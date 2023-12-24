@@ -40,7 +40,6 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
-  console.log("Signing Up");
   const user = new User({
     email: req.body.email,
     password: req.body.password,
@@ -50,12 +49,13 @@ exports.signup = catchAsync(async (req, res, next) => {
   const userObj = {
     _id: data._id,
     email: data.email,
+    credits: data.credits,
+    plan: data.plan,
   };
   createSendToken(userObj, 200, res);
 });
 
 exports.addtowaitlist = catchAsync(async (req, res, next) => {
-  console.log("Adding to waitlist");
   const { email } = req.body;
 
   const existingUser = await WaitlistedUser.findOne({ email });
@@ -81,9 +81,7 @@ exports.addtowaitlist = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    data: {
-      userObj,
-    },
+    userObj,
   });
 });
 
@@ -136,6 +134,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       id: freshUser._id,
       email: freshUser.email,
       credits: freshUser.credits,
+      plan: freshUser.plan,
     },
   });
 });

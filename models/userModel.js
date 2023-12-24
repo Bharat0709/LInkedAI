@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -13,8 +12,13 @@ const userSchema = new mongoose.Schema({
   passwordChangedAt: { type: Date },
   role: {
     type: String,
-    enum: ["user", "guide", "lead-guide", "admin"],
+    enum: ["user", "tester", "admin"],
     default: "user",
+  },
+  plan: {
+    type: String,
+    enum: ["Free", "Plus", "Pro", "Ultra"],
+    default: "Free",
   },
   password: {
     select: false,
@@ -41,7 +45,7 @@ const userSchema = new mongoose.Schema({
   passwordResetExpires: Date,
   active: {
     type: Boolean,
-    default: true,
+    default: false,
     select: false,
   },
 });
