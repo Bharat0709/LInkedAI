@@ -11,6 +11,7 @@ const {
   HarmCategory,
   HarmBlockThreshold,
 } = require("@google/generative-ai");
+const GuestUser = require("../models/guestUser");
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
@@ -52,7 +53,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
 
     const generatedComment = await getComment(postContent, selectedOption);
     user.credits -= 5;
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
 
     res.json({
       generatedComment: generatedComment,
@@ -84,7 +85,6 @@ async function getComment(postContent, selectedOption) {
 exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postType, selectedTone } = req.body;
-    console.log(postType, selectedTone);
 
     const user = req.user;
 
@@ -98,7 +98,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
     user.credits -= 10;
 
     // Update user details in the database (replace this with your actual logic)
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     res.json({
       generatedPostContent: generatedPostContent,
       remainingCredits: user.credits,
@@ -152,7 +152,7 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     );
     user.credits -= 10;
 
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     // Send the generated template back to the frontend
     res.status(200).json({
       generatedTemplateContent: generatedTemplateContent,
@@ -197,15 +197,15 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
     const user = req.user;
 
     // Check if the user has enough credits
-    if (user.credits < 5) {
+    if (user.credits < 10) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
 
     // Deduct 10 credits from the
-    user.credits -= 5;
+    user.credits -= 10;
 
     // Update user details in the database (replace this with your actual logic)
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
 
     const chatGPTResponse = await axios.post(
       "https://api.openai.com/v1/chat/completions",
@@ -241,7 +241,6 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -288,7 +287,7 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     user.credits -= 10;
 
     // Update user details in the database (replace this with your actual logic)
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     res.status(200).json({
       generatedTemplateContent: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,
@@ -309,6 +308,10 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       return res.status(403).json({ error: "Insufficient credits" });
     }
 
+    user.credits -= 5;
+
+    // Update user details in the database (replace this with your actual logic)
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     const chatGPTResponse = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -329,10 +332,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       }
     );
     // Deduct 5 credits from the
-    user.credits -= 5;
-
-    // Update user details in the database (replace this with your actual logic)
-    await User.findByIdAndUpdate(user._id, { credits: user.credits });
     res.status(200).json({
       generatedComment: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,

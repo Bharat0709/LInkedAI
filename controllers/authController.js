@@ -1,9 +1,43 @@
 const User = require("./../models/userModel");
-const WaitlistedUser = require("../models/waitlistUser");
+const GuestUser = require("../models/guestUser");
 const jwt = require("jsonwebtoken");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const { promisify } = require("util");
+
+exports.addtoguestuser = catchAsync(async (req, res, next) => {
+  const { name, profileLink } = req.body;
+
+  const existingUser = await GuestUser.findOne({ profileLink });
+  if (existingUser) {
+    const userObj = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      profileLink: existingUser.profileLink,
+      credits: existingUser.credits,
+      plan: existingUser.plan,
+      email: existingUser.email,
+    };
+    createSendToken(userObj, 200, res);
+  }
+
+  if (!existingUser) {
+    const user = new GuestUser({
+      name: req.body.name,
+      profileLink: req.body.profileLink,
+    });
+
+    const data = await user.save();
+    const userObj = {
+      _id: data._id,
+      name: data.name,
+      profileLink: data.profileLink,
+      credits: data.credits,
+      plan: data.plan,
+    };
+    createSendToken(userObj, 200, res);
+  }
+});
 
 const signToken = (id) => {
   return jwt.sign(
@@ -55,34 +89,27 @@ exports.signup = catchAsync(async (req, res, next) => {
   createSendToken(userObj, 200, res);
 });
 
-exports.addtowaitlist = catchAsync(async (req, res, next) => {
+exports.addemail = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   const { email } = req.body;
+  const user = req.user;
 
-  const existingUser = await WaitlistedUser.findOne({ email });
+  console.log(email, user);
 
-  if (existingUser) {
-    return res.status(400).json({
-      status: "fail",
-      message: "User with this email already exists in the waitlist.",
+  if (req.user.email) {
+    return next(new AppError("Email Already Exists", 400));
+  }
+  // Update GuestUser with the new email
+  if (!req.user.email) {
+    user.email = email;
+    user.credits += 100;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      email: user.email,
+      credits: user.credits,
     });
   }
-
-  const user = new WaitlistedUser({
-    email: req.body.email,
-    name: req.body.name,
-  });
-
-  const data = await user.save();
-  const userObj = {
-    _id: data._id,
-    email: data.email,
-    name: data.name,
-  };
-
-  res.status(200).json({
-    status: "success",
-    userObj,
-  });
+  // Return success response
+  res.status(200).json({ success: true, user });
 });
 
 // LOGGING IN THE USER
@@ -120,7 +147,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3. Check If User Exists
-  const freshUser = await User.findById(decoded.id);
+  const freshUser = await GuestUser.findById(decoded.id);
 
   if (!freshUser) {
     return next(
@@ -132,9 +159,11 @@ exports.protect = catchAsync(async (req, res, next) => {
     status: "success",
     user: {
       id: freshUser._id,
-      email: freshUser.email,
+      name: freshUser.name,
+      profileLink: freshUser.profileLink,
       credits: freshUser.credits,
       plan: freshUser.plan,
+      email: freshUser.email,
     },
   });
 });
@@ -158,13 +187,14 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
   // 3. Check If User Exists
-  const freshUser = await User.findById(decoded.id);
+  const freshUser = await GuestUser.findById(decoded.id);
 
   if (!freshUser) {
     return next(
       new AppError("The User Belonging to this token does not exists", 401)
     );
   }
+  console.log(freshUser);
   req.user = freshUser;
   next();
 });
