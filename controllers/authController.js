@@ -96,18 +96,22 @@ exports.addemail = catchAsync(async (req, res, next) => {
 
   console.log(email, user);
 
-  if (req.user.email) {
+  // Check if the requested email already exists
+  const existingUser = await GuestUser.findOne({ email });
+
+  if (existingUser) {
+    res.status(400).json({ success: false });
     return next(new AppError("Email Already Exists", 400));
   }
+
   // Update GuestUser with the new email
-  if (!req.user.email) {
-    user.email = email;
-    user.credits += 100;
-    await GuestUser.findByIdAndUpdate(user._id, {
-      email: user.email,
-      credits: user.credits,
-    });
-  }
+  user.email = email;
+  user.credits += 50;
+  await GuestUser.findByIdAndUpdate(user._id, {
+    email: user.email,
+    credits: user.credits,
+  });
+
   // Return success response
   res.status(200).json({ success: true, user });
 });

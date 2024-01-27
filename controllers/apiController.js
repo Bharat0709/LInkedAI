@@ -15,13 +15,6 @@ const GuestUser = require("../models/guestUser");
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-const generationConfig = {
-  temperature: 0.45,
-  topK: 32,
-  topP: 0.65,
-  maxOutputTokens: 1500,
-};
-
 const safetySettings = [
   {
     category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -45,7 +38,6 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
-
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -65,14 +57,55 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   }
 });
 
-async function getComment(postContent, selectedOption) {
+exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
+  try {
+    const { postContent, customTone, wordCount } = req.body;
+    const user = req.user;
+
+    // Check if the user has enough credits
+    if (user.credits < 5) {
+      return res.status(403).json({ error: "Insufficient credits" });
+    }
+
+    const generatedComment = await getCustomComment(
+      postContent,
+      customTone,
+      wordCount
+    );
+    user.credits -= 5;
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    res.json({
+      generatedComment: generatedComment,
+      remainingCredits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+async function getCustomComment(postContent, customTone, wordCount) {
   const parts = [
     {
-      text: `Generate a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} the comment should have some emojis if possible and should be based on the whole post content`,
+      text: `As a linkedIn user in India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
+      Requirements:
+      - The comment should be relevant to the whole post content
+      - Give response as if a real user have written the comment
+      - You can use emojis as well if its a congratulatory comment
+      - Do not repeat the exact words wriiten in the post.
+      - Do not include double quotes in response
+      - Do not include hashtags response 
+      - Give enagaging comment & complete the comment within the word limit 
+      - The comment should not seem to be written by AI`,
     },
     { text: "\n" },
   ];
-
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 120,
+  };
   const result = await model.generateContent({
     contents: [{ role: "user", parts }],
     generationConfig,
@@ -81,6 +114,150 @@ async function getComment(postContent, selectedOption) {
 
   return result.response.text();
 }
+
+async function getComment(postContent, selectedOption) {
+  const parts = [
+    {
+      text: `As a linkedIn user in India on behalf of me help me writing a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
+      Requirements:
+      - if ${
+        selectedOption === "question"
+      } then give a one liner question based on the post content
+      - The comment should be relevant to the whole post content
+      - Give response as if a real user have written the comment
+      - Do not repeat the exact words wriiten in the post
+      - You can use emojis as well if its a congratulatory comment
+      - Give result in a single paragraph and not greater than 30 words  
+      - Do not include double quotes in response
+      - Do not include hashtags in response 
+      - Give a short and engaging comment 
+      - Comment should not seem to be written by AI`,
+    },
+    { text: "\n" },
+  ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 120,
+  };
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts }],
+    generationConfig,
+    safetySettings,
+  });
+
+  return result.response.text();
+}
+
+exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
+  try {
+    const { postContent, selectedOption } = req.body;
+    const user = req.user;
+
+    // Check if the user has enough credits
+    if (user.credits < 5) {
+      return res.status(403).json({ error: "Insufficient credits" });
+    }
+
+    user.credits -= 5;
+
+    // Update user details in the database (replace this with your actual logic)
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    const chatGPTResponse = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `As a linkedIn user on behalf of me help me writing a${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
+            Requirements: 
+            - only if ${
+              selectedOption === "question"
+            } then give a one liner question based on the post content
+            - The comment should be relevant to the whole post content
+            - Give response as if a real user have written the comment
+            - You can use emojis as well if its a congratulatory comment
+            - Do not repeat the exact words wriiten in the post
+            - Give result in a single paragraph and not greater than 30 words  
+            - Do not include double quotes in response
+            - Do not include hashtags in response 
+            - Give a short and engaging comment 
+            - Comment should not seem to be written by AI`,
+          },
+        ],
+        max_tokens: 120,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // Deduct 5 credits from the
+    res.status(200).json({
+      generatedComment: chatGPTResponse.data.choices[0].message.content,
+      remainingCredits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
+  try {
+    const { postContent, customTone, wordCount } = req.body;
+    const user = req.user;
+    // Check if the user has enough credits
+    if (user.credits < 5) {
+      return res.status(403).json({ error: "Insufficient credits" });
+    }
+
+    user.credits -= 5;
+
+    // Update user details in the database (replace this with your actual logic)
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    const chatGPTResponse = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `As a linkedIn user from India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
+            Requirements:
+            - You can use emojis as well if its a congratulatory comment
+            - Give response as if a real user have written the comment
+            - The comment should be relevant to the whole post content
+            - Do not repeat the exact words wriiten in the post.
+            - Do not include double quotes in response
+            - Do not include hashtags in response 
+            - Give enagaging comment & complete the comment within the word limit 
+            - The comment should not seem to be written by AI`,
+          },
+        ],
+        max_tokens: 200,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // Deduct 5 credits from the
+    res.status(200).json({
+      generatedComment: chatGPTResponse.data.choices[0].message.content,
+      remainingCredits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   try {
@@ -290,50 +467,6 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     res.status(200).json({
       generatedTemplateContent: chatGPTResponse.data.choices[0].message.content,
-      remainingCredits: user.credits,
-    });
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
-  try {
-    const { postContent, selectedOption } = req.body;
-    const user = req.user;
-
-    // Check if the user has enough credits
-    if (user.credits < 5) {
-      return res.status(403).json({ error: "Insufficient credits" });
-    }
-
-    user.credits -= 5;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
-    const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "user",
-            content: `Generate a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} the comment should have some emojis if possible and should be based on the whole post content`,
-          },
-        ],
-        max_tokens: 60,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    // Deduct 5 credits from the
-    res.status(200).json({
-      generatedComment: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,
     });
   } catch (error) {
