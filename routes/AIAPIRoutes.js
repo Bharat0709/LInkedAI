@@ -9,6 +9,11 @@ Router.post(
   apiController.generateCommentGemini
 );
 Router.post(
+  "/generatecustomgeminicomment",
+  authController.isLoggedIn,
+  apiController.generateCustomCommentGemini
+);
+Router.post(
   "/generategeminipostcontent",
   authController.isLoggedIn,
   apiController.generatePostContentGemini
@@ -22,6 +27,11 @@ Router.post(
   "/generatechatgptcomment",
   authController.isLoggedIn,
   apiController.generateCommentChatGpt
+);
+Router.post(
+  "/generatecustomchatgptcomment",
+  authController.isLoggedIn,
+  apiController.generateCustomCommentChatGpt
 );
 Router.post(
   "/generatechatgptpostcontent",
