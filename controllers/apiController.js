@@ -196,6 +196,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
         },
       }
     );
+    console.log(chatGPTResponse.data.choices[0].message);
     // Deduct 5 credits from the
     res.status(200).json({
       generatedComment: chatGPTResponse.data.choices[0].message.content,
@@ -289,20 +290,32 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 async function getPostContent(postType, selectedTone) {
   const parts = [
     {
-      text: `Generate a ${selectedTone} LinkedIn post with the following specifications:
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
 
       Post Topic is about ${postType}
 
       Requirements:
       - Include emojis to add a touch of personality.
+      - Do not include ** or * before, after or in between the words in the response
       - Incorporate relevant hashtags for increased visibility.
       - Start the post with a compelling hook line to engage the audience.
       - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
-      - Should have one link attached that is related to post content helpful for the audience 
+      - Should have one link attached that is related to post content helpful for the audience if any
+      - Prompt followers to share their thoughts or experiences related to the post.
+      - Ensure the post fits within LinkedIn's character limit for optimal engagement
+      - Leverage current events or industry trends to make the post timely and relevant.
+      - Use simple and easy to undestand words in the post
+      - The post should not seem to be written by AI
       `,
     },
     { text: "\n" },
   ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 1200,
+  };
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts }],
@@ -391,20 +404,27 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
         messages: [
           {
             role: "user",
-            content: `Generate a ${selectedTone} LinkedIn post with the following specifications:
+            content: `As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
 
             Post Topic is about ${postType}
-
+      
             Requirements:
             - Include emojis to add a touch of personality.
+            - Do not include ** or * before, after or in between the words the text in the response
             - Incorporate relevant hashtags for increased visibility.
             - Start the post with a compelling hook line to engage the audience.
             - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
-            - Should have one link attached that is related to post content helpful for the audience
+            - Should have one link attached that is related to post content helpful for the audience if any
+            - Prompt followers to share their thoughts or experiences related to the post.
+            - Ensure the post fits within LinkedIn's character limit for optimal engagement
+            - Leverage current events or industry trends to make the post timely and relevant.
+            - Use simple and easy to undestand words in the post
+            - The post should not seem to be written by AI
+            - Complete the post within approx 900 words
             `,
           },
         ],
-        max_tokens: 300,
+        max_tokens: 900,
       },
       {
         headers: {
