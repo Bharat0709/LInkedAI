@@ -120,9 +120,6 @@ async function getComment(postContent, selectedOption) {
     {
       text: `As a linkedIn user in India on behalf of me help me writing a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
       Requirements:
-      - if ${
-        selectedOption === "question"
-      } then give a one liner question based on the post content
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
       - Do not repeat the exact words wriiten in the post
@@ -173,9 +170,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
             role: "user",
             content: `As a linkedIn user on behalf of me help me writing a${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
             Requirements: 
-            - only if ${
-              selectedOption === "question"
-            } then give a one liner question based on the post content
             - The comment should be relevant to the whole post content
             - Give response as if a real user have written the comment
             - You can use emojis as well if its a congratulatory comment
@@ -196,7 +190,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
         },
       }
     );
-    console.log(chatGPTResponse.data.choices[0].message);
     // Deduct 5 credits from the
     res.status(200).json({
       generatedComment: chatGPTResponse.data.choices[0].message.content,
@@ -418,7 +411,7 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
             - Prompt followers to share their thoughts or experiences related to the post.
             - Ensure the post fits within LinkedIn's character limit for optimal engagement
             - Leverage current events or industry trends to make the post timely and relevant.
-            - Use simple and easy to undestand words in the post
+            - Use simple and easy to undestand words in the post\
             - The post should not seem to be written by AI
             - Complete the post within approx 900 words
             `,

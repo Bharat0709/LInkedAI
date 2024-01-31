@@ -35,6 +35,10 @@ const GuestUserSchema = new mongoose.Schema({
     unique: true,
     validate: [validator.isEmail, "Please Provide a Valid Email"],
   },
+  daysActive: {
+    type: Number,
+    default: 0,
+  },
 });
 const GuestUser = mongoose.model("guestuser", GuestUserSchema);
 module.exports = GuestUser;

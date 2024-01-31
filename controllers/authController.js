@@ -17,6 +17,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       credits: existingUser.credits,
       plan: existingUser.plan,
       email: existingUser.email,
+      daysActive: existingUser.daysActive,
     };
     createSendToken(userObj, 200, res);
   }
@@ -34,6 +35,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       profileLink: data.profileLink,
       credits: data.credits,
       plan: data.plan,
+      daysActive: data.daysActive,
     };
     createSendToken(userObj, 200, res);
   }
@@ -51,7 +53,6 @@ const signToken = (id) => {
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
-
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -67,9 +68,7 @@ const createSendToken = (user, statusCode, res) => {
   res.status(statusCode).json({
     status: "success",
     token,
-    data: {
-      user,
-    },
+    user,
   });
 };
 
@@ -90,11 +89,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.addemail = catchAsync(async (req, res, next) => {
-  console.log(req.body);
   const { email } = req.body;
   const user = req.user;
-
-  console.log(email, user);
 
   // Check if the requested email already exists
   const existingUser = await GuestUser.findOne({ email });
@@ -116,6 +112,38 @@ exports.addemail = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
+exports.updateDaysActive = catchAsync(async (req, res, next) => {
+  const { activeDays } = req.body;
+  const user = req.user;
+
+  // Update GuestUser with the new email
+  user.daysActive = activeDays;
+  await GuestUser.findByIdAndUpdate(user._id, {
+    daysActive: user.daysActive,
+  });
+
+  // Return success response
+  res.status(200).json({ success: true, user });
+});
+
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  // 1. Fetch all users
+  const allUsers = await GuestUser.find();
+
+  // 2. Create an array to hold user data
+  const usersData = allUsers.map((user) => ({
+    id: user._id,
+    name: user.name,
+    daysActive: user.daysActive,
+    // Add other user properties as needed
+  }));
+
+  // 3. Respond with the user data
+  res.status(200).json({
+    status: "success",
+    users: usersData,
+  });
+});
 // LOGGING IN THE USER
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -168,6 +196,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       credits: freshUser.credits,
       plan: freshUser.plan,
       email: freshUser.email,
+      daysActive: freshUser.daysActive,
     },
   });
 });
@@ -198,7 +227,6 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
       new AppError("The User Belonging to this token does not exists", 401)
     );
   }
-  console.log(freshUser);
   req.user = freshUser;
   next();
 });
