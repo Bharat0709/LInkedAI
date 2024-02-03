@@ -92,7 +92,7 @@ async function getCustomComment(postContent, customTone, wordCount) {
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
       - You can use emojis as well if its a congratulatory comment
-      - Do not repeat the exact words wriiten in the post.
+      -  Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - Do not include double quotes in response
       - Do not include hashtags response 
       - Give enagaging comment & complete the comment within the word limit 
@@ -122,7 +122,7 @@ async function getComment(postContent, selectedOption) {
       Requirements:
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
-      - Do not repeat the exact words wriiten in the post
+      - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - You can use emojis as well if its a congratulatory comment
       - Give result in a single paragraph and not greater than 30 words  
       - Do not include double quotes in response

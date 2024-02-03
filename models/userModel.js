@@ -9,6 +9,10 @@ const userSchema = new mongoose.Schema({
     unique: true,
     validate: [validator.isEmail, "Please Provide a Valid Email"],
   },
+  name: {
+    type: String,
+    required: [true, "Please Provide Your Name"],
+  },
   passwordChangedAt: { type: Date },
   role: {
     type: String,
