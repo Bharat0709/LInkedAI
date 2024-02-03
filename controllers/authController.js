@@ -95,8 +95,8 @@ exports.addemail = catchAsync(async (req, res, next) => {
   // Check if the requested email already exists
   const existingUser = await GuestUser.findOne({ email });
 
-  if (existingUser) {
-    res.status(400).json({ success: false });
+  if (existingUser || user.email) {
+    res.status(400).json({ success: false, email: user.email });
     return next(new AppError("Email Already Exists", 400));
   }
 
