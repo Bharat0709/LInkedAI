@@ -6,10 +6,18 @@ const AppError = require("./../utils/appError");
 const { promisify } = require("util");
 
 exports.addtoguestuser = catchAsync(async (req, res, next) => {
-  const { name, profileLink } = req.body;
+  const { name, profileLink, email } = req.body;
+  console.log(name, profileLink, email);
 
   const existingUser = await GuestUser.findOne({ profileLink });
-  if (existingUser) {
+  const existingEmail = await GuestUser.findOne({ email });
+
+  if (existingEmail) {
+    res.status(400).json({ success: false });
+    return next(new AppError("Email Already Exists", 400));
+  }
+  if (existingUser && existingUser.email) {
+    console.log(existingUser);
     const userObj = {
       _id: existingUser._id,
       name: existingUser.name,
@@ -18,6 +26,8 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       plan: existingUser.plan,
       email: existingUser.email,
       daysActive: existingUser.daysActive,
+      leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
+      accountCreatedAt: existingUser.accountCreatedAt,
     };
     createSendToken(userObj, 200, res);
   }
@@ -26,6 +36,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
     const user = new GuestUser({
       name: req.body.name,
       profileLink: req.body.profileLink,
+      email: req.body.email,
     });
 
     const data = await user.save();
@@ -33,11 +44,38 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       _id: data._id,
       name: data.name,
       profileLink: data.profileLink,
+      email: data.email,
       credits: data.credits,
       plan: data.plan,
       daysActive: data.daysActive,
+      leaderBoardProfileVisibility: data.leaderBoardProfileVisibility,
+      accountCreatedAt: data.accountCreatedAt,
+    };
+    console.log(userObj);
+    createSendToken(userObj, 200, res);
+  }
+});
+
+exports.checkEmailExists = catchAsync(async (req, res, next) => {
+  const { name, profileLink } = req.body;
+  console.log(name, profileLink);
+  const existingUser = await GuestUser.findOne({ profileLink });
+  if (existingUser && existingUser.email) {
+    const userObj = {
+      _id: existingUser._id,
+      name: existingUser.name,
+      profileLink: existingUser.profileLink,
+      email: existingUser.email,
+      credits: existingUser.credits,
+      plan: existingUser.plan,
+      daysActive: existingUser.daysActive,
+      leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
+      accountCreatedAt: existingUser.accountCreatedAt,
     };
     createSendToken(userObj, 200, res);
+    console.log(existingUser);
+  } else {
+    res.status(400).json({ success: false });
   }
 });
 
@@ -53,6 +91,7 @@ const signToken = (id) => {
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
+  console.log(user);
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -62,7 +101,6 @@ const createSendToken = (user, statusCode, res) => {
   if (process.env.NODE_ENV === "production") {
     cookieOptions.secure = true;
   }
-  user.password = undefined;
   res.cookie("jwt", token, cookieOptions);
 
   res.status(statusCode).json({
@@ -88,30 +126,6 @@ exports.signup = catchAsync(async (req, res, next) => {
   createSendToken(userObj, 200, res);
 });
 
-exports.addemail = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
-  const user = req.user;
-
-  // Check if the requested email already exists
-  const existingUser = await GuestUser.findOne({ email });
-
-  if (existingUser || user.email) {
-    res.status(400).json({ success: false, email: user.email });
-    return next(new AppError("Email Already Exists", 400));
-  }
-
-  // Update GuestUser with the new email
-  user.email = email;
-  user.credits += 50;
-  await GuestUser.findByIdAndUpdate(user._id, {
-    email: user.email,
-    credits: user.credits,
-  });
-
-  // Return success response
-  res.status(200).json({ success: true, user });
-});
-
 exports.updateDaysActive = catchAsync(async (req, res, next) => {
   const { activeDays } = req.body;
   const user = req.user;
@@ -126,8 +140,26 @@ exports.updateDaysActive = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
+exports.updateLeaderboardProfileVisibility = catchAsync(
+  async (req, res, next) => {
+    const { leaderBoardProfileVisibility } = req.body;
+    const user = req.user;
+
+    // Update GuestUser with the new email
+    user.leaderBoardProfileVisibility = leaderBoardProfileVisibility;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      leaderBoardProfileVisibility: user.leaderBoardProfileVisibility,
+    });
+
+    // Return success response
+    res.status(200).json({ success: true, user });
+  }
+);
+
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   // 1. Fetch all users
+  const Existinguser = req.user;
+  console.log(Existinguser);
   const allUsers = await GuestUser.find();
 
   // 2. Create an array to hold user data
@@ -135,12 +167,15 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
     id: user._id,
     name: user.name,
     daysActive: user.daysActive,
+    profileLink: user.profileLink,
+    leaderBoardProfileVisibility: user.leaderBoardProfileVisibility,
     // Add other user properties as needed
   }));
 
   // 3. Respond with the user data
   res.status(200).json({
     status: "success",
+    user: Existinguser,
     users: usersData,
   });
 });
@@ -186,7 +221,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError("The User Belonging to this token does not exists", 401)
     );
   }
-  req.user = freshUser;
+  // req.user = freshUser;
   res.status(200).json({
     status: "success",
     user: {
@@ -197,6 +232,8 @@ exports.protect = catchAsync(async (req, res, next) => {
       plan: freshUser.plan,
       email: freshUser.email,
       daysActive: freshUser.daysActive,
+      leaderBoardProfileVisibility: freshUser.leaderBoardProfileVisibility,
+      accountCreatedAt: freshUser.accountCreatedAt,
     },
   });
 });

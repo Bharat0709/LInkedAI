@@ -18,7 +18,7 @@ const GuestUserSchema = new mongoose.Schema({
   },
   credits: {
     type: Number,
-    default: 100,
+    default: 200,
   },
   role: {
     type: String,
@@ -32,13 +32,26 @@ const GuestUserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     validate: [validator.isEmail, "Please Provide a Valid Email"],
+    unique: true,
+  },
+  leaderBoardProfileVisibility: {
+    type: Boolean,
+    default: true,
   },
   daysActive: {
     type: Number,
     default: 0,
   },
+  accountCreatedAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  organization: {
+    type: String,
+    default: "Personal Account",
+  },
 });
 const GuestUser = mongoose.model("guestuser", GuestUserSchema);
+// GuestUser.collection.dropIndex({ email: 1 });
 module.exports = GuestUser;
