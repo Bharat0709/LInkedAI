@@ -6,12 +6,17 @@ Router.post("/signup", authController.signup);
 Router.post("/login", authController.login);
 Router.post("/addtoguestuser", authController.addtoguestuser);
 Router.get("/checkAuth", authController.protect);
-Router.get("/allusers", authController.getAllUsers);
-Router.post("/addemail", authController.isLoggedIn, authController.addemail);
+Router.get("/users", authController.isLoggedIn, authController.getAllUsers);
+Router.post("/checkemail", authController.checkEmailExists);
 Router.post(
   "/daysactive",
   authController.isLoggedIn,
   authController.updateDaysActive
+);
+Router.post(
+  "/lbprofilevisibility",
+  authController.isLoggedIn,
+  authController.updateLeaderboardProfileVisibility
 );
 Router.get("/checkserver", authController.activateServer);
 
