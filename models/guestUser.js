@@ -11,6 +11,9 @@ const GuestUserSchema = new mongoose.Schema({
     required: [true, "Profile link not found"],
     unique: true,
   },
+  lastActive: {
+    type: Date,
+  },
   active: {
     type: Boolean,
     default: true,
@@ -53,5 +56,4 @@ const GuestUserSchema = new mongoose.Schema({
   },
 });
 const GuestUser = mongoose.model("guestuser", GuestUserSchema);
-// GuestUser.collection.dropIndex({ email: 1 });
 module.exports = GuestUser;

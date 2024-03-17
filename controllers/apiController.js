@@ -38,6 +38,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
+    console.log(selectedOption);
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -61,6 +62,7 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, customTone, wordCount } = req.body;
     const user = req.user;
+    console.log(customTone);
 
     // Check if the user has enough credits
     if (user.credits < 5) {
@@ -152,6 +154,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
 
+    console.log(selectedOption);
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -209,7 +212,7 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
-
+    console.log(customTone);
     user.credits -= 5;
 
     // Update user details in the database (replace this with your actual logic)
@@ -439,6 +442,7 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
   try {
     const { templateRequirements, selectedTone } = req.body;
     const user = req.user;
+    console.log(templateRequirements, selectedTone);
 
     // Check if the user has enough credits
     if (user.credits < 10) {
@@ -480,6 +484,60 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     res.status(200).json({
       generatedTemplateContent: chatGPTResponse.data.choices[0].message.content,
+      remainingCredits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
+  try {
+    const { formattedMessages, userName } = req.body;
+    const user = req.user;
+
+    // Check if the user has enough credits
+    if (user.credits < 10) {
+      return res.status(403).json({ error: "Insufficient credits" });
+    }
+
+    const chatGPTResponse = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `My name is ${userName} and on behalf of me Generate a formal reply to these messages from  linkedin with the following last 5 conversation:
+           
+
+           ${formattedMessages}
+
+           If there is no message from the other side except for ${userName} that is me then send a default one to start a conversation.
+            Requirements:
+            - Reply should be short and to the point
+            - Should be completed in 50 words
+            - Reply should be professional.
+            `,
+          },
+        ],
+        max_tokens: 100,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // Deduct 10 credits from the
+    user.credits -= 10;
+
+    // Update user details in the database (replace this with your actual logic)
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    res.status(200).json({
+      generatedReply: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,
     });
   } catch (error) {

@@ -7,7 +7,6 @@ const { promisify } = require("util");
 
 exports.addtoguestuser = catchAsync(async (req, res, next) => {
   const { name, profileLink, email } = req.body;
-  console.log(name, profileLink, email);
 
   const existingUser = await GuestUser.findOne({ profileLink });
   const existingEmail = await GuestUser.findOne({ email });
