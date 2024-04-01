@@ -18,6 +18,26 @@ Router.post(
   authController.isLoggedIn,
   authController.updateLeaderboardProfileVisibility
 );
+Router.post(
+  "/addtocollection",
+  authController.isLoggedIn,
+  authController.addtocollection
+);
+Router.get(
+  "/browsecollections",
+  authController.isLoggedIn,
+  authController.browseCollections
+);
+Router.delete(
+  "/collection/:collectionId",
+  authController.isLoggedIn,
+  authController.deleteCollection
+);
+Router.delete(
+  "/collection/:collectionId/post/:postId",
+  authController.isLoggedIn,
+  authController.deleteCollectionPost
+);
 Router.get("/checkserver", authController.activateServer);
 
 module.exports = Router;
