@@ -21,7 +21,7 @@ const GuestUserSchema = new mongoose.Schema({
   },
   credits: {
     type: Number,
-    default: 200,
+    default: 100,
   },
   role: {
     type: String,

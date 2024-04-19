@@ -1,10 +1,11 @@
-const { Collection, Post } = require("./../models/collection"); // Import the Mongoose models
-const User = require("./../models/userModel");
-const GuestUser = require("../models/guestUser");
-const jwt = require("jsonwebtoken");
-const catchAsync = require("./../utils/catchAsync");
-const AppError = require("./../utils/appError");
-const { promisify } = require("util");
+const { Collection, Post } = require('./../models/collection'); // Import the Mongoose models
+const User = require('./../models/userModel');
+const GuestUser = require('../models/guestUser');
+const jwt = require('jsonwebtoken');
+const catchAsync = require('./../utils/catchAsync');
+const AppError = require('./../utils/appError');
+const { RateLimiterMemory } = require('rate-limiter-flexible');
+const { promisify } = require('util');
 
 exports.addtoguestuser = catchAsync(async (req, res, next) => {
   const { name, profileLink, email } = req.body;
@@ -14,7 +15,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
 
   if (existingEmail) {
     res.status(400).json({ success: false });
-    return next(new AppError("Email Already Exists", 400));
+    return next(new AppError('Email Already Exists', 400));
   }
   if (existingUser && existingUser.email) {
     console.log(existingUser);
@@ -98,13 +99,13 @@ const createSendToken = (user, statusCode, res) => {
     ),
     httpOnly: true,
   };
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === 'production') {
     cookieOptions.secure = true;
   }
-  res.cookie("jwt", token, cookieOptions);
+  res.cookie('jwt', token, cookieOptions);
 
   res.status(statusCode).json({
-    status: "success",
+    status: 'success',
     token,
     user,
   });
@@ -131,6 +132,12 @@ exports.updateDaysActive = catchAsync(async (req, res, next) => {
   const user = req.user;
 
   // Update GuestUser with the new email
+
+  user.credits = 100;
+
+  // Update user details in the database (replace this with your actual logic)
+  await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+
   user.daysActive = activeDays;
   await GuestUser.findByIdAndUpdate(user._id, {
     daysActive: user.daysActive,
@@ -140,8 +147,39 @@ exports.updateDaysActive = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-exports.updateLeaderboardProfileVisibility = catchAsync(
-  async (req, res, next) => {
+// Define rate limit settings
+const rateLimitOpts = {
+  points: 4, // 1 request
+  duration: 60, // per 60 seconds
+};
+
+// Create a rate limiter instance
+const rateLimiter = new RateLimiterMemory(rateLimitOpts);
+
+// Middleware to handle rate limiting
+const rateLimitMiddleware = async (req, res, next) => {
+  try {
+    // Get user ID from the request (assuming user is authenticated)
+    const userId = req.user.id;
+
+    // Consume a point from the user's rate limiter
+    await rateLimiter.consume(userId);
+
+    // If the request is within the limit, continue to the next middleware
+    next();
+  } catch (err) {
+    // If the user has exceeded the limit, send an error response
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests, please try again later.',
+    });
+  }
+};
+
+// Apply rate limiting middleware to the updateLeaderboardProfileVisibility function
+exports.updateLeaderboardProfileVisibility = [
+  rateLimitMiddleware,
+  catchAsync(async (req, res, next) => {
     const { leaderBoardProfileVisibility } = req.body;
     const user = req.user;
 
@@ -153,8 +191,8 @@ exports.updateLeaderboardProfileVisibility = catchAsync(
 
     // Return success response
     res.status(200).json({ success: true, user });
-  }
-);
+  }),
+];
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   // 1. Fetch all users
@@ -174,7 +212,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 
   // 3. Respond with the user data
   res.status(200).json({
-    status: "success",
+    status: 'success',
     user: Existinguser,
     users: usersData,
   });
@@ -184,13 +222,13 @@ exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   // IF email and password exists
   if (!email || !password) {
-    return next(new AppError("Please provide email and password", 400));
+    return next(new AppError('Please provide email and password', 400));
   }
   // check user exists and password is correct
-  const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError("Incorrect email or Password"), 401);
+    return next(new AppError('Incorrect email or Password'), 401);
   }
   createSendToken(user, 200, res);
 });
@@ -200,15 +238,15 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 1. Get  token and check if it exixts
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies.jwt) {
     token = req.cookies.jwt;
   }
 
   if (!token) {
-    return next(new AppError("You are not logged in Login to Get Access"), 401);
+    return next(new AppError('You are not logged in Login to Get Access'), 401);
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
@@ -218,12 +256,12 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (!freshUser) {
     return next(
-      new AppError("The User Belonging to this token does not exists", 401)
+      new AppError('The User Belonging to this token does not exists', 401)
     );
   }
   // req.user = freshUser;
   res.status(200).json({
-    status: "success",
+    status: 'success',
     user: {
       id: freshUser._id,
       name: freshUser.name,
@@ -243,15 +281,15 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
   // 1. Get  token and check if it exixts
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies.jwt) {
     token = req.cookies.jwt;
   }
 
   if (!token) {
-    return next(new AppError("You are not logged in Login to Get Access"), 401);
+    return next(new AppError('You are not logged in Login to Get Access'), 401);
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
@@ -261,7 +299,7 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
 
   if (!freshUser) {
     return next(
-      new AppError("The User Belonging to this token does not exists", 401)
+      new AppError('The User Belonging to this token does not exists', 401)
     );
   }
   req.user = freshUser;
@@ -269,7 +307,7 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
 });
 
 exports.activateServer = catchAsync(async (req, res, next) => {
-  res.status(200).json({ server: "Server is active" });
+  res.status(200).json({ server: 'Server is active' });
 });
 
 // Function to add a new post to a collection
@@ -305,7 +343,7 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
 
     // Check if the collection has reached the limit of 10 posts
     if (collection.posts.length >= 10) {
-      throw new Error("Maximum limit of 10 posts per collection reached");
+      throw new Error('Maximum limit of 10 posts per collection reached');
     }
 
     // Create a new post
@@ -319,8 +357,8 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
     await collection.save();
     res.status(200).json({ collection });
   } catch (error) {
-    console.error("Error adding post:", error);
-    throw new Error("Failed to add post");
+    console.error('Error adding post:', error);
+    throw new Error('Failed to add post');
   }
 });
 
@@ -333,8 +371,8 @@ exports.browseCollections = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ collections });
   } catch (error) {
-    console.error("Error browsing collections:", error);
-    throw new Error("Failed to browse collections");
+    console.error('Error browsing collections:', error);
+    throw new Error('Failed to browse collections');
   }
 });
 
@@ -350,14 +388,14 @@ exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
     if (!collection) {
       return res
         .status(404)
-        .json({ success: false, message: "Collection not found" });
+        .json({ success: false, message: 'Collection not found' });
     }
 
     // Check if the collection belongs to the user
     if (!collection.userId.equals(userId)) {
       return res
         .status(403)
-        .json({ success: false, message: "Unauthorized access" });
+        .json({ success: false, message: 'Unauthorized access' });
     }
 
     // Find the post within the collection by its ID
@@ -366,7 +404,7 @@ exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
     if (!post) {
       return res
         .status(404)
-        .json({ success: false, message: "Post not found in the collection" });
+        .json({ success: false, message: 'Post not found in the collection' });
     }
 
     // Remove the post from the collection
@@ -378,9 +416,9 @@ exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
 
     res
       .status(200)
-      .json({ success: true, message: "Post deleted successfully" });
+      .json({ success: true, message: 'Post deleted successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error deleting post" });
+    res.status(500).json({ success: false, message: 'Error deleting post' });
   }
 });
 
@@ -394,25 +432,25 @@ exports.deleteCollection = catchAsync(async (req, res, next) => {
     if (!collection) {
       return res
         .status(404)
-        .json({ success: false, message: "Collection not found" });
+        .json({ success: false, message: 'Collection not found' });
     }
 
     // Check if the collection belongs to the current user
     if (collection.userId.toString() !== req.user._id.toString()) {
       return res
         .status(403)
-        .json({ success: false, message: "Unauthorized access" });
+        .json({ success: false, message: 'Unauthorized access' });
     }
 
     // Delete the collection
     await Collection.findByIdAndDelete(collectionId);
     res
       .status(200)
-      .json({ success: true, message: "Collection deleted successfully" });
+      .json({ success: true, message: 'Collection deleted successfully' });
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Error deleting collection" });
+      .json({ success: false, message: 'Error deleting collection' });
   }
 });
 
@@ -421,7 +459,7 @@ exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(
-        new AppError("You do not have permission to perform this action", 403)
+        new AppError('You do not have permission to perform this action', 403)
       );
     }
     next();
