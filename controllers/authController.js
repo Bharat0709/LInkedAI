@@ -359,7 +359,7 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
         userId: userId,
       });
       if (userCollectionsCount >= 10) {
-        throw new Error('Maximum limit of 5 collections reached');
+        throw new Error("Maximum limit of 10 collections reached");
       }
 
       await collection.save();
