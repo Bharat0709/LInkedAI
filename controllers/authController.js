@@ -6,6 +6,7 @@ const catchAsync = require('./../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const { promisify } = require('util');
+const Waitlist = require('../models/waitlist');
 
 exports.addtoguestuser = catchAsync(async (req, res, next) => {
   const { name, profileLink, email } = req.body;
@@ -54,6 +55,29 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
     };
     console.log(userObj);
     createSendToken(userObj, 200, res);
+  }
+});
+
+exports.addtoWaitlist = catchAsync(async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Check if the email is already in the waitlist
+    const existingUser = await Waitlist.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ error: 'Email is already in the waitlist' });
+    }
+
+    // Create a new waitlisted user
+    const newUser = new Waitlist({ email });
+    await newUser.save();
+
+    return res.status(201).json(newUser);
+  } catch (error) {
+    console.error('Error adding user to waitlist:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
