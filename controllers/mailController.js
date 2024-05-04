@@ -13,7 +13,7 @@ exports.sendMailtoUser = async (req, res) => {
     from: from_who,
     to: req.params.mail,
     cc: 'letsbunktoday@gmail.com',
-    subject: 'Welcome to EngageGPT Wailist',
+    subject: 'Welcome to EngageGPT Waitlist',
     html: `<!DOCTYPE html>
     <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
     
