@@ -43,5 +43,10 @@ Router.post(
   authController.isLoggedIn,
   apiController.generateTemplateChatGpT
 );
+Router.post(
+  "/generatechatgptreply",
+  authController.isLoggedIn,
+  apiController.generateReplyChatGpT
+);
 
 module.exports = Router;

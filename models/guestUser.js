@@ -11,6 +11,9 @@ const GuestUserSchema = new mongoose.Schema({
     required: [true, "Profile link not found"],
     unique: true,
   },
+  lastActive: {
+    type: Date,
+  },
   active: {
     type: Boolean,
     default: true,
@@ -32,8 +35,24 @@ const GuestUserSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     validate: [validator.isEmail, "Please Provide a Valid Email"],
+    unique: true,
+  },
+  leaderBoardProfileVisibility: {
+    type: Boolean,
+    default: true,
+  },
+  daysActive: {
+    type: Number,
+    default: 0,
+  },
+  accountCreatedAt: {
+    type: Date,
+    default: Date.now(),
+  },
+  organization: {
+    type: String,
+    default: "Personal Account",
   },
 });
 const GuestUser = mongoose.model("guestuser", GuestUserSchema);

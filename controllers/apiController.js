@@ -52,7 +52,6 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -61,8 +60,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, customTone, wordCount } = req.body;
     const user = req.user;
-
-    // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
@@ -79,7 +76,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -92,7 +88,7 @@ async function getCustomComment(postContent, customTone, wordCount) {
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
       - You can use emojis as well if its a congratulatory comment
-      - Do not repeat the exact words wriiten in the post.
+      -  Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - Do not include double quotes in response
       - Do not include hashtags response 
       - Give enagaging comment & complete the comment within the word limit 
@@ -120,12 +116,9 @@ async function getComment(postContent, selectedOption) {
     {
       text: `As a linkedIn user in India on behalf of me help me writing a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
       Requirements:
-      - if ${
-        selectedOption === "question"
-      } then give a one liner question based on the post content
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
-      - Do not repeat the exact words wriiten in the post
+      - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - You can use emojis as well if its a congratulatory comment
       - Give result in a single paragraph and not greater than 30 words  
       - Do not include double quotes in response
@@ -154,7 +147,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
-
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -173,9 +165,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
             role: "user",
             content: `As a linkedIn user on behalf of me help me writing a${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
             Requirements: 
-            - only if ${
-              selectedOption === "question"
-            } then give a one liner question based on the post content
             - The comment should be relevant to the whole post content
             - Give response as if a real user have written the comment
             - You can use emojis as well if its a congratulatory comment
@@ -202,7 +191,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -215,7 +203,6 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
-
     user.credits -= 5;
 
     // Update user details in the database (replace this with your actual logic)
@@ -254,7 +241,6 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -281,7 +267,6 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -289,20 +274,32 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 async function getPostContent(postType, selectedTone) {
   const parts = [
     {
-      text: `Generate a ${selectedTone} LinkedIn post with the following specifications:
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
 
       Post Topic is about ${postType}
 
       Requirements:
       - Include emojis to add a touch of personality.
+      - Do not include ** or * before, after or in between the words in the response
       - Incorporate relevant hashtags for increased visibility.
       - Start the post with a compelling hook line to engage the audience.
       - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
-      - Should have one link attached that is related to post content helpful for the audience 
+      - Should have one link attached that is related to post content helpful for the audience if any
+      - Prompt followers to share their thoughts or experiences related to the post.
+      - Ensure the post fits within LinkedIn's character limit for optimal engagement
+      - Leverage current events or industry trends to make the post timely and relevant.
+      - Use simple and easy to undestand words in the post
+      - The post should not seem to be written by AI
       `,
     },
     { text: "\n" },
   ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 1200,
+  };
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts }],
@@ -337,7 +334,6 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     // Handle errors appropriately
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -391,20 +387,27 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
         messages: [
           {
             role: "user",
-            content: `Generate a ${selectedTone} LinkedIn post with the following specifications:
+            content: `As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
 
             Post Topic is about ${postType}
-
+      
             Requirements:
             - Include emojis to add a touch of personality.
+            - Do not include ** or * before, after or in between the words the text in the response
             - Incorporate relevant hashtags for increased visibility.
             - Start the post with a compelling hook line to engage the audience.
             - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
-            - Should have one link attached that is related to post content helpful for the audience
+            - Should have one link attached that is related to post content helpful for the audience if any
+            - Prompt followers to share their thoughts or experiences related to the post.
+            - Ensure the post fits within LinkedIn's character limit for optimal engagement
+            - Leverage current events or industry trends to make the post timely and relevant.
+            - Use simple and easy to undestand words in the post\
+            - The post should not seem to be written by AI
+            - Complete the post within approx 900 words
             `,
           },
         ],
-        max_tokens: 300,
+        max_tokens: 900,
       },
       {
         headers: {
@@ -426,7 +429,6 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
   try {
     const { templateRequirements, selectedTone } = req.body;
     const user = req.user;
-
     // Check if the user has enough credits
     if (user.credits < 10) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -470,7 +472,59 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
+  try {
+    const { formattedMessages, userName } = req.body;
+    const user = req.user;
+
+    // Check if the user has enough credits
+    if (user.credits < 10) {
+      return res.status(403).json({ error: "Insufficient credits" });
+    }
+
+    const chatGPTResponse = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "user",
+            content: `My name is ${userName} and on behalf of me Generate a formal reply to these messages from  linkedin with the following last 5 conversation:
+           
+
+           ${formattedMessages}
+
+           If there is no message from the other side except for ${userName} that is me then send a default one to start a conversation.
+            Requirements:
+            - Reply should be short and to the point
+            - Should be completed in 50 words
+            - Reply should be professional.
+            `,
+          },
+        ],
+        max_tokens: 100,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    // Deduct 10 credits from the
+    user.credits -= 10;
+
+    // Update user details in the database (replace this with your actual logic)
+    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    res.status(200).json({
+      generatedReply: chatGPTResponse.data.choices[0].message.content,
+      remainingCredits: user.credits,
+    });
+  } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
