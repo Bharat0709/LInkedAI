@@ -19,7 +19,6 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
     return next(new AppError('Email Already Exists', 400));
   }
   if (existingUser && existingUser.email) {
-    console.log(existingUser);
     const userObj = {
       _id: existingUser._id,
       name: existingUser.name,
@@ -53,7 +52,6 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       leaderBoardProfileVisibility: data.leaderBoardProfileVisibility,
       accountCreatedAt: data.accountCreatedAt,
     };
-    console.log(userObj);
     createSendToken(userObj, 200, res);
   }
 });
@@ -76,14 +74,12 @@ exports.addtoWaitlist = catchAsync(async (req, res, next) => {
 
     return res.status(201).json(newUser);
   } catch (error) {
-    console.error('Error adding user to waitlist:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 exports.checkEmailExists = catchAsync(async (req, res, next) => {
   const { name, profileLink } = req.body;
-  console.log(name, profileLink);
   const existingUser = await GuestUser.findOne({ profileLink });
   if (existingUser && existingUser.email) {
     const userObj = {
@@ -98,7 +94,6 @@ exports.checkEmailExists = catchAsync(async (req, res, next) => {
       accountCreatedAt: existingUser.accountCreatedAt,
     };
     createSendToken(userObj, 200, res);
-    console.log(existingUser);
   } else {
     res.status(400).json({ success: false });
   }
@@ -116,7 +111,6 @@ const signToken = (id) => {
 
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id);
-  console.log(user);
   const cookieOptions = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
@@ -221,7 +215,6 @@ exports.updateLeaderboardProfileVisibility = [
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   // 1. Fetch all users
   const Existinguser = req.user;
-  console.log(Existinguser);
   const allUsers = await GuestUser.find();
 
   // 2. Create an array to hold user data
@@ -339,14 +332,11 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
   try {
     const userId = req.user._id; // Assuming user ID is available in req.user
     const { collectionId, collectionName, postURL, postDescription } = req.body;
-    console.log({ collectionId, collectionName, postURL, postDescription });
-
     let collection;
 
     // If the collectionId is provided, find the collection by ID
     if (collectionId && collectionId != null) {
       collection = await Collection.findById(collectionId);
-      console.log(collection);
     } else {
       // If the collectionId is not provided, create a new collection
       collection = new Collection({
@@ -381,7 +371,6 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
     await collection.save();
     res.status(200).json({ collection });
   } catch (error) {
-    console.error('Error adding post:', error);
     throw new Error('Failed to add post');
   }
 });
@@ -395,7 +384,6 @@ exports.browseCollections = catchAsync(async (req, res, next) => {
 
     res.status(200).json({ collections });
   } catch (error) {
-    console.error('Error browsing collections:', error);
     throw new Error('Failed to browse collections');
   }
 });

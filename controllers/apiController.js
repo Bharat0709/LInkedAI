@@ -38,7 +38,6 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
-    console.log(selectedOption);
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -53,7 +52,6 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -62,9 +60,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, customTone, wordCount } = req.body;
     const user = req.user;
-    console.log(customTone);
-
-    // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
@@ -81,7 +76,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -153,8 +147,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
-
-    console.log(selectedOption);
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -199,7 +191,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -212,7 +203,6 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
     if (user.credits < 5) {
       return res.status(403).json({ error: "Insufficient credits" });
     }
-    console.log(customTone);
     user.credits -= 5;
 
     // Update user details in the database (replace this with your actual logic)
@@ -251,7 +241,6 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -278,7 +267,6 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -346,7 +334,6 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     // Handle errors appropriately
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -442,8 +429,6 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
   try {
     const { templateRequirements, selectedTone } = req.body;
     const user = req.user;
-    console.log(templateRequirements, selectedTone);
-
     // Check if the user has enough credits
     if (user.credits < 10) {
       return res.status(403).json({ error: "Insufficient credits" });
@@ -487,7 +472,6 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -541,7 +525,6 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    console.error("Error:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

@@ -7,7 +7,6 @@ const domain = 'support.letsbunktoday.live';
 var from_who = 'engagegpt@gmail.com';
 
 exports.sendMailtoUser = async (req, res) => {
-  console.log(req.params.mail);
   var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
   var data = {
     from: from_who,
@@ -98,12 +97,12 @@ exports.sendMailtoUser = async (req, res) => {
             max-height: none !important;
           }
     
-          .row-1 .column-1 .block-3.paragraph_block td.pad>div {
-            font-size: 18px !important;
-          }
-    
           .row-1 .column-1 .block-2.paragraph_block td.pad>div {
             font-size: 34px !important;
+          }
+    
+          .row-1 .column-1 .block-3.paragraph_block td.pad>div {
+            font-size: 18px !important;
           }
         }
       </style>
@@ -251,13 +250,11 @@ exports.sendMailtoUser = async (req, res) => {
                                 <tr>
                                   <td class="pad">
                                     <div class="alignment" align="center"><!--[if mso]>
-    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" style="height:47px;width:145px;v-text-anchor:middle;" arcsize="77%" strokeweight="0.75pt" strokecolor="#000000" fillcolor="#f9f9f9">
+    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://engage-gpt-y2ne.vercel.app" style="height:47px;width:145px;v-text-anchor:middle;" arcsize="77%" strokeweight="0.75pt" strokecolor="#000000" fillcolor="#f9f9f9">
     <w:anchorlock/>
     <v:textbox inset="0px,0px,0px,0px">
     <center style="color:#000000; font-family:Tahoma, sans-serif; font-size:16px">
-    <![endif]-->
-                                      <div style="text-decoration:none;display:inline-block;color:#000000;background-color:#f9f9f9;border-radius:33px;width:auto;border-top:1px solid #000000;font-weight:400;border-right:1px solid #000000;border-bottom:1px solid #000000;border-left:1px solid #000000;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Our Website</span></span></div><!--[if mso]></center></v:textbox></v:roundrect><![endif]-->
-                                    </div>
+    <![endif]--><a href="https://engage-gpt-y2ne.vercel.app" target="_blank" style="text-decoration:none;display:inline-block;color:#000000;background-color:#f9f9f9;border-radius:33px;width:auto;border-top:1px solid #000000;font-weight:400;border-right:1px solid #000000;border-bottom:1px solid #000000;border-left:1px solid #000000;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Our Website</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
                                   </td>
                                 </tr>
                               </table>
@@ -360,8 +357,39 @@ exports.sendMailtoUser = async (req, res) => {
                   </tr>
                 </tbody>
               </table>
-              </td>
-              </tr>
+              <table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; color: #000000; width: 480px; margin: 0 auto;" width="480">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="icons_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; text-align: center;">
+                                <tr>
+                                  <td class="pad" style="vertical-align: middle; color: #1e0e4b; font-family: 'Inter', sans-serif; font-size: 15px; padding-bottom: 5px; padding-top: 5px; text-align: center;">
+                                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                      <tr>
+                                        <td class="alignment" style="vertical-align: middle; text-align: center;"><!--[if vml]><table align="center" cellpadding="0" cellspacing="0" role="presentation" style="display:inline-block;padding-left:0px;padding-right:0px;mso-table-lspace: 0pt;mso-table-rspace: 0pt;"><![endif]-->
+                                          <!--[if !vml]><!-->
+                                          <table class="icons-inner" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; display: inline-block; margin-right: -4px; padding-left: 0px; padding-right: 0px;" cellpadding="0" cellspacing="0" role="presentation"><!--<![endif]-->
+                                            <tr>
+                                              <td style="vertical-align: middle; text-align: center; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 6px;"><a href="http://designedwithbeefree.com/" target="_blank" style="text-decoration: none;"><img class="icon" alt="Beefree Logo" src="https://d1oco4z2z1fhwp.cloudfront.net/assets/Beefree-logo.png" height="auto" width="34" align="center" style="display: block; height: auto; margin: 0 auto; border: 0;"></a></td>
+                                              <td style="font-family: 'Inter', sans-serif; font-size: 15px; font-weight: undefined; color: #1e0e4b; vertical-align: middle; letter-spacing: undefined; text-align: center;"><a href="http://designedwithbeefree.com/" target="_blank" style="color: #1e0e4b; text-decoration: none;">Designed with Beefree</a></td>
+                                            </tr>
+                                          </table>
+                                        </td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </td>
@@ -374,10 +402,8 @@ exports.sendMailtoUser = async (req, res) => {
   };
   mailgun.messages().send(data, function (err, body) {
     if (err) {
-      console.log('Error sending email:', err);
       res.status(500).send({ error: 'Error sending email' });
     } else {
-      console.log('Email sent successfully:');
       res.status(200).send({ message: 'Email sent successfully' });
     }
   });
