@@ -8,7 +8,7 @@ const domain = 'support.letsbunktoday.live';
 var from_who = 'engagegpt@gmail.com';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 4,
+  max: 30,
   message: 'Too many requests, please try again later',
 });
 
