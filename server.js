@@ -8,7 +8,7 @@ dotenv.config({ path: "./.env" });
 const DB = process.env.DATABASE;
 
 app.listen(port, () => {
-  console.log(`Server listening at ${port}`);
+  console.log(`Server listening to ${port}`);
 });
 
 mongoose.connect(DB);
