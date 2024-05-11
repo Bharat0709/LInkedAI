@@ -28,7 +28,7 @@ exports.verifyOTP = async (req, res, next) => {
     if (!isValidOTP) {
       return res.status(400).json({ success: false, invalidOTP: true });
     }
-    next(); // Move to the next middleware if OTP is valid
+    next();
   } catch (error) {
     return res.status(500).json({ success: false, servererror: true });
   }
@@ -324,7 +324,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.isLoggedIn = catchAsync(async (req, res, next) => {
   let token;
-  // 1. Get  token and check if it exixts
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
