@@ -82,10 +82,11 @@ async function getCustomComment(postContent, customTone, wordCount) {
     {
       text: `As a linkedIn user in India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
       Requirements:
+      - The tone of the comment should strictly be in ${customTone} tone
       - The comment should be relevant to the whole post content
       - Give response as if a real user have written the comment
       - You can use emojis as well if its a congratulatory comment
-      -  Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
+      - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - Do not include double quotes in response
       - Do not include hashtags response 
       - Give enagaging comment & complete the comment within the word limit 
@@ -113,8 +114,8 @@ async function getComment(postContent, selectedOption) {
     {
       text: `As a linkedIn user in India on behalf of me help me write a ${selectedOption} tone.  comment for a linkedIn Post with the following post content:\n\n${postContent} 
       Requirements:
+      - The comment should be strictly in ${selectedOption} tone only.
       - The comment should be relevant to the whole post content
-      - The comment should be in ${selectedOption} tone only.
       - Give response as if a real user have written the comment
       - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - You can use emojis as well if its a congratulatory comment
@@ -161,8 +162,9 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
         messages: [
           {
             role: 'user',
-            content: `As a linkedIn user on behalf of me help me writing a${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
+            content: `As a linkedIn user on behalf of me help me writing a comment in ${selectedOption} tone for a linkedIn Post with the following post content:\n\n${postContent} 
             Requirements: 
+            - The comment should be strictly in ${selectedOption} tone only.
             - The comment should be relevant to the whole post content
             - Give response as if a real user have written the comment
             - You can use emojis as well if its a congratulatory comment
@@ -212,9 +214,10 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
         messages: [
           {
             role: 'user',
-            content: `As a linkedIn user from India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
+            content: `As a linkedIn user from India on behalf of me help me write a comment for a linkedIn Post in the ${customTone} tone with the following post content:\n\n${postContent} in ${wordCount} words
             Requirements:
             - You can use emojis as well if its a congratulatory comment
+            - The comment should strictly be in ${customTone} only
             - Give response as if a real user have written the comment
             - The comment should be relevant to the whole post content
             - Do not repeat the exact words wriiten in the post.
