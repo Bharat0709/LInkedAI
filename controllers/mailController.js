@@ -1,11 +1,16 @@
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
+const otpCache = require('../utils/cache');
+const Mailgun = require('mailgun-js');
+const { RateLimiterMemory } = require('rate-limiter-flexible');
+const api_key = process.env.MAILGUN_API_KEY;
+
 dotenv.config();
 dotenv.config({ path: './.env' });
-const Mailgun = require('mailgun-js');
-const api_key = process.env.MAILGUN_API_KEY;
-const domain = 'support.letsbunktoday.live';
+
+const domain = 'support.engagegpt.in';
 var from_who = 'engagegpt@gmail.com';
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
@@ -389,6 +394,396 @@ exports.sendMailtoUser = [
       </body>
       
       </html>`,
+    };
+    mailgun.messages().send(data, function (err, body) {
+      if (err) {
+        res.status(500).send({ error: 'Error sending email' });
+      } else {
+        res.status(200).send({ message: 'Email sent successfully' });
+      }
+    });
+  },
+];
+
+const generateOTP = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let otp = '';
+  for (let i = 0; i < 6; i++) {
+    otp += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return otp;
+};
+
+const rateLimitOpts = {
+  points: 20, // 20 request
+  duration: 60, // per 60 seconds
+};
+
+const rateLimiter = new RateLimiterMemory(rateLimitOpts);
+
+const rateLimitMiddleware = async (req, res, next) => {
+  try {
+    const email = req.params.email;
+    // Consume a point from the user's rate limiter
+    await rateLimiter.consume(email);
+    next();
+  } catch (err) {
+    // If the user has exceeded the limit, send an error response
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests, please try again later.',
+    });
+  }
+};
+
+exports.sendOTPtoUser = [
+  rateLimitMiddleware,
+  async (req, res) => {
+    const email = req.params.mail;
+    const OTP = generateOTP();
+
+    otpCache.set(email, {
+      otp: OTP,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    });
+
+    var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+    var data = {
+      from: from_who,
+      to: req.params.mail,
+      subject: 'Verify Email Address',
+      html: `<!DOCTYPE html>
+    <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+    
+    <head>
+      <title>Verify OTP</title>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!-->
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css"><!--<![endif]-->
+      <style>
+        * {
+          box-sizing: border-box;
+        }
+    
+        body {
+          margin: 0;
+          padding: 0;
+        }
+    
+        a[x-apple-data-detectors] {
+          color: inherit !important;
+          text-decoration: inherit !important;
+        }
+    
+        #MessageViewBody a {
+          color: inherit;
+          text-decoration: none;
+        }
+    
+        p {
+          line-height: inherit
+        }
+    
+        .desktop_hide,
+        .desktop_hide table {
+          mso-hide: all;
+          display: none;
+          max-height: 0px;
+          overflow: hidden;
+        }
+    
+        .image_block img+div {
+          display: none;
+        }
+    
+        @media (max-width:570px) {
+          .desktop_hide table.icons-inner {
+            display: inline-block !important;
+          }
+    
+          .icons-inner {
+            text-align: center;
+          }
+    
+          .icons-inner td {
+            margin: 0 auto;
+          }
+    
+          .mobile_hide {
+            display: none;
+          }
+    
+          .row-content {
+            width: 100% !important;
+          }
+    
+          .stack .column {
+            width: 100%;
+            display: block;
+          }
+    
+          .mobile_hide {
+            min-height: 0;
+            max-height: 0;
+            max-width: 0;
+            overflow: hidden;
+            font-size: 0px;
+          }
+    
+          .desktop_hide,
+          .desktop_hide table {
+            display: table !important;
+            max-height: none !important;
+          }
+        }
+      </style>
+    </head>
+    
+    <body style="background-color: #f9f9f9; margin: 0; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
+      <table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f9f9f9;">
+        <tbody>
+          <tr>
+            <td>
+              <table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f9f9f9;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:15px;padding-top:15px;width:100%;padding-right:0px;padding-left:0px;">
+                                    <div class="alignment" align="center" style="line-height:10px">
+                                      <div style="max-width: 220px;"><img src="https://9ffa24b4da.imgdist.com/pub/bfra/g99k8lsa/vj2/3ok/86w/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="220" alt="Alternate text" title="Alternate text" height="auto"></div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:15px;padding-top:15px;">
+                                    <div style="color:#1678ac;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:20px;line-height:180%;text-align:center;mso-line-height-alt:36px;">
+                                      <p style="margin: 0;"><strong>Verify Your Email Address</strong></p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f9f9f9; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 15px; padding-top: 15px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-left:25px;padding-right:10px;padding-top:10px;">
+                                    <div style="color:#232323;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:12px;line-height:150%;text-align:center;mso-line-height-alt:18px;">
+                                      <p style="margin: 0;">You have requested an OTP Login to your EngageGPT Account. If this was you, please input the Code below to continue.</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-top:10px;">
+                                    <div style="color:#232323;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:17px;line-height:120%;text-align:center;mso-line-height-alt:20.4px;">
+                                      <p style="margin: 0;"><strong>OTP</strong></p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <table class="paragraph_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-top:10px;">
+                                    <div style="color:#0068a5;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:32px;line-height:120%;text-align:center;mso-line-height-alt:38.4px;">
+                                      <p style="margin: 0; word-break: break-word;"><strong><span>${OTP}</span></strong></p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <table class="paragraph_block block-4" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:20px;padding-left:25px;padding-right:10px;padding-top:20px;">
+                                    <div style="color:#232323;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
+                                      <p style="margin: 0;">Do not share your OTP with anyone under any circumstances.</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-4" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; border-radius: 3px; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 10px; padding-top: 10px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="button_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-top:10px;text-align:center;">
+                                    <div class="alignment" align="center"><!--[if mso]>
+    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.engagegpt.in" style="height:42px;width:138px;v-text-anchor:middle;" arcsize="70%" stroke="false" fillcolor="#0068a5">
+    <w:anchorlock/>
+    <v:textbox inset="5px,0px,0px,0px">
+    <center style="color:#ffffff; font-family:Tahoma, sans-serif; font-size:16px">
+    <![endif]--><a href="https://www.engagegpt.in" target="_blank" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#0068a5;border-radius:29px;width:auto;border-top:0px solid transparent;font-weight:undefined;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:15px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Visit Website</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                            <td class="column column-2" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="button_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-top:10px;text-align:center;">
+                                    <div class="alignment" align="center"><!--[if mso]>
+    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" style="height:48px;width:167px;v-text-anchor:middle;" arcsize="71%" strokeweight="0.75pt" strokecolor="#0068a5" fillcolor="#f9f9f9">
+    <w:anchorlock/>
+    <v:textbox inset="0px,0px,0px,0px">
+    <center style="color:#0068a5; font-family:Tahoma, sans-serif; font-size:16px">
+    <![endif]--><a href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" target="_blank" style="text-decoration:none;display:inline-block;color:#0068a5;background-color:#f9f9f9;border-radius:31px;width:auto;border-top:1px solid #0068a5;font-weight:undefined;border-right:1px solid #0068a5;border-bottom:1px solid #0068a5;border-left:1px solid #0068a5;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">View Extension</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-5" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f9f9f9;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f9f9f9; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 15px; padding-top: 15px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:10px;padding-left:25px;padding-right:10px;padding-top:10px;">
+                                    <div style="color:#232323;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
+                                      <p style="margin: 0;">For any further queries or clarifications, feel free to reach out to us at <a href="mailto:engagegpt@gmail.com?subject=Query/Clarification&body=Enter your query here......" target="_blank" title="engagegpt@gmail.com" style="text-decoration: underline; color: #0068A5;" rel="noopener">engagegpt@gmail.com</a> or visit our website <a href="https://www.engagegpt.in" target="_blank" style="text-decoration: underline; color: #0068A5;" rel="noopener">www.engagegpt.in</a></p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                          <tr>
+                            <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
+                              <table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                <tr>
+                                  <td class="pad" style="padding-bottom:20px;padding-left:25px;padding-right:10px;padding-top:20px;">
+                                    <div style="color:#232323;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:14px;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
+                                      <p style="margin: 0; margin-bottom: 4px;"><strong>Happy Engaging</strong></p>
+                                      <p style="margin: 0;"><strong>Team EngageGPT</strong></p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                <tr>
+                                  <td class="pad" style="width:100%;padding-right:0px;padding-left:0px;">
+                                    <div class="alignment" align="center" style="line-height:10px">
+                                      <div style="max-width: 247.5px;"><img src="https://9ffa24b4da.imgdist.com/pub/bfra/g99k8lsa/vj2/3ok/86w/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="247.5" height="auto"></div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                              <table class="divider_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                <tr>
+                                  <td class="pad">
+                                    <div class="alignment" align="center">
+                                      <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="95%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                                        <tr>
+                                          <td class="divider_inner" style="font-size: 1px; line-height: 1px; border-top: 1px dashed #BBBBBB;"><span>&#8202;</span></td>
+                                        </tr>
+                                      </table>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <table class="row row-7" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
+                <tbody>
+                  <tr>
+                    <td>
+                      <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; color: #000000; width: 550px; margin: 0 auto;" width="550">
+                        <tbody>
+                                </tr>
+                              </table>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table><!-- End -->
+    </body>
+    
+    </html>`,
     };
     mailgun.messages().send(data, function (err, body) {
       if (err) {
