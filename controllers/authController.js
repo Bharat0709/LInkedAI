@@ -7,15 +7,45 @@ const AppError = require('./../utils/appError');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const { promisify } = require('util');
 const Waitlist = require('../models/waitlist');
+const otpCache = require('../utils/cache');
+
+const compareOTP = async (email, otp) => {
+  // Retrieve OTP data from the cache based on the provided email
+  const otpData = otpCache.get(email);
+
+  if (!otpData) {
+    return false; // OTP data not found in cache
+  }
+
+  return otpData.otp === otp && otpData.expiresAt > Date.now();
+};
+
+exports.verifyOTP = async (req, res, next) => {
+  const { otp, email } = req.body;
+  try {
+    // Compare the OTP entered by the user
+    const isValidOTP = await compareOTP(email, otp);
+    if (!isValidOTP) {
+      return res.status(400).json({ success: false, invalidOTP: true });
+    }
+    next(); // Move to the next middleware if OTP is valid
+  } catch (error) {
+    return res.status(500).json({ success: false, servererror: true });
+  }
+};
 
 exports.addtoguestuser = catchAsync(async (req, res, next) => {
-  const { name, profileLink, email } = req.body;
+  const { otp, name, profileLink, email } = req.body;
+  const isValidOTP = await compareOTP(email, otp);
+  if (!isValidOTP) {
+    return res.status(400).json({ success: false, invalidOTP: true });
+  }
 
   const existingUser = await GuestUser.findOne({ profileLink });
   const existingEmail = await GuestUser.findOne({ email });
 
   if (existingEmail) {
-    res.status(400).json({ success: false });
+    res.status(400).json({ success: false, alreadyExists: true });
     return next(new AppError('Email Already Exists', 400));
   }
   if (existingUser && existingUser.email) {
@@ -32,7 +62,6 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
     };
     createSendToken(userObj, 200, res);
   }
-
   if (!existingUser) {
     const user = new GuestUser({
       name: req.body.name,
@@ -349,7 +378,7 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
         userId: userId,
       });
       if (userCollectionsCount >= 10) {
-        throw new Error("Maximum limit of 10 collections reached");
+        throw new Error('Maximum limit of 10 collections reached');
       }
 
       await collection.save();

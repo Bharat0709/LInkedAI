@@ -1,19 +1,16 @@
-const User = require("./../models/userModel");
-const catchAsync = require("./../utils/catchAsync");
-const AppError = require("./../utils/appError");
-const dotenv = require("dotenv");
+const catchAsync = require('./../utils/catchAsync');
+const dotenv = require('dotenv');
 dotenv.config();
-const axios = require("axios");
-const { promisify } = require("util");
+const axios = require('axios');
 const apiKey = process.env.API_KEY_CHATGPT;
 const {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold,
-} = require("@google/generative-ai");
-const GuestUser = require("../models/guestUser");
+} = require('@google/generative-ai');
+const GuestUser = require('../models/guestUser');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
 const safetySettings = [
   {
@@ -40,7 +37,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
     const user = req.user;
     // Check if the user has enough credits
     if (user.credits < 5) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     const generatedComment = await getComment(postContent, selectedOption);
@@ -52,7 +49,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -61,7 +58,7 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
     const { postContent, customTone, wordCount } = req.body;
     const user = req.user;
     if (user.credits < 5) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     const generatedComment = await getCustomComment(
@@ -76,7 +73,7 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -94,7 +91,7 @@ async function getCustomComment(postContent, customTone, wordCount) {
       - Give enagaging comment & complete the comment within the word limit 
       - The comment should not seem to be written by AI`,
     },
-    { text: "\n" },
+    { text: '\n' },
   ];
   const generationConfig = {
     temperature: 0.45,
@@ -103,7 +100,7 @@ async function getCustomComment(postContent, customTone, wordCount) {
     maxOutputTokens: 120,
   };
   const result = await model.generateContent({
-    contents: [{ role: "user", parts }],
+    contents: [{ role: 'user', parts }],
     generationConfig,
     safetySettings,
   });
@@ -114,9 +111,10 @@ async function getCustomComment(postContent, customTone, wordCount) {
 async function getComment(postContent, selectedOption) {
   const parts = [
     {
-      text: `As a linkedIn user in India on behalf of me help me writing a ${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
+      text: `As a linkedIn user in India on behalf of me help me write a ${selectedOption} tone.  comment for a linkedIn Post with the following post content:\n\n${postContent} 
       Requirements:
       - The comment should be relevant to the whole post content
+      - The comment should be in ${selectedOption} tone only.
       - Give response as if a real user have written the comment
       - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - You can use emojis as well if its a congratulatory comment
@@ -126,7 +124,7 @@ async function getComment(postContent, selectedOption) {
       - Give a short and engaging comment 
       - Comment should not seem to be written by AI`,
     },
-    { text: "\n" },
+    { text: '\n' },
   ];
   const generationConfig = {
     temperature: 0.45,
@@ -135,7 +133,7 @@ async function getComment(postContent, selectedOption) {
     maxOutputTokens: 120,
   };
   const result = await model.generateContent({
-    contents: [{ role: "user", parts }],
+    contents: [{ role: 'user', parts }],
     generationConfig,
     safetySettings,
   });
@@ -149,7 +147,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
     const user = req.user;
     // Check if the user has enough credits
     if (user.credits < 5) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     user.credits -= 5;
@@ -157,12 +155,12 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
     // Update user details in the database (replace this with your actual logic)
     await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: 'gpt-3.5-turbo',
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `As a linkedIn user on behalf of me help me writing a${selectedOption} comment for a linkedIn Post with the following post content:\n\n${postContent} 
             Requirements: 
             - The comment should be relevant to the whole post content
@@ -181,7 +179,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -191,7 +189,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -201,19 +199,19 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
     const user = req.user;
     // Check if the user has enough credits
     if (user.credits < 5) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
     user.credits -= 5;
 
     // Update user details in the database (replace this with your actual logic)
     await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
     const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: 'gpt-3.5-turbo',
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `As a linkedIn user from India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
             Requirements:
             - You can use emojis as well if its a congratulatory comment
@@ -231,7 +229,7 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -241,7 +239,7 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -253,7 +251,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 
     // Check if the user has enough credits
     if (user.credits < 10) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     const generatedPostContent = await getPostContent(postType, selectedTone);
@@ -267,7 +265,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -292,7 +290,7 @@ async function getPostContent(postType, selectedTone) {
       - The post should not seem to be written by AI
       `,
     },
-    { text: "\n" },
+    { text: '\n' },
   ];
   const generationConfig = {
     temperature: 0.45,
@@ -302,7 +300,7 @@ async function getPostContent(postType, selectedTone) {
   };
 
   const result = await model.generateContent({
-    contents: [{ role: "user", parts }],
+    contents: [{ role: 'user', parts }],
     generationConfig,
     safetySettings,
   });
@@ -318,7 +316,7 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
 
     // Check if the user has enough credits
     if (user.credits < 10) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
     const generatedTemplateContent = await getTemplate(
       templateRequirements,
@@ -334,7 +332,7 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     // Handle errors appropriately
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -352,11 +350,11 @@ async function getTemplate(templateRequirements, selectedTone) {
       - If the template is about applying for a job then attach a resume and skills in the message and the message should be professional
       `,
     },
-    { text: "\n" },
+    { text: '\n' },
   ];
 
   const result = await model.generateContent({
-    contents: [{ role: "user", parts }],
+    contents: [{ role: 'user', parts }],
     generationConfig,
     safetySettings,
   });
@@ -371,7 +369,7 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
 
     // Check if the user has enough credits
     if (user.credits < 10) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     // Deduct 10 credits from the
@@ -381,12 +379,12 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
     await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
 
     const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: 'gpt-3.5-turbo',
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
 
             Post Topic is about ${postType}
@@ -412,7 +410,7 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -421,7 +419,7 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -431,16 +429,16 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     const user = req.user;
     // Check if the user has enough credits
     if (user.credits < 10) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: 'gpt-3.5-turbo',
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `Generate a ${selectedTone} message template for linkedin with the following purpose:
 
             Template is about ${templateRequirements}
@@ -458,7 +456,7 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -472,7 +470,7 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -483,16 +481,16 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
 
     // Check if the user has enough credits
     if (user.credits < 10) {
-      return res.status(403).json({ error: "Insufficient credits" });
+      return res.status(403).json({ error: 'Insufficient credits' });
     }
 
     const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      'https://api.openai.com/v1/chat/completions',
       {
-        model: "gpt-3.5-turbo",
+        model: 'gpt-3.5-turbo',
         messages: [
           {
-            role: "user",
+            role: 'user',
             content: `My name is ${userName} and on behalf of me Generate a formal reply to these messages from  linkedin with the following last 5 conversation:
            
 
@@ -511,7 +509,7 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
       {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
@@ -525,6 +523,6 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
       remainingCredits: user.credits,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });

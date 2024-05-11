@@ -4,7 +4,11 @@ const Router = express.Router();
 
 Router.post('/signup', authController.signup);
 Router.post('/login', authController.login);
-Router.post('/addtoguestuser', authController.addtoguestuser);
+Router.post(
+  '/addtoguestuser',
+  authController.verifyOTP,
+  authController.addtoguestuser
+);
 Router.post('/addtowaitlist', authController.addtoWaitlist);
 Router.get('/checkAuth', authController.protect);
 Router.get('/users', authController.isLoggedIn, authController.getAllUsers);
