@@ -146,7 +146,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
     const user = req.user;
-    // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
@@ -158,7 +157,7 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
     const chatGPTResponse = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-3.5-turbo-0125',
         messages: [
           {
             role: 'user',
@@ -185,7 +184,6 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
         },
       }
     );
-    // Deduct 5 credits from the
     res.status(200).json({
       generatedComment: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,
