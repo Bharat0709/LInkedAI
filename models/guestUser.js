@@ -1,18 +1,16 @@
-const mongoose = require("mongoose");
-const validator = require("validator");
+const mongoose = require('mongoose');
+const validator = require('validator');
+const { CurrencyCodes } = require('validator/lib/isISO4217');
 
 const GuestUserSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please Provide Your Name"],
+    required: [true, 'Please Provide Your Name'],
   },
   profileLink: {
     type: String,
-    required: [true, "Profile link not found"],
+    required: [true, 'Profile link not found'],
     unique: true,
-  },
-  lastActive: {
-    type: Date,
   },
   active: {
     type: Boolean,
@@ -25,17 +23,17 @@ const GuestUserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["user", "tester", "admin"],
-    default: "user",
+    enum: ['user', 'tester', 'admin'],
+    default: 'user',
   },
   plan: {
     type: String,
-    enum: ["Free", "Plus", "Pro", "Ultra"],
-    default: "Free",
+    enum: ['Free', 'Plus', 'Pro', 'Ultra'],
+    default: 'Free',
   },
   email: {
     type: String,
-    validate: [validator.isEmail, "Please Provide a Valid Email"],
+    validate: [validator.isEmail, 'Please Provide a Valid Email'],
     unique: true,
   },
   leaderBoardProfileVisibility: {
@@ -52,8 +50,20 @@ const GuestUserSchema = new mongoose.Schema({
   },
   organization: {
     type: String,
-    default: "Personal Account",
+    default: 'Personal Account',
+  },
+  totalCreditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  lastActive: {
+    type: Date,
+    default: Date.now(),
+  },
+  currentStreak: {
+    type: Number,
+    default: 0,
   },
 });
-const GuestUser = mongoose.model("guestuser", GuestUserSchema);
+const GuestUser = mongoose.model('guestuser', GuestUserSchema);
 module.exports = GuestUser;

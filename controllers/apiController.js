@@ -42,7 +42,11 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
 
     const generatedComment = await getComment(postContent, selectedOption);
     user.credits -= 5;
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 5;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
 
     res.json({
       generatedComment: generatedComment,
@@ -67,7 +71,11 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
       wordCount
     );
     user.credits -= 5;
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 5;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     res.json({
       generatedComment: generatedComment,
       remainingCredits: user.credits,
@@ -149,11 +157,14 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
-
     user.credits -= 5;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 5;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     const chatGPTResponse = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
@@ -202,9 +213,13 @@ exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
     user.credits -= 5;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 5;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     const chatGPTResponse = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
@@ -258,9 +273,13 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
     const generatedPostContent = await getPostContent(postType, selectedTone);
     // Deduct 10 credits from the
     user.credits -= 10;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 10;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     res.json({
       generatedPostContent: generatedPostContent,
       remainingCredits: user.credits,
@@ -324,8 +343,13 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
       selectedTone
     );
     user.credits -= 10;
-
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 10;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     // Send the generated template back to the frontend
     res.status(200).json({
       generatedTemplateContent: generatedTemplateContent,
@@ -375,9 +399,13 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
 
     // Deduct 10 credits from the
     user.credits -= 10;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 10;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
 
     const chatGPTResponse = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -463,9 +491,13 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     );
     // Deduct 10 credits from the
     user.credits -= 10;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 10;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     res.status(200).json({
       generatedTemplateContent: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,
@@ -516,9 +548,13 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
     );
     // Deduct 10 credits from the
     user.credits -= 10;
-
-    // Update user details in the database (replace this with your actual logic)
-    await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+    user.totalCreditsUsed += 10;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      credits: user.credits,
+    });
+    await GuestUser.findByIdAndUpdate(user._id, {
+      totalCreditsUsed: user.totalCreditsUsed,
+    });
     res.status(200).json({
       generatedReply: chatGPTResponse.data.choices[0].message.content,
       remainingCredits: user.credits,

@@ -59,6 +59,9 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       daysActive: existingUser.daysActive,
       leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
       accountCreatedAt: existingUser.accountCreatedAt,
+      totalCreditsUsed: existingUser.totalCreditsUsed,
+      lastActive: existingUser.lastActive,
+      currentStreak: existingUser.currentStreak,
     };
     createSendToken(userObj, 200, res);
   }
@@ -80,6 +83,9 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       daysActive: data.daysActive,
       leaderBoardProfileVisibility: data.leaderBoardProfileVisibility,
       accountCreatedAt: data.accountCreatedAt,
+      totalCreditsUsed: data.totalCreditsUsed,
+      lastActive: data.lastActive,
+      currentStreak: data.currentStreak,
     };
     createSendToken(userObj, 200, res);
   }
@@ -121,6 +127,9 @@ exports.checkEmailExists = catchAsync(async (req, res, next) => {
       daysActive: existingUser.daysActive,
       leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
       accountCreatedAt: existingUser.accountCreatedAt,
+      totalCreditsUsed: existingUser.totalCreditsUsed,
+      lastActive: existingUser.lastActive,
+      currentStreak: existingUser.currentStreak,
     };
     createSendToken(userObj, 200, res);
   } else {
@@ -150,7 +159,6 @@ const createSendToken = (user, statusCode, res) => {
     cookieOptions.secure = true;
   }
   res.cookie('jwt', token, cookieOptions);
-
   res.status(statusCode).json({
     status: 'success',
     token,
@@ -175,22 +183,25 @@ exports.signup = catchAsync(async (req, res, next) => {
 });
 
 exports.updateDaysActive = catchAsync(async (req, res, next) => {
-  const { activeDays } = req.body;
+  const { activeDays, currentStreak } = req.body;
   const user = req.user;
-
   // Update GuestUser with the new email
-
+  user.lastActive = Date.now();
   user.credits = 100;
+  user.currentStreak = currentStreak;
 
   // Update user details in the database (replace this with your actual logic)
-  await GuestUser.findByIdAndUpdate(user._id, { credits: user.credits });
+  await GuestUser.findByIdAndUpdate(user._id, {
+    credits: user.credits,
+    lastActive: user.lastActive,
+  });
 
   user.daysActive = activeDays;
   await GuestUser.findByIdAndUpdate(user._id, {
     daysActive: user.daysActive,
+    currentStreak: user.currentStreak,
   });
 
-  // Return success response
   res.status(200).json({ success: true, user });
 });
 
@@ -242,27 +253,16 @@ exports.updateLeaderboardProfileVisibility = [
 ];
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
-  // 1. Fetch all users
-  const Existinguser = req.user;
+  // Fetch all users
   const allUsers = await GuestUser.find();
 
-  // 2. Create an array to hold user data
-  const usersData = allUsers.map((user) => ({
-    id: user._id,
-    name: user.name,
-    daysActive: user.daysActive,
-    profileLink: user.profileLink,
-    leaderBoardProfileVisibility: user.leaderBoardProfileVisibility,
-    // Add other user properties as needed
-  }));
-
-  // 3. Respond with the user data
+  // Respond with the user data
   res.status(200).json({
     status: 'success',
-    user: Existinguser,
-    users: usersData,
+    users: allUsers,
   });
 });
+
 // LOGGING IN THE USER
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
@@ -318,6 +318,9 @@ exports.protect = catchAsync(async (req, res, next) => {
       daysActive: freshUser.daysActive,
       leaderBoardProfileVisibility: freshUser.leaderBoardProfileVisibility,
       accountCreatedAt: freshUser.accountCreatedAt,
+      totalCreditsUsed: freshUser.totalCreditsUsed,
+      lastActive: freshUser.lastActive,
+      currentStreak: freshUser.currentStreak,
     },
   });
 });
