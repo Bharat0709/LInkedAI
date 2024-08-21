@@ -1,10 +1,10 @@
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
+dotenv.config();
 const otpCache = require('../utils/cache');
 const Mailgun = require('mailgun-js');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
 const api_key = process.env.MAILGUN_API_KEY;
-
 dotenv.config();
 dotenv.config({ path: './.env' });
 
@@ -1675,7 +1675,7 @@ exports.invitation = async (req, res) => {
   var data = {
     from: from_who,
     to: req.params.mail,
-    cc: 'letsbunktoday@gmail.com',
+    // cc: 'letsbunktoday@gmail.com',
     subject: 'Meet Your AI Networking Partner',
     html: `<!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
@@ -2298,6 +2298,51 @@ exports.invitation = async (req, res) => {
       res.status(500).send({ error: 'Error sending email' });
     } else {
       res.status(200).send({ message: 'Email sent successfully' });
+    }
+  });
+};
+
+exports.sendNewUserEmail = async (user) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+  var data = {
+    from: from_who,
+    to: 'pahwabharat15@gmail.com',
+    cc: 'letsbunktoday@gmail.com',
+    subject: 'New User Added',
+    html: ` <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+        <h1 style="color: #4CAF50;">New User Created</h1>
+        <p style="font-size: 16px;">A new user has been created with the following details:</p>
+        <ul style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; list-style-type: none;">
+          <li style="margin-bottom: 10px;">
+            <strong>Name:</strong> 
+            <span style="color: #555;">${user.name}</span>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <strong>Email:</strong> 
+            <span style="color: #555;">${user.email}</span>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <strong>Profile Link:</strong> 
+            <a href="${
+              user.profileLink
+            }" style="color: #1a73e8; text-decoration: none;">${
+      user.profileLink
+    }</a>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <strong>Account Created At:</strong> 
+            <span style="color: #555;">${new Date(
+              user.accountCreatedAt
+            ).toLocaleString()}</span>
+          </li>
+        </ul>
+      </div>`,
+  };
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success');
     }
   });
 };

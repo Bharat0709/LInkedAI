@@ -64,7 +64,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
-
     const generatedComment = await getCustomComment(
       postContent,
       customTone,
