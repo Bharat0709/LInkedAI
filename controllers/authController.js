@@ -8,6 +8,7 @@ const { RateLimiterMemory } = require('rate-limiter-flexible');
 const { promisify } = require('util');
 const Waitlist = require('../models/waitlist');
 const otpCache = require('../utils/cache');
+const { sendNewUserEmail } = require('../controllers/mailController');
 
 const compareOTP = async (email, otp) => {
   // Retrieve OTP data from the cache based on the provided email
@@ -73,6 +74,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
     });
 
     const data = await user.save();
+    await sendNewUserEmail(data);
     const userObj = {
       _id: data._id,
       name: data.name,
@@ -147,7 +149,7 @@ const signToken = (id) => {
   );
 };
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = async (user, statusCode, res) => {
   const token = signToken(user._id);
   const cookieOptions = {
     expires: new Date(
@@ -253,13 +255,46 @@ exports.updateLeaderboardProfileVisibility = [
 ];
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
-  // Fetch all users
-  const allUsers = await GuestUser.find();
+  const user = req.user;
+
+  // Fetch all users with leaderboard visibility true, sorted by days active
+  const topUsers = await GuestUser.find(
+    {},
+    {
+      name: 1,
+      profileLink: 1,
+      daysActive: 1,
+      leaderBoardProfileVisibility: 1,
+    }
+  )
+    .sort({
+      daysActive: -1,
+    })
+    .limit(20); // Limit to top 10 users
+
+  // Fetch all users to determine the rank of the current user
+  const allUsers = await GuestUser.find(
+    {},
+    {
+      _id: 0,
+      daysActive: 1,
+    }
+  ).sort({
+    daysActive: -1,
+  });
+
+  // Determine the rank of the current user
+  const userRank =
+    allUsers.findIndex((u) => u.daysActive === user.daysActive) + 1;
+
+  console.log(user);
 
   // Respond with the user data
   res.status(200).json({
     status: 'success',
-    users: allUsers,
+    user: user,
+    rank: userRank,
+    users: topUsers,
   });
 });
 

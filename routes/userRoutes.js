@@ -11,6 +11,7 @@ Router.post(
 );
 Router.post('/addtowaitlist', authController.addtoWaitlist);
 Router.get('/checkAuth', authController.protect);
+Router.get('/users', authController.isLoggedIn, authController.getAllUsers);
 Router.post('/checkemail', authController.checkEmailExists);
 Router.post(
   '/daysactive',
