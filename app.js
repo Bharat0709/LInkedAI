@@ -3,6 +3,7 @@ const app = express();
 const userRouter = require('./routes/userRoutes');
 const aiRouter = require('./routes/AIAPIRoutes');
 const mailRouter = require('./routes/mailRoutes');
+const postRouter = require('./routes/postsRoutes');
 const AppError = require('./utils/appError');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -17,6 +18,7 @@ app.use((req, res, next) => {
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/user', mailRouter);
 app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/posts', postRouter);
 
 app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`), 404);

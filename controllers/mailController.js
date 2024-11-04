@@ -1224,6 +1224,7 @@ exports.sendAccess = async (req, res) => {
       
       </html>`,
   };
+
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       res.status(500).send({ error: 'Error sending email' });
@@ -1675,7 +1676,7 @@ exports.invitation = async (req, res) => {
   var data = {
     from: from_who,
     to: req.params.mail,
-    // cc: 'letsbunktoday@gmail.com',
+    cc: 'letsbunktoday@gmail.com',
     subject: 'Meet Your AI Networking Partner',
     html: `<!DOCTYPE html>
 <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
