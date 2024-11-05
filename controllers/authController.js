@@ -58,6 +58,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       plan: existingUser.plan,
       email: existingUser.email,
       daysActive: existingUser.daysActive,
+      tagPost: existingUser.tagPost,
       leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
       accountCreatedAt: existingUser.accountCreatedAt,
       totalCreditsUsed: existingUser.totalCreditsUsed,
@@ -83,6 +84,7 @@ exports.addtoguestuser = catchAsync(async (req, res, next) => {
       credits: data.credits,
       plan: data.plan,
       daysActive: data.daysActive,
+      tagPost: data.tagPost,
       leaderBoardProfileVisibility: data.leaderBoardProfileVisibility,
       accountCreatedAt: data.accountCreatedAt,
       totalCreditsUsed: data.totalCreditsUsed,
@@ -127,6 +129,7 @@ exports.checkEmailExists = catchAsync(async (req, res, next) => {
       credits: existingUser.credits,
       plan: existingUser.plan,
       daysActive: existingUser.daysActive,
+      tagPost: existingUser.tagPost,
       leaderBoardProfileVisibility: existingUser.leaderBoardProfileVisibility,
       accountCreatedAt: existingUser.accountCreatedAt,
       totalCreditsUsed: existingUser.totalCreditsUsed,
@@ -254,6 +257,23 @@ exports.updateLeaderboardProfileVisibility = [
   }),
 ];
 
+exports.updatePostTagging = [
+  rateLimitMiddleware,
+  catchAsync(async (req, res, next) => {
+    const { tagPost } = req.body;
+    const user = req.user;
+
+    // Update GuestUser with the new email
+    user.tagPost = tagPost;
+    await GuestUser.findByIdAndUpdate(user._id, {
+      tagPost: user.tagPost,
+    });
+
+    // Return success response
+    res.status(200).json({ success: true, user });
+  }),
+];
+
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const user = req.user;
 
@@ -286,8 +306,6 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   // Determine the rank of the current user
   const userRank =
     allUsers.findIndex((u) => u.daysActive === user.daysActive) + 1;
-
-  console.log(user);
 
   // Respond with the user data
   res.status(200).json({
@@ -351,6 +369,7 @@ exports.protect = catchAsync(async (req, res, next) => {
       plan: freshUser.plan,
       email: freshUser.email,
       daysActive: freshUser.daysActive,
+      tagPost: freshUser.tagPost,
       leaderBoardProfileVisibility: freshUser.leaderBoardProfileVisibility,
       accountCreatedAt: freshUser.accountCreatedAt,
       totalCreditsUsed: freshUser.totalCreditsUsed,

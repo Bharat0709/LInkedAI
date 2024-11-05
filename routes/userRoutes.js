@@ -24,6 +24,11 @@ Router.post(
   authController.updateLeaderboardProfileVisibility
 );
 Router.post(
+  '/tagPost',
+  authController.isLoggedIn,
+  authController.updatePostTagging
+);
+Router.post(
   '/addtocollection',
   authController.isLoggedIn,
   authController.addtocollection

@@ -1,7 +1,8 @@
 // controllers/postController.js
+const { detectTopicGemini } = require('../controllers/apiController');
 const supabase = require('../supabaseClient');
 
-exports.createPost = async (req, res) => {
+exports.analyzePost = async (req, res) => {
   try {
     const { content, category, likes, comments, author, author_url } = req.body;
 
@@ -30,10 +31,19 @@ exports.createPost = async (req, res) => {
         error: error.message,
       });
     }
-    res.status(201).json({
-      status: 'success',
-      data: data,
-    });
+
+    const detectedTopic = await detectTopicGemini(content);
+    if (detectedTopic) {
+      res.status(201).json({
+        status: 'success',
+        topic: detectedTopic,
+      });
+    } else {
+      res.status(500).json({
+        status: 'error',
+        message: 'Unexpected error detecting post topic',
+      });
+    }
   } catch (err) {
     console.error('Unexpected error saving post:', err);
     res.status(500).json({

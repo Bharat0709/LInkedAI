@@ -562,3 +562,49 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+exports.detectTopicGemini = async (postContent) => {
+  try {
+    const detectedTopic = await detectTopic(postContent);
+    return detectedTopic;
+  } catch (error) {
+    // Handle errors appropriately
+    console.log(error);
+  }
+};
+
+async function detectTopic(postContent) {
+  const parts = [
+    {
+      text: `Analyze the following LinkedIn post content and provide a concise 3-4 word summary that describes the primary nature of the post. 
+      
+      - If the post content is very short (3 - 4 words or less) and it is diificult detect the nature of the post return the result that Short Post
+      - If you think this post based on its content is a spam post then in that case (but you should be 90% sure that this is a potential spam) post then only "Potential Spam"
+      - If you think this post based on its content is type of a promotional Post but you should be 90% sure that this is a promotional post then only include "Promotional Post"
+      - If you think this post based on its content is type AI generated but you should be 90% sure that this is a AI Generated post then only include "AI Generated"
+      - Otherwise, summarize the main topic (e.g., "Job Search Tips", "Networking Opportunity")
+      
+      Post Content:
+      
+      "${postContent}"
+      
+      Respond with a single phrase of 3-4 words that best captures what the post is about.`,
+    },
+
+    { text: '\n' },
+  ];
+
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 120,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+  return result.response.text();
+}

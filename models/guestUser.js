@@ -40,6 +40,10 @@ const GuestUserSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  tagPost: {
+    type: Boolean,
+    default: true,
+  },
   daysActive: {
     type: Number,
     default: 0,

@@ -3,5 +3,5 @@ const postController = require('../controllers/postController');
 const authController = require('../controllers/authController');
 const Router = express.Router();
 
-Router.post('/collect', authController.isLoggedIn, postController.createPost);
+Router.post('/analyze', authController.isLoggedIn, postController.analyzePost);
 module.exports = Router;
