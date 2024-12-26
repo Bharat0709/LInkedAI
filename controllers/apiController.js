@@ -8,7 +8,7 @@ const {
   HarmCategory,
   HarmBlockThreshold,
 } = require('@google/generative-ai');
-const GuestUser = require('../models/guestUser');
+const Member = require('../models/members');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
@@ -34,7 +34,7 @@ const safetySettings = [
 exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
-    const user = req.user;
+    const user = req.member;
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
@@ -43,7 +43,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
     const generatedComment = await getComment(postContent, selectedOption);
     user.credits -= 5;
     user.totalCreditsUsed += 5;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
       totalCreditsUsed: user.totalCreditsUsed,
     });
@@ -60,7 +60,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
 exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postContent, customTone, wordCount } = req.body;
-    const user = req.user;
+    const user = req.member;
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
@@ -71,7 +71,7 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
     );
     user.credits -= 5;
     user.totalCreditsUsed += 5;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
       totalCreditsUsed: user.totalCreditsUsed,
     });
@@ -152,16 +152,16 @@ async function getComment(postContent, selectedOption) {
 exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postContent, selectedOption } = req.body;
-    const user = req.user;
+    const user = req.member;
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
     user.credits -= 5;
     user.totalCreditsUsed += 5;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     const chatGPTResponse = await axios.post(
@@ -206,17 +206,17 @@ exports.generateCommentChatGpt = catchAsync(async (req, res, next) => {
 exports.generateCustomCommentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postContent, customTone, wordCount } = req.body;
-    const user = req.user;
+    const user = req.member;
     // Check if the user has enough credits
     if (user.credits < 5) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
     user.credits -= 5;
     user.totalCreditsUsed += 5;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     const chatGPTResponse = await axios.post(
@@ -262,7 +262,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   try {
     const { postType, selectedTone } = req.body;
 
-    const user = req.user;
+    const user = req.member;
 
     // Check if the user has enough credits
     if (user.credits < 10) {
@@ -273,10 +273,10 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     res.json({
@@ -331,7 +331,7 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
   try {
     const { templateRequirements, selectedTone } = req.body;
     // Use the API key from the environment variable
-    const user = req.user;
+    const user = req.member;
 
     // Check if the user has enough credits
     if (user.credits < 10) {
@@ -343,10 +343,10 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     );
     user.credits -= 10;
     user.totalCreditsUsed += 10;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     // Send the generated template back to the frontend
@@ -389,7 +389,7 @@ async function getTemplate(templateRequirements, selectedTone) {
 exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
   try {
     const { postType, selectedTone } = req.body;
-    const user = req.user;
+    const user = req.member;
 
     // Check if the user has enough credits
     if (user.credits < 10) {
@@ -399,10 +399,10 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
 
@@ -454,7 +454,7 @@ exports.generatePostContentChatGpt = catchAsync(async (req, res, next) => {
 exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
   try {
     const { templateRequirements, selectedTone } = req.body;
-    const user = req.user;
+    const user = req.member;
     // Check if the user has enough credits
     if (user.credits < 10) {
       return res.status(403).json({ error: 'Insufficient credits' });
@@ -491,10 +491,10 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     res.status(200).json({
@@ -509,7 +509,7 @@ exports.generateTemplateChatGpT = catchAsync(async (req, res, next) => {
 exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
   try {
     const { formattedMessages, userName } = req.body;
-    const user = req.user;
+    const user = req.member;
 
     // Check if the user has enough credits
     if (user.credits < 10) {
@@ -548,10 +548,10 @@ exports.generateReplyChatGpT = catchAsync(async (req, res, next) => {
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       credits: user.credits,
     });
-    await GuestUser.findByIdAndUpdate(user._id, {
+    await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
     res.status(200).json({

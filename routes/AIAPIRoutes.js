@@ -5,47 +5,47 @@ const Router = express.Router();
 
 Router.post(
   '/generategeminicomment',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateCommentGemini
 );
 Router.post(
   '/generatecustomgeminicomment',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateCustomCommentGemini
 );
 Router.post(
   '/generategeminipostcontent',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generatePostContentGemini
 );
 Router.post(
   '/generategeminitemplate',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateTemplateGemini
 );
 Router.post(
   '/generatechatgptcomment',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateCommentChatGpt
 );
 Router.post(
   '/generatecustomchatgptcomment',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateCustomCommentChatGpt
 );
 Router.post(
   '/generatechatgptpostcontent',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generatePostContentChatGpt
 );
 Router.post(
   '/generatechatgpttemplate',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateTemplateChatGpT
 );
 Router.post(
   '/generatechatgptreply',
-  authController.isLoggedIn,
+  authController.isUserLoggedIn,
   apiController.generateReplyChatGpT
 );
 
