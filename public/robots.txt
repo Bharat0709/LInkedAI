@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /  # Prevent any page from being scraped
