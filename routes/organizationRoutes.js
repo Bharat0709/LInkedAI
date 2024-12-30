@@ -22,9 +22,9 @@ Router.post(
   authController.isUserLoggedIn,
   organizationController.Organizationfeedback
 );
-Router.get('auth/google', organizationAuthController.googleAuth);
+Router.get('/auth/google', organizationAuthController.googleAuth);
 Router.get(
-  'auth/google/callback',
+  '/auth/google/callback',
   organizationAuthController.googleAuthCallback
 );
 
