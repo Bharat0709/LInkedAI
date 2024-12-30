@@ -70,7 +70,6 @@ app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/auth', authRouter);
 
-// Health check route
 app.get('/', (req, res) => {
   console.log('Server is up and running');
   res.status(200).json({

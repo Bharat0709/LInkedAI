@@ -149,6 +149,6 @@ exports.googleAuthCallback = async (req, res, next) => {
 
     const token = await createGoogleAuthToken(user, res, true);
 
-    res.redirect(`http://localhost:3000/dashboard?token=${token}`);
+    res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${token}`);
   })(req, res, next);
 };
