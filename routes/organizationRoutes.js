@@ -1,16 +1,31 @@
 const express = require('express');
-const organizationController = require('../controllers/orgAuthController');
+const organizationAuthController = require('../controllers/orgAuthController');
 const authController = require('../controllers/authController');
+const organizationController = require('../controllers/organizationController');
 
 const Router = express.Router();
 Router.get(
-  '/',
+  '/auth',
   authController.isUserLoggedIn,
-  organizationController.verifyOrganizationDetails
+  organizationAuthController.verifyOrganizationDetails
 );
-Router.post('/signup', organizationController.signupOrganization);
-Router.post('/login', organizationController.loginOrganization);
-Router.get('/google', organizationController.googleAuth);
-Router.get('/google/callback', organizationController.googleAuthCallback);
+Router.post('/auth/signup', organizationAuthController.signupOrganization);
+Router.post('/auth/login', organizationAuthController.loginOrganization);
+Router.post(
+  '/mail/help',
+  authController.isUserLoggedIn,
+  organizationController.sendHelpRequest
+);
+
+Router.post(
+  '/mail/feedback',
+  authController.isUserLoggedIn,
+  organizationController.Organizationfeedback
+);
+Router.get('auth/google', organizationAuthController.googleAuth);
+Router.get(
+  'auth/google/callback',
+  organizationAuthController.googleAuthCallback
+);
 
 module.exports = Router;

@@ -32,7 +32,7 @@ const organizationSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      default: 'Anonymous',
+      default: 'EngageGPT User',
     },
     profilePicture: {
       type: String,

@@ -6,7 +6,7 @@ const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const { signToken, createSendToken } = require('./../middlewares/tokenUtils');
 const Organization = require('./../models/organization');
-const { encryptToken, generateState } = require('../utils/linkedInAuth');
+const { encryptToken } = require('../utils/linkedInAuth');
 dotenv.config();
 
 exports.signupOrganization = catchAsync(async (req, res, next) => {

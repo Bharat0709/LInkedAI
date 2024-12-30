@@ -1,12 +1,10 @@
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
-dotenv.config();
 const otpCache = require('../utils/cache');
 const Mailgun = require('mailgun-js');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
-const api_key = process.env.MAILGUN_API_KEY;
 dotenv.config();
-dotenv.config({ path: './.env' });
+const api_key = process.env.MAILGUN_API_KEY;
 
 const domain = 'support.engagegpt.in';
 var from_who = 'engagegpt@gmail.com';
@@ -795,1514 +793,6 @@ exports.sendOTPtoUser = [
   },
 ];
 
-exports.sendAccess = async (req, res) => {
-  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
-  var data = {
-    from: from_who,
-    to: req.params.mail,
-    subject: 'Early Access to EngageGPT',
-    html: `<!DOCTYPE html>
-      <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
-      <head>
-        <title></title>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!-->
-        <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css"><!--<![endif]-->
-        <style>
-          * {
-            box-sizing: border-box;
-          }
-      
-          body {
-            margin: 0;
-            padding: 0;
-          }
-      
-          a[x-apple-data-detectors] {
-            color: inherit !important;
-            text-decoration: inherit !important;
-          }
-      
-          #MessageViewBody a {
-            color: inherit;
-            text-decoration: none;
-          }
-      
-          p {
-            line-height: inherit
-          }
-      
-          .desktop_hide,
-          .desktop_hide table {
-            mso-hide: all;
-            display: none;
-            max-height: 0px;
-            overflow: hidden;
-          }
-      
-          .image_block img+div {
-            display: none;
-          }
-      
-          @media (max-width:615px) {
-            .desktop_hide table.icons-inner {
-              display: inline-block !important;
-            }
-      
-            .icons-inner {
-              text-align: center;
-            }
-      
-            .icons-inner td {
-              margin: 0 auto;
-            }
-      
-            .mobile_hide {
-              display: none;
-            }
-      
-            .row-content {
-              width: 100% !important;
-            }
-      
-            .stack .column {
-              width: 100%;
-              display: block;
-            }
-      
-            .mobile_hide {
-              min-height: 0;
-              max-height: 0;
-              max-width: 0;
-              overflow: hidden;
-              font-size: 0px;
-            }
-      
-            .desktop_hide,
-            .desktop_hide table {
-              display: table !important;
-              max-height: none !important;
-            }
-      
-            .reverse {
-              display: table;
-              width: 100%;
-            }
-      
-            .reverse .column.first {
-              display: table-footer-group !important;
-            }
-      
-            .reverse .column.last {
-              display: table-header-group !important;
-            }
-      
-            .row-3 td.column.first .border {
-              padding: 40px 30px 30px;
-              border-top: 0;
-              border-right: 0px;
-              border-bottom: 0;
-              border-left: 0;
-            }
-      
-            .row-3 td.column.last .border {
-              padding: 5px 0;
-              border-top: 0;
-              border-right: 0px;
-              border-bottom: 0;
-              border-left: 0;
-            }
-      
-            .row-2 .column-1 .block-1.heading_block h2,
-            .row-2 .column-1 .block-2.paragraph_block td.pad>div,
-            .row-5 .column-1 .block-1.heading_block h2,
-            .row-5 .column-1 .block-2.paragraph_block td.pad>div {
-              text-align: center !important;
-            }
-          }
-        </style>
-      </head>
-      
-      <body style="margin: 0; background-color: #011638; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
-        <table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-          <tbody>
-            <tr>
-              <td>
-                <table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; background-size: auto;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <div class="spacer_block block-1" style="height:25px;line-height:25px;font-size:1px;">&#8202;</div>
-                                <table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="width:100%;padding-right:0px;padding-left:0px;">
-                                      <div class="alignment" align="center" style="line-height:10px">
-                                        <div style="max-width: 238px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/q7p/8b5/we0/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="238" height="auto"></div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="paragraph_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                  <tr>
-                                    <td class="pad" style="padding-bottom:25px;padding-left:25px;padding-right:25px;padding-top:30px;">
-                                      <div style="color:#101112;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:22px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:33px;">
-                                        <p style="margin: 0;"><strong>Congratulations 🎉</strong><br>You are in top 100,<br>to gain early access to EngageGPT&nbsp;</p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8621/Group_1000006081.png'); background-repeat: no-repeat; background-size: cover; border-radius: 12px; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 20px; padding-left: 10px; padding-right: 10px; padding-top: 30px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="padding-left:10px;padding-right:10px;padding-top:10px;text-align:center;width:100%;">
-                                      <h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 48px;"><span class="tinyMce-placeholder">Install the extension now</span></h2>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                  <tr>
-                                    <td class="pad">
-                                      <div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
-                                        <p style="margin: 0;">Click on the button below to access EngageGPT extension</p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="button_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad">
-                                      <div class="alignment" align="center"><!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" style="height:48px;width:149px;v-text-anchor:middle;" arcsize="69%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#ffffff">
-      <w:anchorlock/>
-      <v:textbox inset="0px,0px,0px,0px">
-      <center style="color:#000000; font-family:Arial, sans-serif; font-size:16px">
-      <![endif]--><a href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" target="_blank" style="text-decoration:none;display:inline-block;color:#000000;background-color:#ffffff;border-radius:30px;width:auto;border-top:1px solid #746ff0;font-weight:400;border-right:1px solid #746ff0;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;padding-top:5px;padding-bottom:5px;font-family:Arial, Helvetica, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Add Extension</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr class="reverse">
-                              <td class="column column-1 first" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 30px; padding-left: 30px; padding-right: 30px; padding-top: 40px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <div class="border">
-                                  <table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                    <tr>
-                                      <td class="pad" style="text-align:center;width:100%;">
-                                        <h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 27px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 40.5px;"><span class="tinyMce-placeholder">EngageGPT Support Group</span></h2>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                  <table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                    <tr>
-                                      <td class="pad" style="padding-bottom:10px;padding-left:5px;padding-right:5px;padding-top:10px;">
-                                        <div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:left;mso-line-height-alt:24px;">
-                                          <p style="margin: 0;">In case u need any help u can send message to this group</p>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                  <table class="button_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                    <tr>
-                                      <td class="pad" style="padding-bottom:10px;padding-top:10px;text-align:left;">
-                                        <div class="alignment" align="left"><!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" style="height:48px;width:124px;v-text-anchor:middle;" arcsize="80%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#d3d1ff">
-      <w:anchorlock/>
-      <v:textbox inset="0px,0px,0px,0px">
-      <center style="color:#000000; font-family:Arial, sans-serif; font-size:16px">
-      <![endif]--><a href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" target="_blank" style="text-decoration:none;display:inline-block;color:#000000;background-color:#d3d1ff;border-radius:35px;width:auto;border-top:1px solid #746ff0;font-weight:400;border-right:1px solid #746ff0;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;padding-top:5px;padding-bottom:5px;font-family:Arial, Helvetica, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Join Group</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </div>
-                              </td>
-                              <td class="column column-2 last" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <div class="border">
-                                  <table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                    <tr>
-                                      <td class="pad" style="padding-top:40px;width:100%;padding-right:0px;padding-left:0px;">
-                                        <div class="alignment" align="center" style="line-height:10px">
-                                          <div style="max-width: 297.5px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/8yw/au8/81m/3831044-removebg-preview.png" style="display: block; height: auto; border: 0; width: 100%;" width="297.5" height="auto"></div>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-4" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; background-color: #011638; padding-bottom: 40px; padding-left: 30px; padding-right: 30px; padding-top: 10px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="padding-bottom:20px;padding-top:20px;width:100%;padding-right:0px;padding-left:0px;">
-                                      <div class="alignment" align="center" style="line-height:10px">
-                                        <div style="max-width: 201.875px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/fau/grq/0ws/image-removebg-preview%20%282%29.png" style="display: block; height: auto; border: 0; width: 100%;" width="201.875" height="auto"></div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                              <td class="column column-2" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="padding-left:30px;padding-right:30px;text-align:center;width:100%;">
-                                      <h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 27px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 40.5px;"><span class="tinyMce-placeholder">Features Tutorials</span></h2>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                  <tr>
-                                    <td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:10px;padding-top:10px;">
-                                      <div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:left;mso-line-height-alt:24px;">
-                                        <p style="margin: 0;">Watch these tutorials to get started with EngageGPT</p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="button_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:10px;padding-top:10px;text-align:left;">
-                                      <div class="alignment" align="left"><!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" style="height:48px;width:155px;v-text-anchor:middle;" arcsize="91%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#d3d1ff">
-      <w:anchorlock/>
-      <v:textbox inset="0px,0px,0px,0px">
-      <center style="color:#000000; font-family:Arial, sans-serif; font-size:16px">
-      <![endif]--><a href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" target="_blank" style="text-decoration:none;display:inline-block;color:#000000;background-color:#d3d1ff;border-radius:40px;width:auto;border-top:1px solid #746ff0;font-weight:400;border-right:1px solid #746ff0;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;padding-top:5px;padding-bottom:5px;font-family:Arial, Helvetica, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Watch Tutorials</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-5" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8621/Group_1000006081.png'); background-repeat: no-repeat; background-size: cover; border-radius: 12px; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 30px; padding-left: 10px; padding-right: 10px; padding-top: 30px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad" style="padding-left:10px;padding-right:10px;padding-top:10px;text-align:center;width:100%;">
-                                      <h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 48px;"><span class="tinyMce-placeholder">Your Feedback Matters</span></h2>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                  <tr>
-                                    <td class="pad">
-                                      <div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
-                                        <p style="margin: 0;">We value your opinion and would love to hear about your experience with EngageGPT</p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="button_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad">
-                                      <div class="alignment" align="center"><!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="mailto:engagegpt@gmail.com?body=Dear%20EngageGPT%20Team%2C%0A%0AI%20hope%20this%20message%20finds%20you%20well.%20I%27m%20writing%20to%20share%20my%20feedback%20and%20suggestions%20regarding%20the%20EngageGPT%20extension.%20Your%20commitment%20to%20improving%20user%20experience%20is%20commendable%2C%20and%20I%27m%20eager%20to%20contribute%20to%20the%20enhancement%20of%20the%20platform.%0A%0AFeedback%20Details%3A%0A%0A1.%20User%20Experience%3A%0A%20%20%20%5BYour%20feedback%20here%5D%0A%0A2.%20Feature%20Requests%3A%0A%20%20%20%5BYour%20suggestions%20for%20additional%20features%5D%0A%0A3.%20Performance%3A%0A%20%20%20%5BAny%20performance%20issues%20or%20bugs%20you%20encountered%5D%0A%0A4.%20Overall%20Satisfaction%3A%0A%20%20%20%5BRate%20your%20overall%20satisfaction%20on%20a%20scale%20of%201%20to%205%5D%0A%0AAdditional%20Comments%3A%0A%5BFeel%20free%20to%20provide%20any%20additional%20comments%20or%20thoughts%20here%5D%0A%0AThank%20you%20for%20providing%20this%20opportunity%20to%20share%20my%20feedback.%20I%20believe%20that%20by%20working%20together%2C%20we%20can%20make%20EngageGPT%20even%20more%20valuable%20for%20users%20like%20myself.%0A%0ALooking%20forward%20to%20seeing%20the%20continued%20improvement%20of%20EngageGPT%21%0A%0ABest%20regards%2C%0A%5BYour%20Name%5D&subject=EngageGPT%20Feedback%20Form" style="height:48px;width:168px;v-text-anchor:middle;" arcsize="69%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#ffffff">
-      <w:anchorlock/>
-      <v:textbox inset="0px,0px,0px,0px">
-      <center style="color:#000000; font-family:Arial, sans-serif; font-size:16px">
-      <![endif]--><a href="mailto:engagegpt@gmail.com?body=Dear%20EngageGPT%20Team%2C%0A%0AI%20hope%20this%20message%20finds%20you%20well.%20I%27m%20writing%20to%20share%20my%20feedback%20and%20suggestions%20regarding%20the%20EngageGPT%20extension.%20Your%20commitment%20to%20improving%20user%20experience%20is%20commendable%2C%20and%20I%27m%20eager%20to%20contribute%20to%20the%20enhancement%20of%20the%20platform.%0A%0AFeedback%20Details%3A%0A%0A1.%20User%20Experience%3A%0A%20%20%20%5BYour%20feedback%20here%5D%0A%0A2.%20Feature%20Requests%3A%0A%20%20%20%5BYour%20suggestions%20for%20additional%20features%5D%0A%0A3.%20Performance%3A%0A%20%20%20%5BAny%20performance%20issues%20or%20bugs%20you%20encountered%5D%0A%0A4.%20Overall%20Satisfaction%3A%0A%20%20%20%5BRate%20your%20overall%20satisfaction%20on%20a%20scale%20of%201%20to%205%5D%0A%0AAdditional%20Comments%3A%0A%5BFeel%20free%20to%20provide%20any%20additional%20comments%20or%20thoughts%20here%5D%0A%0AThank%20you%20for%20providing%20this%20opportunity%20to%20share%20my%20feedback.%20I%20believe%20that%20by%20working%20together%2C%20we%20can%20make%20EngageGPT%20even%20more%20valuable%20for%20users%20like%20myself.%0A%0ALooking%20forward%20to%20seeing%20the%20continued%20improvement%20of%20EngageGPT%21%0A%0ABest%20regards%2C%0A%5BYour%20Name%5D&subject=EngageGPT%20Feedback%20Form" target="_blank" style="text-decoration:none;display:inline-block;color:#000000;background-color:#ffffff;border-radius:30px;width:auto;border-top:1px solid #746ff0;font-weight:400;border-right:1px solid #746ff0;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;padding-top:5px;padding-bottom:5px;font-family:Arial, Helvetica, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;"><strong>Share Feedback</strong></span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-                                <table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-                                  <tr>
-                                    <td class="pad" style="padding-left:20px;padding-right:20px;padding-top:20px;">
-                                      <div style="color:#ffffff;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:19px;font-weight:400;letter-spacing:0px;line-height:180%;text-align:center;mso-line-height-alt:34.2px;">
-                                        <p style="margin: 0;"><strong>Happy Engaging</strong><br><strong>Team EngageGPT</strong></p>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                                <table class="image_block block-2" width="100%" border="0" cellpadding="25" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-                                  <tr>
-                                    <td class="pad">
-                                      <div class="alignment" align="center" style="line-height:10px">
-                                        <div style="max-width: 178.5px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/q7p/8b5/we0/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="178.5" height="auto"></div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <table class="row row-7" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 595px; margin: 0 auto;" width="595">
-                          <tbody>
-                            <tr>
-                              <td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table><!-- End -->
-      </body>
-      
-      </html>`,
-  };
-
-  mailgun.messages().send(data, function (err, body) {
-    if (err) {
-      res.status(500).send({ error: 'Error sending email' });
-    } else {
-      res.status(200).send({ message: 'Email sent successfully' });
-    }
-  });
-};
-
-exports.supportGroup = async (req, res) => {
-  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
-  var data = {
-    from: from_who,
-    to: req.params.mail,
-    subject: 'EngageGPT Support Group',
-    html: `<!DOCTYPE html>
-<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
-
-<head>
-	<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!-->
-	<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css"><!--<![endif]-->
-	<style>
-		* {
-			box-sizing: border-box;
-		}
-
-		body {
-			margin: 0;
-			padding: 0;
-		}
-
-		a[x-apple-data-detectors] {
-			color: inherit !important;
-			text-decoration: inherit !important;
-		}
-
-		#MessageViewBody a {
-			color: inherit;
-			text-decoration: none;
-		}
-
-		p {
-			line-height: inherit
-		}
-
-		.desktop_hide,
-		.desktop_hide table {
-			mso-hide: all;
-			display: none;
-			max-height: 0px;
-			overflow: hidden;
-		}
-
-		.image_block img+div {
-			display: none;
-		}
-
-		@media (max-width:615px) {
-
-			.desktop_hide table.icons-inner,
-			.row-2 .column-1 .block-2.button_block .alignment a,
-			.row-2 .column-1 .block-2.button_block .alignment div,
-			.row-3 .column-2 .block-3.button_block .alignment a,
-			.row-3 .column-2 .block-3.button_block .alignment div {
-				display: inline-block !important;
-			}
-
-			.icons-inner {
-				text-align: center;
-			}
-
-			.icons-inner td {
-				margin: 0 auto;
-			}
-
-			.mobile_hide {
-				display: none;
-			}
-
-			.row-content {
-				width: 100% !important;
-			}
-
-			.stack .column {
-				width: 100%;
-				display: block;
-			}
-
-			.mobile_hide {
-				min-height: 0;
-				max-height: 0;
-				max-width: 0;
-				overflow: hidden;
-				font-size: 0px;
-			}
-
-			.desktop_hide,
-			.desktop_hide table {
-				display: table !important;
-				max-height: none !important;
-			}
-
-			.reverse {
-				display: table;
-				width: 100%;
-			}
-
-			.reverse .column.first {
-				display: table-footer-group !important;
-			}
-
-			.reverse .column.last {
-				display: table-header-group !important;
-			}
-
-			.row-3 td.column.first .border {
-				padding: 10px 30px 40px;
-				border-top: 0;
-				border-right: 0px;
-				border-bottom: 0;
-				border-left: 0;
-			}
-
-			.row-3 td.column.last .border {
-				padding: 5px 0;
-				border-top: 0;
-				border-right: 0px;
-				border-bottom: 0;
-				border-left: 0;
-			}
-
-			.row-2 .column-1 .block-1.paragraph_block td.pad>div,
-			.row-2 .column-1 .block-2.button_block .alignment,
-			.row-3 .column-2 .block-1.heading_block h2,
-			.row-3 .column-2 .block-2.paragraph_block td.pad>div,
-			.row-3 .column-2 .block-3.button_block .alignment,
-			.row-4 .column-1 .block-1.heading_block h2,
-			.row-4 .column-1 .block-2.paragraph_block td.pad>div {
-				text-align: center !important;
-			}
-
-			.row-2 .column-1 .block-2.button_block a,
-			.row-2 .column-1 .block-2.button_block div,
-			.row-2 .column-1 .block-2.button_block span,
-			.row-3 .column-2 .block-3.button_block a,
-			.row-3 .column-2 .block-3.button_block div,
-			.row-3 .column-2 .block-3.button_block span {
-				line-height: 32px !important;
-			}
-
-			.row-3 .column-2 .block-1.heading_block td.pad {
-				padding: 35px 30px 0 !important;
-			}
-
-			.row-2 .column-2 .block-1.image_block td.pad {
-				padding: 0 !important;
-			}
-
-			.row-4 .column-1 .block-2.paragraph_block td.pad {
-				padding: 20px !important;
-			}
-
-			.row-2 .column-1 {
-				padding: 15px 30px 30px !important;
-			}
-
-			.row-3 .column-1 .border {
-				padding: 5px 30px 40px !important;
-			}
-		}
-	</style>
-</head>
-
-<body class="body" style="margin: 0; background-color: #011638; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
-	<table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-		<tbody>
-			<tr>
-				<td>
-					<table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="image_block block-1" width="100%" border="0" cellpadding="25" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 238px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/q7p/8b5/we0/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="238" alt="I'm an image" title="I'm an image" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="text_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="font-family: sans-serif">
-																	<div class style="font-size: 12px; font-family: Arial, Helvetica, sans-serif; mso-line-height-alt: 21.6px; color: #000000; line-height: 1.8;">
-																		<p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 36px;"><span style="font-size:20px;">Join EngageGPT Support Group<br>Community | Support | Growth</span></p>
-																	</div>
-																</div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 30px; padding-left: 30px; padding-right: 30px; padding-top: 40px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-bottom:10px;padding-left:5px;padding-right:5px;padding-top:10px;">
-																<div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:left;mso-line-height-alt:24px;">
-																	<p style="margin: 0;">In case u need any help u can send message to this group</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:10px;padding-top:10px;text-align:left;">
-																<div class="alignment" align="left"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" style="height:43px;width:119px;v-text-anchor:middle;" arcsize="82%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#d3d1ff">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#000000;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" target="_blank" style="background-color:#d3d1ff;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;border-radius:35px;border-right:1px solid #746ff0;border-top:1px solid #746ff0;color:#000000;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Join Group</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-												<td class="column column-2" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-top:40px;width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 297.5px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/8yw/au8/81m/3831044-removebg-preview.png" style="display: block; height: auto; border: 0; width: 100%;" width="297.5" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr class="reverse">
-												<td class="column column-1 first" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; background-color: #011638; padding-bottom: 40px; padding-left: 30px; padding-right: 30px; padding-top: 10px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<div class="border">
-														<table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-															<tr>
-																<td class="pad" style="padding-bottom:20px;padding-top:20px;width:100%;padding-right:0px;padding-left:0px;">
-																	<div class="alignment" align="center" style="line-height:10px">
-																		<div style="max-width: 201.875px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/fau/grq/0ws/image-removebg-preview%20%282%29.png" style="display: block; height: auto; border: 0; width: 100%;" width="201.875" height="auto"></div>
-																	</div>
-																</td>
-															</tr>
-														</table>
-													</div>
-												</td>
-												<td class="column column-2 last" width="50%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<div class="border">
-														<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-															<tr>
-																<td class="pad" style="padding-left:30px;padding-right:30px;text-align:center;width:100%;">
-																	<h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 27px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 40.5px;"><span class="tinyMce-placeholder">Features Tutorials</span></h2>
-																</td>
-															</tr>
-														</table>
-														<table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-															<tr>
-																<td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:10px;padding-top:10px;">
-																	<div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:left;mso-line-height-alt:24px;">
-																		<p style="margin: 0;">Watch these tutorials to get started with EngageGPT</p>
-																	</div>
-																</td>
-															</tr>
-														</table>
-														<table class="button_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-															<tr>
-																<td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:10px;padding-top:10px;text-align:left;">
-																	<div class="alignment" align="left"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" style="height:43px;width:151px;v-text-anchor:middle;" arcsize="94%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#d3d1ff">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#000000;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" target="_blank" style="background-color:#d3d1ff;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;border-radius:40px;border-right:1px solid #746ff0;border-top:1px solid #746ff0;color:#000000;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Watch Tutorials</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-																</td>
-															</tr>
-														</table>
-													</div>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-4" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8621/Group_1000006081.png'); background-repeat: no-repeat; background-size: cover; border-radius: 12px; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 30px; padding-left: 10px; padding-right: 10px; padding-top: 30px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-left:10px;padding-right:10px;padding-top:10px;text-align:center;width:100%;">
-																<h2 style="margin: 0; color: #ffffff; direction: ltr; font-family: 'Fira Sans', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: normal; line-height: 150%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 48px;"><span class="tinyMce-placeholder">Your Feedback Matters</span></h2>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#d8d8f6;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:21px;">
-																	<p style="margin: 0;">We value your opinion and would love to hear about your experience with EngageGPT</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="mailto:engagegpt@gmail.com?body=Dear%20EngageGPT%20Team%2C%0A%0AI%20hope%20this%20message%20finds%20you%20well.%20I%27m%20writing%20to%20share%20my%20feedback%20and%20suggestions%20regarding%20the%20EngageGPT%20extension.%20Your%20commitment%20to%20improving%20user%20experience%20is%20commendable%2C%20and%20I%27m%20eager%20to%20contribute%20to%20the%20enhancement%20of%20the%20platform.%0A%0AFeedback%20Details%3A%0A%0A1.%20User%20Experience%3A%0A%20%20%20%5BYour%20feedback%20here%5D%0A%0A2.%20Feature%20Requests%3A%0A%20%20%20%5BYour%20suggestions%20for%20additional%20features%5D%0A%0A3.%20Performance%3A%0A%20%20%20%5BAny%20performance%20issues%20or%20bugs%20you%20encountered%5D%0A%0A4.%20Overall%20Satisfaction%3A%0A%20%20%20%5BRate%20your%20overall%20satisfaction%20on%20a%20scale%20of%201%20to%205%5D%0A%0AAdditional%20Comments%3A%0A%5BFeel%20free%20to%20provide%20any%20additional%20comments%20or%20thoughts%20here%5D%0A%0AThank%20you%20for%20providing%20this%20opportunity%20to%20share%20my%20feedback.%20I%20believe%20that%20by%20working%20together%2C%20we%20can%20make%20EngageGPT%20even%20more%20valuable%20for%20users%20like%20myself.%0A%0ALooking%20forward%20to%20seeing%20the%20continued%20improvement%20of%20EngageGPT%21%0A%0ABest%20regards%2C%0A%5BYour%20Name%5D&subject=EngageGPT%20Feedback%20Form" style="height:43px;width:164px;v-text-anchor:middle;" arcsize="70%" strokeweight="0.75pt" strokecolor="#746ff0" fillcolor="#ffffff">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#000000;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="mailto:engagegpt@gmail.com?body=Dear%20EngageGPT%20Team%2C%0A%0AI%20hope%20this%20message%20finds%20you%20well.%20I%27m%20writing%20to%20share%20my%20feedback%20and%20suggestions%20regarding%20the%20EngageGPT%20extension.%20Your%20commitment%20to%20improving%20user%20experience%20is%20commendable%2C%20and%20I%27m%20eager%20to%20contribute%20to%20the%20enhancement%20of%20the%20platform.%0A%0AFeedback%20Details%3A%0A%0A1.%20User%20Experience%3A%0A%20%20%20%5BYour%20feedback%20here%5D%0A%0A2.%20Feature%20Requests%3A%0A%20%20%20%5BYour%20suggestions%20for%20additional%20features%5D%0A%0A3.%20Performance%3A%0A%20%20%20%5BAny%20performance%20issues%20or%20bugs%20you%20encountered%5D%0A%0A4.%20Overall%20Satisfaction%3A%0A%20%20%20%5BRate%20your%20overall%20satisfaction%20on%20a%20scale%20of%201%20to%205%5D%0A%0AAdditional%20Comments%3A%0A%5BFeel%20free%20to%20provide%20any%20additional%20comments%20or%20thoughts%20here%5D%0A%0AThank%20you%20for%20providing%20this%20opportunity%20to%20share%20my%20feedback.%20I%20believe%20that%20by%20working%20together%2C%20we%20can%20make%20EngageGPT%20even%20more%20valuable%20for%20users%20like%20myself.%0A%0ALooking%20forward%20to%20seeing%20the%20continued%20improvement%20of%20EngageGPT%21%0A%0ABest%20regards%2C%0A%5BYour%20Name%5D&subject=EngageGPT%20Feedback%20Form" target="_blank" style="background-color:#ffffff;border-bottom:1px solid #746ff0;border-left:1px solid #746ff0;border-radius:30px;border-right:1px solid #746ff0;border-top:1px solid #746ff0;color:#000000;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:16px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;"><strong>Share Feedback</strong></span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-5" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #011638;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="paragraph_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-left:20px;padding-right:20px;padding-top:20px;">
-																<div style="color:#ffffff;direction:ltr;font-family:Arial, Helvetica, sans-serif;font-size:19px;font-weight:400;letter-spacing:0px;line-height:180%;text-align:center;mso-line-height-alt:34.2px;">
-																	<p style="margin: 0;"><strong>Happy Engaging</strong><br><strong>Team EngageGPT</strong></p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="image_block block-2" width="100%" border="0" cellpadding="25" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 178.5px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/q7p/8b5/we0/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="178.5" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; color: #000000; width: 595px; margin: 0 auto;" width="595">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="icons_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; text-align: center;">
-														<tr>
-															<td class="pad" style="vertical-align: middle; color: #1e0e4b; font-family: 'Inter', sans-serif; font-size: 15px; padding-bottom: 5px; padding-top: 5px; text-align: center;">
-																<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-																	<tr>
-																		<td class="alignment" style="vertical-align: middle; text-align: center;"><!--[if vml]><table align="center" cellpadding="0" cellspacing="0" role="presentation" style="display:inline-block;padding-left:0px;padding-right:0px;mso-table-lspace: 0pt;mso-table-rspace: 0pt;"><![endif]-->
-																		</td>
-																	</tr>
-																</table>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</td>
-			</tr>
-		</tbody>
-	</table><!-- End -->
-</body>
-
-</html>`,
-  };
-  mailgun.messages().send(data, function (err, body) {
-    if (err) {
-      res.status(500).send({ error: 'Error sending email' });
-    } else {
-      res.status(200).send({ message: 'Email sent successfully' });
-    }
-  });
-};
-
-exports.invitation = async (req, res) => {
-  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
-  var data = {
-    from: from_who,
-    to: req.params.mail,
-    cc: 'letsbunktoday@gmail.com',
-    subject: 'Meet Your AI Networking Partner',
-    html: `<!DOCTYPE html>
-<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
-
-<head>
-	<title></title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0"><!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]--><!--[if !mso]><!--><!--<![endif]-->
-	<style>
-		* {
-			box-sizing: border-box;
-		}
-
-		body {
-			margin: 0;
-			padding: 0;
-		}
-
-		a[x-apple-data-detectors] {
-			color: inherit !important;
-			text-decoration: inherit !important;
-		}
-
-		#MessageViewBody a {
-			color: inherit;
-			text-decoration: none;
-		}
-
-		p {
-			line-height: inherit
-		}
-
-		.desktop_hide,
-		.desktop_hide table {
-			mso-hide: all;
-			display: none;
-			max-height: 0px;
-			overflow: hidden;
-		}
-
-		.image_block img+div {
-			display: none;
-		}
-
-		@media (max-width:670px) {
-
-			.desktop_hide table.icons-inner,
-			.row-5 .column-1 .block-6.button_block .alignment a,
-			.row-5 .column-1 .block-6.button_block .alignment div {
-				display: inline-block !important;
-			}
-
-			.icons-inner {
-				text-align: center;
-			}
-
-			.icons-inner td {
-				margin: 0 auto;
-			}
-
-			.image_block div.fullWidth {
-				max-width: 100% !important;
-			}
-
-			.mobile_hide {
-				display: none;
-			}
-
-			.row-content {
-				width: 100% !important;
-			}
-
-			.stack .column {
-				width: 100%;
-				display: block;
-			}
-
-			.mobile_hide {
-				min-height: 0;
-				max-height: 0;
-				max-width: 0;
-				overflow: hidden;
-				font-size: 0px;
-			}
-
-			.desktop_hide,
-			.desktop_hide table {
-				display: table !important;
-				max-height: none !important;
-			}
-
-			.row-1 .column-1 .block-1.divider_block td.pad {
-				padding: 0 25px !important;
-			}
-
-			.row-1 .column-1 .block-1.divider_block .alignment table {
-				display: inline-table;
-			}
-
-			.row-1 .column-1 .block-3.image_block td.pad {
-				padding: 25px 0 0 !important;
-			}
-
-			.row-1 .column-1 .block-2.paragraph_block td.pad {
-				padding: 10px 25px 0 !important;
-			}
-
-			.row-1 .column-1 .block-4.paragraph_block td.pad>div {
-				font-size: 31px !important;
-			}
-
-			.row-1 .column-1 .block-5.paragraph_block td.pad>div {
-				font-size: 36px !important;
-			}
-
-			.row-1 .column-1 .block-6.paragraph_block td.pad>div,
-			.row-2 .column-1 .block-1.heading_block h1,
-			.row-2 .column-1 .block-2.paragraph_block td.pad>div,
-			.row-3 .column-1 .block-1.heading_block h1,
-			.row-3 .column-1 .block-2.paragraph_block td.pad>div,
-			.row-4 .column-1 .block-1.heading_block h1,
-			.row-4 .column-1 .block-2.paragraph_block td.pad>div,
-			.row-7 .column-1 .block-4.paragraph_block td.pad>div {
-				font-size: 16px !important;
-			}
-
-			.row-1 .column-1 .block-6.paragraph_block td.pad {
-				padding: 20px 60px 15px !important;
-			}
-
-			.row-1 .column-1 .block-7.image_block td.pad {
-				padding: 0 !important;
-			}
-
-			.row-2 .column-1 .block-3.paragraph_block td.pad>div,
-			.row-3 .column-1 .block-3.paragraph_block td.pad>div,
-			.row-4 .column-1 .block-3.paragraph_block td.pad>div {
-				font-size: 14px !important;
-			}
-
-			.row-2 .column-1 .block-3.paragraph_block td.pad,
-			.row-3 .column-1 .block-3.paragraph_block td.pad,
-			.row-4 .column-1 .block-3.paragraph_block td.pad {
-				padding: 5px 25px 10px !important;
-			}
-
-			.row-2 .column-1 .block-2.paragraph_block td.pad,
-			.row-3 .column-1 .block-2.paragraph_block td.pad,
-			.row-4 .column-1 .block-2.paragraph_block td.pad {
-				padding: 5px 0 !important;
-			}
-
-			.row-5 .column-1 .block-2.spacer_block {
-				height: 60px !important;
-			}
-
-			.row-5 .column-1 .block-1.spacer_block {
-				height: 1px !important;
-			}
-
-			.row-5 .column-1 .block-3.paragraph_block td.pad>div,
-			.row-5 .column-1 .block-4.paragraph_block td.pad>div {
-				text-align: center !important;
-				font-size: 30px !important;
-			}
-
-			.row-5 .column-1 .block-3.paragraph_block td.pad {
-				padding: 60px 20px 0 !important;
-			}
-
-			.row-5 .column-1 .block-5.paragraph_block td.pad>div {
-				text-align: center !important;
-				font-size: 14px !important;
-			}
-
-			.row-5 .column-1 .block-5.paragraph_block td.pad {
-				padding: 10px !important;
-			}
-
-			.row-5 .column-1 .block-6.button_block td.pad {
-				padding: 10px 0 30px !important;
-			}
-
-			.row-5 .column-1 .block-6.button_block a,
-			.row-5 .column-1 .block-6.button_block div,
-			.row-5 .column-1 .block-6.button_block span {
-				line-height: 28px !important;
-			}
-
-			.row-5 .column-1 .block-6.button_block .alignment {
-				text-align: center !important;
-			}
-
-			.row-7 .column-1 .block-3.paragraph_block td.pad>div {
-				font-size: 20px !important;
-			}
-
-			.row-7 .column-1 .block-3.paragraph_block td.pad {
-				padding: 20px 10px 0 !important;
-			}
-
-			.row-2 .column-1,
-			.row-3 .column-1,
-			.row-4 .column-1 {
-				padding: 30px 15px 25px !important;
-			}
-		}
-	</style><!--[if true]><style>.forceBgColor{background-color: white !important}</style><![endif]-->
-</head>
-
-<body class="body forceBgColor" style="background-color: transparent; margin: 0; padding: 0; -webkit-text-size-adjust: none; text-size-adjust: none;">
-	<table class="nl-container" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: transparent; background-size: auto; background-image: none; background-position: top left; background-repeat: no-repeat;">
-		<tbody>
-			<tr>
-				<td>
-					<table class="row row-1" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #007c86; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Onboarding_v01_copy.jpg'); background-repeat: no-repeat; background-size: cover; border-radius: 0; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="divider_block block-1 mobile_hide" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-left:60px;padding-right:60px;">
-																<div class="alignment" align="center">
-																	<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-																		<tr>
-																			<td class="divider_inner" style="font-size: 1px; line-height: 1px; border-top: 1px solid #ffffff;"><span>&#8202;</span></td>
-																		</tr>
-																	</table>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-2 mobile_hide" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-left:60px;padding-right:60px;padding-top:10px;">
-																<div style="color:#ffffff;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:14px;font-weight:400;letter-spacing:2px;line-height:120%;text-align:left;mso-line-height-alt:16.8px;">&nbsp;</div>
-															</td>
-														</tr>
-													</table>
-													<table class="image_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 65px;"><img src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/3_Green_Sparkles.png" style="display: block; height: auto; border: 0; width: 100%;" width="65" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#ffffff;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:35px;font-weight:700;letter-spacing:-1px;line-height:120%;text-align:center;mso-line-height-alt:42px;">
-																	<p style="margin: 0;">EngageGPT</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-5" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#ffffff;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:60px;font-weight:700;letter-spacing:-1px;line-height:120%;text-align:center;mso-line-height-alt:72px;">
-																	<p style="margin: 0;">AI for Linkedin</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-6" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-left:60px;padding-right:60px;padding-top:10px;">
-																<div style="color:#ffffff;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:28px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:42px;">
-																	<p style="margin: 0;">Simplify your networking journey using AI</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="image_block block-7" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:20px;padding-top:25px;width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div class="fullWidth" style="max-width: 650px;"><img src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/Welcome_Thread.png" style="display: block; height: auto; border: 0; width: 100%;" width="650" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<div class="spacer_block block-8" style="height:20px;line-height:20px;font-size:1px;">&#8202;</div>
-													<div class="spacer_block block-9" style="height:40px;line-height:40px;font-size:1px;">&#8202;</div>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-2" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Onboarding_v02_copy.jpg'); background-position: top center; background-repeat: no-repeat; background-size: auto;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto; border-bottom: 15px solid transparent; border-left: 30px solid transparent; border-radius: 14px; border-right: 30px solid transparent; border-top: 15px solid transparent; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; background-color: #ffffff; padding-bottom: 20px; padding-left: 25px; padding-right: 25px; padding-top: 35px; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:5px;text-align:center;width:100%;">
-																<h1 style="margin: 0; color: #222222; direction: ltr; font-family: TimesNewRoman, 'Times New Roman', Times, Beskerville, Georgia, serif; font-size: 22px; font-weight: 700; letter-spacing: -1px; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 26.4px;"><em><span class="tinyMce-placeholder">Step 1</span></em></h1>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:30px;font-weight:700;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:36px;">
-																	<p style="margin: 0;">Install Chrome Extension</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:19.2px;">
-																	<p style="margin: 0;">Click on the button below to install our extension</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" style="height:41px;width:153px;v-text-anchor:middle;" arcsize="25%" stroke="false" fillcolor="#007c86">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#ffffff;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="https://chromewebstore.google.com/detail/engagegpt-ai-for-linkedin/ldhdipkofibjleihomflebfklhadikio?hl=en-GB" target="_blank" style="background-color:#007c86;border-bottom:0px solid #222222;border-left:0px solid #222222;border-radius:10px;border-right:0px solid #222222;border-top:0px solid #222222;color:#ffffff;display:inline-block;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:1px;"><span style="word-break: break-word; line-height: 32px;">Get Extension</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-3" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Onboarding_v03_copy.jpg'); background-position: top center; background-repeat: no-repeat; background-size: auto;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto; border-bottom: 15px solid transparent; border-left: 30px solid transparent; border-radius: 0; border-right: 30px solid transparent; border-top: 15px solid transparent; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; background-color: #ffffff; padding-bottom: 20px; padding-left: 25px; padding-right: 25px; padding-top: 30px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:5px;text-align:center;width:100%;">
-																<h1 style="margin: 0; color: #222222; direction: ltr; font-family: TimesNewRoman, 'Times New Roman', Times, Beskerville, Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -1px; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 26.4px;"><em><span class="tinyMce-placeholder">Step 2</span></em></h1>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:30px;font-weight:700;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:36px;">
-																	<p style="margin: 0;">Join Community/Support group</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:19.2px;">
-																	<p style="margin: 0;">In case of any queries/issues &nbsp;</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" style="height:41px;width:186px;v-text-anchor:middle;" arcsize="25%" stroke="false" fillcolor="#007c86">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#ffffff;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="https://chat.whatsapp.com/CxMeAkMmAlnBJzVg89hkST" target="_blank" style="background-color:#007c86;border-bottom:0px solid #222222;border-left:0px solid #222222;border-radius:10px;border-right:0px solid #222222;border-top:0px solid #222222;color:#ffffff;display:inline-block;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:15px;padding-right:15px;font-size:16px;display:inline-block;letter-spacing:1px;"><span style="word-break: break-word; line-height: 32px;">Join Now</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-4" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Onboarding_v04_copy.jpg'); background-position: top center; background-repeat: no-repeat; background-size: auto;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto; border-bottom: 15px solid transparent; border-left: 30px solid transparent; border-radius: 0; border-right: 30px solid transparent; border-top: 15px solid transparent; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; background-color: #ffffff; padding-bottom: 20px; padding-left: 25px; padding-right: 25px; padding-top: 30px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="heading_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:5px;text-align:center;width:100%;">
-																<h1 style="margin: 0; color: #222222; direction: ltr; font-family: TimesNewRoman, 'Times New Roman', Times, Beskerville, Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: -1px; line-height: 120%; text-align: center; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 26.4px;"><em><span class="tinyMce-placeholder">Step 3</span></em></h1>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:30px;font-weight:700;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:36px;">
-																	<p style="margin: 0;">Watch features tutorials</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:19.2px;">
-																	<p style="margin: 0;">Watch our feature tutorials to get started</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad">
-																<div class="alignment" align="center"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" style="height:41px;width:173px;v-text-anchor:middle;" arcsize="25%" stroke="false" fillcolor="#007c86">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#ffffff;font-family:Arial, sans-serif;font-size:16px">
-<![endif]--><a href="https://www.youtube.com/playlist?list=PLYHoCaYE8EoD6YBlcDrPoHSYTIvAjW3vI" target="_blank" style="background-color:#007c86;border-bottom:0px solid #222222;border-left:0px solid #222222;border-radius:10px;border-right:0px solid #222222;border-top:0px solid #222222;color:#ffffff;display:inline-block;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:16px;font-weight:700;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:1px;"><span style="word-break: break-word; line-height: 32px;">Watch Tutorials</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-5" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-position: top center; background-repeat: no-repeat; background-size: auto; background-image: url('https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Onboarding_v06_copy.jpg'); border-radius: 0; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: middle; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<div class="spacer_block block-1" style="height:60px;line-height:60px;font-size:1px;">&#8202;</div>
-													<div class="spacer_block block-2" style="height:60px;line-height:60px;font-size:1px;">&#8202;</div>
-													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-left:20px;padding-right:20px;padding-top:60px;">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:36px;font-weight:700;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:43.199999999999996px;">
-																	<p style="margin: 0;">About</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-4" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-bottom:10px;padding-left:30px;padding-right:30px;padding-top:10px;">
-																<div style="color:#222222;direction:ltr;font-family:TimesNewRoman, 'Times New Roman', Times, Beskerville, Georgia, serif;font-size:36px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:43.199999999999996px;">
-																	<p style="margin: 0;">EngageGPT</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-5" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-bottom:15px;padding-left:30px;padding-right:30px;padding-top:10px;">
-																<div style="color:#222222;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:18px;font-weight:400;letter-spacing:0px;line-height:150%;text-align:center;mso-line-height-alt:27px;">
-																	<p style="margin: 0;">EngageGPT Extension enhances your LinkedIn experience by providing AI-powered tools for generating comments, posts, message replies, and more....</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="button_block block-6" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="padding-bottom:30px;text-align:center;">
-																<div class="alignment" align="center"><!--[if mso]>
-<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.engagegpt.in" style="height:39px;width:133px;v-text-anchor:middle;" arcsize="26%" strokeweight="0.75pt" strokecolor="#222222" fillcolor="#f6f5f1">
-<w:anchorlock/>
-<v:textbox inset="0px,0px,0px,0px">
-<center dir="false" style="color:#222222;font-family:Arial, sans-serif;font-size:14px">
-<![endif]--><a href="https://www.engagegpt.in" target="_blank" style="background-color:#f6f5f1;border-bottom:1px solid #222222;border-left:1px solid #222222;border-radius:10px;border-right:1px solid #222222;border-top:1px solid #222222;color:#222222;display:inline-block;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:14px;font-weight:400;mso-border-alt:none;padding-bottom:5px;padding-top:5px;text-align:center;text-decoration:none;width:auto;word-break:keep-all;"><span style="padding-left:15px;padding-right:15px;font-size:14px;display:inline-block;letter-spacing:1px;"><span style="word-break: break-word; line-height: 28px;">LEARN MORE</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-6" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #f6f5f1; border-radius: 0; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="width:100%;">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 650px;"><img src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/8741/BEE_May20_MarketingAgency_Invoice_v01.jpg" style="display: block; height: auto; border: 0; width: 100%;" width="650" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-7" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-size: auto; background-color: #007c86; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-												<td class="column column-1" width="100%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 15px; padding-left: 20px; padding-right: 20px; padding-top: 15px; vertical-align: top; border-top: 0px; border-right: 0px; border-bottom: 0px; border-left: 0px;">
-													<div class="spacer_block block-1" style="height:40px;line-height:40px;font-size:1px;">&#8202;</div>
-													<table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
-														<tr>
-															<td class="pad" style="width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px">
-																	<div style="max-width: 183px;"><img src="https://fceae5ec2c.imgdist.com/pub/bfra/jyy05d7s/q7p/8b5/we0/EngageGPTLogo.png" style="display: block; height: auto; border: 0; width: 100%;" width="183" height="auto"></div>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-bottom:30px;padding-left:10px;padding-right:10px;padding-top:20px;">
-																<div style="color:#ffffff;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:20px;font-weight:400;letter-spacing:2px;line-height:180%;text-align:center;mso-line-height-alt:36px;">
-																	<p style="margin: 0;">Happy Engaging<br>Team EngageGPT</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-4" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#ffffff;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:17px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:20.4px;">
-																	<p style="margin: 0;">New Delhi, India</p>
-																</div>
-															</td>
-														</tr>
-													</table>
-													<table class="paragraph_block block-5" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad">
-																<div style="color:#ffffff;direction:ltr;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:14px;font-weight:400;letter-spacing:0px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">&nbsp;</div>
-															</td>
-														</tr>
-													</table>
-													<div class="spacer_block block-6" style="height:40px;line-height:40px;font-size:1px;">&#8202;</div>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					<table class="row row-8" align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff;">
-						<tbody>
-							<tr>
-								<td>
-									<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; background-color: #ffffff; color: #000000; width: 650px; margin: 0 auto;" width="650">
-										<tbody>
-											<tr>
-
-														</tr>
-													</table>
-												</td>
-											</tr>
-										</tbody>
-									</table>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</td>
-			</tr>
-		</tbody>
-	</table><!-- End -->
-</body>
-
-</html>`,
-  };
-  mailgun.messages().send(data, function (err, body) {
-    if (err) {
-      res.status(500).send({ error: 'Error sending email' });
-    } else {
-      res.status(200).send({ message: 'Email sent successfully' });
-    }
-  });
-};
-
 exports.sendNewUserEmail = async (user) => {
   var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
   var data = {
@@ -2338,6 +828,186 @@ exports.sendNewUserEmail = async (user) => {
           </li>
         </ul>
       </div>`,
+  };
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success');
+    }
+  });
+};
+
+exports.helpRequest = async (user, helpMessage) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+  var data = {
+    from: from_who,
+    to: 'pahwabharat15@gmail.com',
+    cc: 'letsbunktoday@gmail.com',
+    subject: `help Request from ${user?.name}`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #555;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        .profile-pic {
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        .credits-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e8f0fe;
+            border-left: 4px solid #007bff;
+        }
+        .cta {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .cta a {
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Help Request from ${user?.name}</h1>
+    <p>Dear ${user?.name},</p>
+    <p>Reaching out for assistance.</p>
+    <p>Here are your details:</p>
+    <p><strong>Email:</strong> ${user?.email}</p>
+    <p><strong>Plan:</strong> ${user?.plan}</p>
+    <p><strong>Credits:</strong> ${user?.credits}</p>
+    <p><strong>Total Credits Used:</strong> ${user?.totalCreditsUsed}</p>
+
+    <div class="credits-info">
+        <p>Help Request <br/> ${helpMessage}</p>
+    </div>
+</div>
+
+</body>
+</html>
+`,
+  };
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success');
+    }
+  });
+};
+
+exports.feedback = async (user, rating, feedback) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+  var data = {
+    from: from_who,
+    to: 'pahwabharat15@gmail.com',
+    cc: 'letsbunktoday@gmail.com',
+    subject: `Feedback from ${user?.name}`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #555;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        .profile-pic {
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        .credits-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e8f0fe;
+            border-left: 4px solid #007bff;
+        }
+        .cta {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .cta a {
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>${user?.name} Rated ${rating} stars</h1>
+    <p>Here are your details:</p>
+    <p><strong>Email:</strong> ${user?.email}</p>
+    <p><strong>Plan:</strong> ${user?.plan}</p>
+    <p><strong>Credits:</strong> ${user?.credits}</p>
+    <p><strong>Total Credits Used:</strong> ${user?.totalCreditsUsed}</p>
+    <p>${user?.name} rated <strong>${rating}</strong> Stars </p><br/>
+    <div class="credits-info">
+        <p>Feedback <br/> ${feedback}</p>
+    </div>
+</div>
+
+</body>
+</html>
+`,
   };
   mailgun.messages().send(data, function (err, body) {
     if (err) {
@@ -2446,7 +1116,7 @@ exports.sendNewMemberInviteEmail = async (
 </div>
 
 </body>
-</html>`
+</html>`,
   };
   mailgun.messages().send(data, function (err, body) {
     if (err) {

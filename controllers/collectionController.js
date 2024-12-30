@@ -50,9 +50,8 @@ exports.addtocollection = catchAsync(async (req, res, next) => {
 
 exports.browseCollections = catchAsync(async (req, res, next) => {
   try {
-    const userId = req.user.id; // Assuming user ID is available in req.user
+    const userId = req.user.id;
 
-    // Find all collections associated with the user
     const collections = await Collection.find({ userId: userId });
 
     res.status(200).json({ collections });
@@ -62,12 +61,11 @@ exports.browseCollections = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
-  const userId = req.user._id; // Assuming the user ID is stored in req.user._id
+  const userId = req.user._id;
   const collectionId = req.params.collectionId;
   const postId = req.params.postId;
 
   try {
-    // Find the collection by its ID
     const collection = await Collection.findById(collectionId);
 
     if (!collection) {
@@ -76,14 +74,12 @@ exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
         .json({ success: false, message: 'Collection not found' });
     }
 
-    // Check if the collection belongs to the user
     if (!collection.userId.equals(userId)) {
       return res
         .status(403)
         .json({ success: false, message: 'Unauthorized access' });
     }
 
-    // Find the post within the collection by its ID
     const post = collection.posts.find((post) => post._id.equals(postId));
 
     if (!post) {
@@ -92,11 +88,9 @@ exports.deleteCollectionPost = catchAsync(async (req, res, next) => {
         .json({ success: false, message: 'Post not found in the collection' });
     }
 
-    // Remove the post from the collection
     collection.posts.pull(post._id);
     await collection.save();
 
-    // Delete the post document from the database
     await Post.findByIdAndDelete(postId);
 
     res

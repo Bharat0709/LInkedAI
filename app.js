@@ -63,7 +63,7 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
 });
 
-app.use('/api/v1/organization/auth', organizationRouter);
+app.use('/api/v1/organization', organizationRouter);
 app.use('/api/v1/members', memberRouter);
 app.use('/api/v1/mail', mailRouter);
 app.use('/api/v1/ai', aiRouter);

@@ -1,10 +1,10 @@
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
-const { generateConnectionToken } = require('../utils/randomString');
 const Organization = require('../models/organization');
 const Member = require('../models/members');
-const { sendNewMemberInviteEmail } = require('./mailController');
 const rateLimitMiddleware = require('../middlewares/rateLimiter');
+const { generateConnectionToken } = require('../utils/randomString');
+const { sendNewMemberInviteEmail } = require('./mailController');
 const { createSendToken } = require('./../middlewares/tokenUtils');
 
 exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
@@ -331,4 +331,40 @@ exports.addConnectionToken = catchAsync(async (req, res, next) => {
   const isOrganization = false;
   await member.save();
   createSendToken(member, 200, res, isOrganization, isMember);
+});
+
+exports.disconnectLinkedIn = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId;
+  const organizationId = req.organization.id;
+  console.log(req.params);
+  try {
+    const member = await Member.findOne({ _id: memberId, organizationId });
+    if (!member) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    if (member.isLinkedinConnected === false) {
+      return next(new AppError('Member is not connected to LinkedIn', 400));
+    }
+
+    member.isLinkedinConnected = false;
+    member.linkedinAccessToken = null;
+    member.tokenExpiresIn = null;
+    member.linkedinProfileId = null;
+
+    await member.save();
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      message: 'Member successfully disconnected from LinkedIn',
+    });
+  } catch (error) {
+    next(new AppError('Error disconnecting LinkedIn', 500));
+  }
 });

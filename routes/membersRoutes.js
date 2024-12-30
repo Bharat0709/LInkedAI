@@ -47,6 +47,12 @@ Router.post(
 );
 
 Router.post(
+  '/linkedin/disconnect/:memberId',
+  authController.isUserLoggedIn,
+  memberController.disconnectLinkedIn
+);
+
+Router.post(
   '/lbprofilevisibility',
   authController.isUserLoggedIn,
   memberController.updateLeaderboardProfileVisibility

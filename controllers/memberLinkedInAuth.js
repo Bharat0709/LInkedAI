@@ -7,7 +7,6 @@ const { encryptToken, generateState } = require('../utils/linkedInAuth');
 dotenv.config();
 
 exports.linkedinAuth = async (req, res, next) => {
-  console.log('Request to authticate linkedin Recieved');
   try {
     const state = generateState();
     req.session.state = state;
@@ -20,7 +19,6 @@ exports.linkedinAuth = async (req, res, next) => {
       scope: `${process.env.LINKEDIN_SCOPE}`,
       state,
     };
-    console.log(params);
 
     const authUrl = `${baseURL}?${querystring.stringify(params)}`;
 

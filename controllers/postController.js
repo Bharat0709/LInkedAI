@@ -6,11 +6,9 @@ const Organization = require('../models/organization');
 const Member = require('../models/members');
 
 exports.upsertPostsData = catchAsync(async (req, res, next) => {
-  console.log('-------------------ADDING POSTS ---------------------');
   const organizationId = req.member.organizationId;
   const memberId = req.member.id;
   const posts = req.body;
-  console.log(memberId, organizationId.toString());
 
   if (!Array.isArray(posts) || posts.length === 0) {
     return res.status(400).json({
