@@ -1,4 +1,6 @@
 const { RateLimiterMemory } = require('rate-limiter-flexible');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
 
 const rateLimitOpts = {
   points: 4,
@@ -7,19 +9,15 @@ const rateLimitOpts = {
 
 const rateLimiter = new RateLimiterMemory(rateLimitOpts);
 
-const rateLimitMiddleware = async (req, res, next) => {
+const rateLimitMiddleware = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
   try {
-    const userId = req.user.id;
-
     await rateLimiter.consume(userId);
-
     next();
   } catch (err) {
-    res.status(429).json({
-      success: false,
-      message: 'Too many requests, please try again later.',
-    });
+    throw new AppError('Too many requests, please try again later.', 429);
   }
-};
+});
 
 module.exports = rateLimitMiddleware;

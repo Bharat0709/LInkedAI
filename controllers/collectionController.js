@@ -1,10 +1,6 @@
 // Function to add a new post to a collection
 const { Collection, Post } = require('./../models/collection'); // Import the Mongoose models
-const jwt = require('jsonwebtoken');
 const catchAsync = require('./../utils/catchAsync');
-const { promisify } = require('util');
-const otpCache = require('../utils/cache');
-const { sendNewUserEmail } = require('../controllers/mailController');
 
 exports.addtocollection = catchAsync(async (req, res, next) => {
   try {

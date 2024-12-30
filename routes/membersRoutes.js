@@ -1,9 +1,24 @@
 const express = require('express');
 const memberController = require('../controllers/memberController');
 const authController = require('../controllers/authController');
+const linkedInAuthController = require('../controllers/memberLinkedInAuth');
+const linkedInController = require('../controllers/linkedInController');
 const Router = express.Router();
 
+Router.get('/auth/linkedin', linkedInAuthController.linkedinAuth);
 Router.post('/checkMember', memberController.checkMemberExists);
+
+Router.get(
+  '/auth/linkedin/callback',
+  linkedInAuthController.linkedinAuthCallback
+);
+
+Router.post(
+  '/linkedin/share/:id',
+  authController.isUserLoggedIn,
+  linkedInController.parseFormData,
+  linkedInController.shareLinkedInPost
+);
 
 Router.get(
   '/:organizationId/:memberId',
@@ -30,11 +45,13 @@ Router.post(
   authController.isUserLoggedIn,
   memberController.updateDaysActive
 );
+
 Router.post(
   '/lbprofilevisibility',
   authController.isUserLoggedIn,
   memberController.updateLeaderboardProfileVisibility
 );
+
 Router.post(
   '/tagPost',
   authController.isUserLoggedIn,

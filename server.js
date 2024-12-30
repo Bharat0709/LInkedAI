@@ -1,31 +1,13 @@
 const app = require('./app');
 const dotenv = require('dotenv');
-const os = require('os');
 const mongoose = require('mongoose');
-dotenv.config();
-const port = process.env.PORT || 8000;
-
-dotenv.config({ path: './.env' });
 const DB = process.env.DATABASE;
-// Get local IP address
-const getLocalIp = () => {
-  const networkInterfaces = os.networkInterfaces();
-  for (const interfaceName in networkInterfaces) {
-    // @ts-ignore
-    for (const address of networkInterfaces[interfaceName]) {
-      if (address.family === 'IPv4' && !address.internal) {
-        return address.address;
-      }
-    }
-  }
-  return '127.0.0.1';
-};
-
 const PORT = Number(process.env.PORT) || 8000;
-const ipAddress = getLocalIp();
 
+dotenv.config();
 app.listen(PORT, () => {
-  console.log(`Server running on http://${ipAddress}:${PORT}`);
+  console.log(`Server running on ${PORT}`);
+  console.log(`Server started in ${process.env.NODE_ENV}`);
 });
 
 mongoose.connect(DB);

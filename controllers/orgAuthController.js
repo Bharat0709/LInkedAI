@@ -1,15 +1,12 @@
 const dotenv = require('dotenv');
 const passport = require('passport');
-const jwt = require('jsonwebtoken');
-const { promisify } = require('util');
 const bcrypt = require('bcryptjs');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const { signToken, createSendToken } = require('./../middlewares/tokenUtils');
 const Organization = require('./../models/organization');
-const GuestUser = require('../models/members');
-const User = require('./../models/userModel');
+const { encryptToken, generateState } = require('../utils/linkedInAuth');
 dotenv.config();
 
 exports.signupOrganization = catchAsync(async (req, res, next) => {
@@ -43,12 +40,13 @@ exports.signupOrganization = catchAsync(async (req, res, next) => {
     email: data.email,
   };
 
-  createSendToken(orgObj, 201, res, true, false);
+  const isOrganization = true;
+  const isMember = false;
+  await createSendToken(orgObj, 201, res, isOrganization, isMember);
 });
 
 exports.loginOrganization = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(email, password);
 
   if (!email || !password) {
     return next(new AppError('Please provide email and password', 400));
@@ -57,9 +55,12 @@ exports.loginOrganization = catchAsync(async (req, res, next) => {
   const organization = await Organization.findOne({ email }).select(
     '+password'
   );
-  console.log(organization);
+
+  if (!organization) {
+    return next(new AppError('User does not exist', 401));
+  }
+
   const isMatch = await bcrypt.compare(password, organization.password);
-  console.log(isMatch);
   if (!organization || !isMatch) {
     return next(new AppError('Incorrect email or password', 401));
   }
@@ -69,7 +70,6 @@ exports.loginOrganization = catchAsync(async (req, res, next) => {
 
 exports.verifyOrganizationDetails = catchAsync(async (req, res, next) => {
   const user = req.organization;
-  console.log(user);
   res.status(200).json({
     status: 'success',
     user: user,
@@ -104,10 +104,9 @@ passport.use(
         });
 
         if (existingOrg) {
-          // Update Google OAuth details if necessary
           existingOrg.name = profile.displayName;
           existingOrg.oauthProvider = 'google';
-          existingOrg.oauthId = profile.id;
+          existingOrg.oauthId = encryptToken(profile.id);
           existingOrg.profilePicture = profile.photos[0].value || null;
           await existingOrg.save();
           return done(null, existingOrg);
@@ -118,9 +117,8 @@ passport.use(
           oauthProvider: 'google',
           name: profile.displayName || 'Google User',
           profilePicture: profile.photos[0].value || null,
-          oauthId: profile.id,
+          oauthId: encryptToken(profile.id),
         });
-
         done(null, newOrg);
       } catch (err) {
         done(err, null);
@@ -139,7 +137,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Google Auth Routes
 exports.googleAuth = passport.authenticate('google', {
   scope: ['profile', 'email'],
 });
@@ -150,10 +147,8 @@ exports.googleAuthCallback = async (req, res, next) => {
       return next(new AppError('Authentication failed.', 401));
     }
 
-    // Generate token
     const token = await createGoogleAuthToken(user, res, true);
 
-    // Redirect to frontend with token
     res.redirect(`http://localhost:3000/dashboard?token=${token}`);
   })(req, res, next);
 };

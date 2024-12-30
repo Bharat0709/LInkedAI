@@ -8,6 +8,14 @@ const organizationSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    credits: {
+      type: Number,
+      default: 100,
+    },
+    totalCreditsUsed: {
+      type: Number,
+      default: 0,
+    },
     password: {
       type: String,
       minlength: 8,
@@ -24,11 +32,11 @@ const organizationSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      default: 'Anonymous', // Default name if not provided
+      default: 'Anonymous',
     },
     profilePicture: {
-      type: String, // URL for the profile picture
-      default: null, // Null if no profile picture is available
+      type: String,
+      default: null,
     },
     billingDetails: {
       addressLine1: { type: String },
@@ -58,7 +66,7 @@ const organizationSchema = new mongoose.Schema(
     },
     credits: {
       type: Number,
-      default: 0,
+      default: 100,
     },
   },
   {

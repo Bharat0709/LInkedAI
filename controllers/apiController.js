@@ -9,6 +9,7 @@ const {
   HarmBlockThreshold,
 } = require('@google/generative-ai');
 const Member = require('../models/members');
+const Organization = require('../models/organization');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
@@ -264,12 +265,14 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 
     const user = req.member;
 
-    // Check if the user has enough credits
     if (user.credits < 10) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
 
-    const generatedPostContent = await getPostContent(postType, selectedTone);
+    const generatedPostContent = await getPostContentMember(
+      postType,
+      selectedTone
+    );
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
@@ -288,10 +291,83 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   }
 });
 
-async function getPostContent(postType, selectedTone) {
+exports.generateOrganizationPostContentGemini = catchAsync(
+  async (req, res, next) => {
+    try {
+      const { postType, language, template, selectedTone } = req.body;
+
+      const user = req.organization;
+
+      if (user.credits < 10) {
+        return res.status(403).json({ error: 'Insufficient credits' });
+      }
+
+      const generatedPostContent = await getPostContentOrg(
+        postType,
+        selectedTone,
+        language,
+        template
+      );
+      user.credits -= 10;
+      user.totalCreditsUsed += 10;
+      await Organization.findByIdAndUpdate(user._id, {
+        credits: user.credits,
+      });
+      await Organization.findByIdAndUpdate(user._id, {
+        totalCreditsUsed: user.totalCreditsUsed,
+      });
+      res.json({
+        generatedPostContent: generatedPostContent,
+        remainingCredits: user.credits,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+async function getPostContentOrg(postType, selectedTone, language, template) {
   const parts = [
     {
-      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in ${language} for me with the following specifications:
+
+      Post Topic is about ${postType} and u can follow this template if you want to - ${template} - use this only if this has some contnet in it if not follwo the below requirements
+
+      Requirements:
+      - Include emojis to add a touch of personality.
+      - Do not include ** or * before, after or in between the words in the response
+      - Incorporate relevant hashtags for increased visibility.
+      - Start the post with a compelling hook line to engage the audience.
+      - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
+      - Should have one link attached that is related to post content helpful for the audience if any
+      - Prompt followers to share their thoughts or experiences related to the post.
+      - Ensure the post fits within LinkedIn's character limit for optimal engagement
+      - Leverage current events or industry trends to make the post timely and relevant.
+      - Use simple and easy to undestand words in the post
+      - The post should not seem to be written by AI
+      `,
+    },
+    { text: '\n' },
+  ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 1200,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+  return result.response.text();
+}
+
+async function getPostContentMember(postType, selectedTone) {
+  const parts = [
+    {
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in for me with the following specifications:
 
       Post Topic is about ${postType}
 
@@ -568,7 +644,6 @@ exports.detectTopicGemini = async (postContent) => {
     const detectedTopic = await detectTopic(postContent);
     return detectedTopic;
   } catch (error) {
-    // Handle errors appropriately
     console.log(error);
   }
 };

@@ -9,23 +9,19 @@ const { createSendToken } = require('./../middlewares/tokenUtils');
 
 exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
   const user = req.member;
-  console.log(user);
   res.status(200).json({
     status: 'success',
-    user: user,
+    user,
   });
 });
 
 exports.checkMemberExists = catchAsync(async (req, res, next) => {
-  console.log('checking if member exists');
   const { name, profileLink } = req.body;
-  console.log(name, profileLink);
   const existingUser = await Member.findOne({ name, profileLink });
-  console.log(existingUser);
   if (existingUser && existingUser.email) {
     createSendToken(existingUser, 200, res, false, true);
   } else {
-    res.status(400).json({ success: false, message: 'Member not found' });
+    return next(new AppError('Member not found', 400));
   }
 });
 
@@ -36,19 +32,19 @@ exports.updateDaysActive = catchAsync(async (req, res, next) => {
   user.lastActive = Date.now();
   user.credits = 100;
   user.currentStreak = currentStreak;
+  user.daysActive = activeDays;
 
   await Member.findByIdAndUpdate(user._id, {
     credits: user.credits,
     lastActive: user.lastActive,
-  });
-
-  user.daysActive = activeDays;
-  await Member.findByIdAndUpdate(user._id, {
     daysActive: user.daysActive,
     currentStreak: user.currentStreak,
   });
 
-  res.status(200).json({ success: true, user });
+  res.status(200).json({
+    success: true,
+    user,
+  });
 });
 
 exports.updateLeaderboardProfileVisibility = [
@@ -58,11 +54,15 @@ exports.updateLeaderboardProfileVisibility = [
     const user = req.member;
 
     user.leaderBoardProfileVisibility = leaderBoardProfileVisibility;
+
     await Member.findByIdAndUpdate(user._id, {
-      leaderBoardProfileVisibility: user.leaderBoardProfileVisibility,
+      leaderBoardProfileVisibility,
     });
 
-    res.status(200).json({ success: true, user });
+    res.status(200).json({
+      success: true,
+      user,
+    });
   }),
 ];
 
@@ -73,9 +73,7 @@ exports.updatePostTagging = [
     const user = req.member;
 
     user.tagPost = tagPost;
-    await Member.findByIdAndUpdate(user._id, {
-      tagPost: user.tagPost,
-    });
+    await Member.findByIdAndUpdate(user._id, { tagPost: user.tagPost });
 
     res.status(200).json({ success: true, user });
   }),
@@ -93,18 +91,10 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
       leaderBoardProfileVisibility: 1,
     }
   )
-    .sort({
-      daysActive: -1,
-    })
-    .limit(20); // Limit to top 10 users
+    .sort({ daysActive: -1 })
+    .limit(20);
 
-  const allUsers = await Member.find(
-    {},
-    {
-      _id: 0,
-      daysActive: 1,
-    }
-  ).sort({
+  const allUsers = await Member.find({}, { _id: 0, daysActive: 1 }).sort({
     daysActive: -1,
   });
 
@@ -119,41 +109,32 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createMember = catchAsync(async (req, res) => {
+exports.createMember = catchAsync(async (req, res, next) => {
   const { name, email } = req.body;
-  console.log(name, email);
-  const organizationId = req.organization._id;
+  const organizationId = req.organization?._id;
 
-  if (!name || !email || !organizationId) {
-    return res
-      .status(400)
-      .json({ message: 'Name, email, and organization are required' });
+  if (!organizationId || !req.organization) {
+    return next(new AppError('Unauthorized to perform this action', 401));
+  }
+
+  if (!name || !email) {
+    return next(new AppError('Name, email are required', 400));
   }
 
   try {
     const existingOrganization = await Organization.findById(organizationId);
 
     if (!existingOrganization) {
-      return res.status(400).json({ message: 'Organization does not exist' });
+      return next(new AppError('Organization does not exist', 400));
     }
-    console.log(existingOrganization);
 
-    const existingMember = await Member.findOne({
-      $or: [
-        { email },
-        { connectionToken: generateConnectionToken(name, organizationId) },
-      ],
-    });
-    console.log(existingMember);
+    const existingMember = await Member.findOne({ email });
 
     if (existingMember) {
-      return res.status(400).json({
-        message: 'Member already exists with this email or connection token',
-      });
+      return next(new AppError('Member already exists with this email', 400));
     }
 
-    const connectionToken = generateConnectionToken(name, organizationId);
-    console.log(connectionToken);
+    let connectionToken = generateConnectionToken(organizationId);
 
     const newMember = new Member({
       name,
@@ -162,16 +143,15 @@ exports.createMember = catchAsync(async (req, res) => {
       connectionToken,
     });
 
-    newMember.connectionToken = generateConnectionToken(
-      existingOrganization._id.toString(),
-      newMember._id.toString()
-    );
-
-    // Create new member
     if (existingOrganization.email === email) {
       newMember.role = 'owner';
     }
-    console.log(newMember);
+
+    newMember.connectionToken = generateConnectionToken(
+      organizationId,
+      newMember._id
+    );
+
     await sendNewMemberInviteEmail(
       existingOrganization.name,
       name,
@@ -180,18 +160,13 @@ exports.createMember = catchAsync(async (req, res) => {
     );
 
     const data = await newMember.save();
-    console.log(data);
 
     res.status(201).json({
       message: 'Member created successfully',
       data: data,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: 'Error creating member',
-      error: error.message,
-    });
+    next(new AppError('Error creating member', 500));
   }
 });
 
@@ -199,7 +174,7 @@ exports.getAllMembersOfOrganization = catchAsync(async (req, res, next) => {
   const organizationId = req.organization._id;
 
   if (!organizationId) {
-    return res.status(400).json({ message: 'Organization ID is required' });
+    return next(new AppError('Organization ID is required', 400));
   }
 
   try {
@@ -218,18 +193,13 @@ exports.getAllMembersOfOrganization = catchAsync(async (req, res, next) => {
       data: members,
     });
   } catch (error) {
-    res.status(500).json({
-      message: 'Error retrieving members',
-      error: error.message,
-    });
+    next(new AppError('Error retrieving members', 500));
   }
 });
 
 exports.updateMemberDetails = catchAsync(async (req, res, next) => {
   const userId = req.member.id;
   const organizationId = req.member.organizationId;
-  console.log(userId, organizationId.toString());
-  console.log(req.body);
   const {
     firstName,
     lastName,
@@ -244,35 +214,31 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
   } = req.body;
 
   if (!firstName || !lastName) {
-    return res.status(400).json({
-      message: 'First name and last name are required',
-    });
+    return next(new AppError('First name and last name are required', 400));
   }
 
   try {
     const existingOrganization = await Organization.findById(organizationId);
     if (!existingOrganization) {
-      return res.status(404).json({
-        message: 'Organization not found',
-      });
+      return next(new AppError('Organization not found', 404));
     }
 
-    // Validate member
     const existingMember = await Member.findById(userId);
-    console.log(existingMember);
     if (!existingMember || existingMember.organizationId !== organizationId) {
-      return res.status(404).json({
-        message: 'Member not found or does not belong to the organization',
-      });
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
     }
 
-    // Combine first name and last name into a full name
     const fullName = `${firstName} ${lastName}`;
 
-    // Update the user details
     const updatedUser = await Member.findByIdAndUpdate(
       userId,
       {
+        lastSyncedAt: new Date().toLocaleString('en-GB'),
         name: fullName,
         connectionsCount,
         profileViews,
@@ -290,9 +256,7 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
     );
 
     if (!updatedUser) {
-      return res.status(404).json({
-        message: 'User not found',
-      });
+      return next(new AppError('User not found', 404));
     }
 
     // Send the response
@@ -301,23 +265,16 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
       data: updatedUser,
     });
   } catch (error) {
-    // Handle errors
-    res.status(500).json({
-      message: 'Error updating user details',
-      error: error.message,
-    });
+    next(new AppError('Error updating user details', 500));
   }
 });
 
 exports.getMemberDetailsByIds = catchAsync(async (req, res, next) => {
   const { organizationId, memberId } = req.params;
-  console.log(organizationId, memberId);
   try {
     const organization = await Organization.findById(organizationId);
     if (!organization) {
-      return res.status(404).json({
-        message: 'Organization not found',
-      });
+      return next(new AppError('Organization not found', 404));
     }
 
     const member = await Member.findOne({
@@ -326,9 +283,12 @@ exports.getMemberDetailsByIds = catchAsync(async (req, res, next) => {
     });
 
     if (!member) {
-      return res.status(404).json({
-        message: 'Member not found or does not belong to the organization',
-      });
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
     }
 
     res.status(200).json({
@@ -336,46 +296,39 @@ exports.getMemberDetailsByIds = catchAsync(async (req, res, next) => {
       data: member,
     });
   } catch (error) {
-    res.status(500).json({
-      message: 'Error retrieving member details',
-      error: error.message,
-    });
+    next(new AppError('Error retrieving member details', 500));
   }
 });
 
 exports.addConnectionToken = catchAsync(async (req, res, next) => {
-  const { connectionToken, name, profileLink ,  profilePicture } = req.body;
-  console.log(connectionToken, name, profileLink , profilePicture);
+  const { connectionToken, name, profileLink, profilePicture } = req.body;
+
   const organizationId = connectionToken.split('-')[0];
-  console.log(organizationId);
+
   const organization = await Organization.findById(organizationId);
   if (!organization) {
-    return res.status(404).json({
-      message: 'Organization not found',
-    });
+    return next(new AppError('Organization not found', 404));
   }
   const memberId = connectionToken.split('-')[1];
-  console.log(memberId);
   const member = await Member.findOne({ _id: memberId, organizationId });
   if (!member) {
-    return res.status(404).json({
-      message: 'Member not found',
-    });
+    return next(new AppError('Member not found', 404));
   }
-  console.log(connectionToken, member.connectionToken);
-
 
   if (connectionToken !== member.connectionToken) {
-    return res.status(400).json({
-      message: 'Invalid connection token',
-    });
+    return next(new AppError('Invalid connection token', 400));
+  }
+
+  if (member.isConnected === 'connected') {
+    return next(new AppError('Member already connected', 400));
   }
 
   member.isConnected = 'connected';
   member.name = name;
   member.profileLink = profileLink;
   member.profilePicture = profilePicture;
-
+  const isMember = true;
+  const isOrganization = false;
   await member.save();
-  createSendToken(member, 200, res, false, true);
+  createSendToken(member, 200, res, isOrganization, isMember);
 });

@@ -3,9 +3,15 @@ const postController = require('../controllers/postController');
 const authController = require('../controllers/authController');
 const Router = express.Router();
 
-Router.post(
-  '/analyze',
+Router.put(
+  '/:id',
   authController.isUserLoggedIn,
-  postController.analyzePost
+  postController.upsertPostsData
+);
+
+Router.get(
+  '/:id',
+  authController.isUserLoggedIn,
+  postController.getPostsByMemberAndOrganization
 );
 module.exports = Router;

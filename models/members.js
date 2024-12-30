@@ -111,7 +111,21 @@ const MemberSchema = new mongoose.Schema({
     default: [],
   },
   lastSyncedAt: {
+    type: String,
+    default: '',
+  },
+  linkedinAccessToken: {
+    type: String,
+  },
+  isLinkedinConnected: {
+    type: Boolean,
+    default: false,
+  },
+  tokenExpiresIn: {
     type: Date,
+  },
+  linkedinProfileId: {
+    type: String,
   },
 });
 
