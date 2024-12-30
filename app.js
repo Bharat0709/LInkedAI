@@ -71,7 +71,7 @@ app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/auth', authRouter);
 
 // Health check route
-app.get('/api/v1/health', (req, res) => {
+app.get('/', (req, res) => {
   console.log('Server is up and running');
   res.status(200).json({
     message: 'Server is up and running',
