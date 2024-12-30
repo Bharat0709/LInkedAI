@@ -24,7 +24,7 @@ const corsOptions = {
       ? ['https://engagegpt.in', 'https://www.linkedin.com']
       : NODE_ENV === 'staging'
       ? [
-          'https://engagegpt-61cwiegr3-bharat0709s-projects.vercel.app',
+          'https://engagegpt-git-analytics-bharat0709s-projects.vercel.app',
           'https://www.linkedin.com',
         ]
       : [
@@ -91,13 +91,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Enable static files
 app.use(express.static('public'));
 
-// Use morgan only in development
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Export app
 module.exports = app;
