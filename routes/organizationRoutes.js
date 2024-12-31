@@ -11,6 +11,11 @@ Router.get(
 );
 Router.post('/auth/signup', organizationAuthController.signupOrganization);
 Router.post('/auth/login', organizationAuthController.loginOrganization);
+Router.post('/auth/forgot-password', organizationAuthController.forgotPassword);
+Router.post(
+  '/auth/reset-password/:token',
+  organizationAuthController.resetPassword
+);
 Router.post(
   '/mail/help',
   authController.isUserLoggedIn,

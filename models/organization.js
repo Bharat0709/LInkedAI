@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 const organizationSchema = new mongoose.Schema(
   {
@@ -23,8 +24,8 @@ const organizationSchema = new mongoose.Schema(
     },
     oauthProvider: {
       type: String,
-      enum: ['google', 'github', 'none'],
-      default: 'none',
+      enum: ['google', 'github', 'password'],
+      default: 'password',
     },
     oauthId: {
       type: String,
@@ -59,21 +60,65 @@ const organizationSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    plan: {
-      type: String,
-      enum: ['basic', 'pro', 'enterprise'],
-      default: 'basic',
+    subscription: {
+      plan: {
+        type: String,
+        enum: ['basic', 'pro', 'enterprise'],
+        default: 'basic',
+      },
+      status: {
+        type: String,
+        enum: ['active', 'inactive', 'canceled'],
+        default: 'active',
+      },
+      renewalDate: {
+        type: Date,
+        default: null,
+      },
     },
-    credits: {
-      type: Number,
-      default: 100,
+    activityLog: [
+      {
+        action: { type: String },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
     },
   },
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    timestamps: true,
   }
 );
+
+organizationSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+organizationSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // Token valid for 10 minutes
+  return resetToken;
+};
 
 const Organization = mongoose.model('Organization', organizationSchema);
 

@@ -1,12 +1,14 @@
 const dotenv = require('dotenv');
 const passport = require('passport');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const AppError = require('./../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
 const { signToken, createSendToken } = require('./../middlewares/tokenUtils');
 const Organization = require('./../models/organization');
 const { encryptToken } = require('../utils/linkedInAuth');
+const { sendResetPasswordURL } = require('./mailController');
 dotenv.config();
 
 exports.signupOrganization = catchAsync(async (req, res, next) => {
@@ -30,13 +32,17 @@ exports.signupOrganization = catchAsync(async (req, res, next) => {
   const organization = new Organization({
     email,
     password: hashedPassword,
+    name: 'EngageGPT User',
+    credits: 100,
+    oauthProvider: 'password',
+    isVerified: true,
+    isActive: true,
   });
 
   const data = await organization.save();
 
   const orgObj = {
     _id: data._id,
-    organizationName: data.organizationName,
     email: data.email,
   };
 
@@ -72,7 +78,14 @@ exports.verifyOrganizationDetails = catchAsync(async (req, res, next) => {
   const user = req.organization;
   res.status(200).json({
     status: 'success',
-    user: user,
+    user: {
+      profilePicture: user.profilePicture,
+      name: user.name,
+      email: user.email,
+      credits: user.credits,
+      subscription: user.subscription,
+      oauthProvider: user.oauthProvider,
+    },
   });
 });
 
@@ -115,9 +128,11 @@ passport.use(
         const newOrg = await Organization.create({
           email: profile.emails[0].value,
           oauthProvider: 'google',
-          name: profile.displayName || 'Google User',
+          name: profile.displayName || 'EngageGPT User',
           profilePicture: profile.photos[0].value || null,
           oauthId: encryptToken(profile.id),
+          credits: 100,
+          subscription: { plan: 'basic', status: 'active' },
         });
         done(null, newOrg);
       } catch (err) {
@@ -152,3 +167,70 @@ exports.googleAuthCallback = async (req, res, next) => {
     res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${token}`);
   })(req, res, next);
 };
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const organization = await Organization.findOne({ email });
+  if (!organization) {
+    return next(new AppError('There is no user with that email address.', 404));
+  }
+
+  const resetToken = organization.createPasswordResetToken();
+
+  await organization.save({ validateBeforeSave: false });
+
+  const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+  try {
+    await sendResetPasswordURL(
+      organization.email,
+      'Reset your password (valid for 10 minutes)',
+      resetURL
+    );
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Password reset link sent to email!',
+    });
+  } catch (err) {
+    organization.resetPasswordToken = undefined;
+    organization.resetPasswordExpires = undefined;
+    await organization.save({ validateBeforeSave: false });
+
+    return next(
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
+    );
+  }
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+  const { password, passwordConfirm } = req.body;
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const organization = await Organization.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  });
+
+  if (!organization) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
+
+  if (password !== passwordConfirm) {
+    return next(new AppError('Passwords do not match.', 400));
+  }
+
+  organization.password = await bcrypt.hash(password, 12);
+  organization.resetPasswordToken = undefined;
+  organization.resetPasswordExpires = undefined;
+
+  await organization.save();
+
+  await createSendToken(organization, 200, res, true, false);
+});

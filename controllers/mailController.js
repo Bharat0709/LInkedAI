@@ -1126,3 +1126,65 @@ exports.sendNewMemberInviteEmail = async (
     }
   });
 };
+
+exports.sendResetPasswordURL = async (email, subject, resetURL) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+  var data = {
+    from: from_who,
+    to: email,
+    subject: subject,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f7f7; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600px" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background-color: #007bff; padding: 20px; text-align: center; color: #ffffff; font-size: 24px; font-weight: bold;">
+              Password Reset Request
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px; color: #333333; font-size: 16px; line-height: 1.5;">
+              <p>Hi,</p>
+              <p>We received a request to reset your password. If you made this request, please click the button below to reset your password:</p>
+              <p style="text-align: center; margin: 20px 0;">
+                <a href="${resetURL}" style="display: inline-block; background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-size: 16px;">Reset Password</a>
+              </p>
+              <p>If you didn’t request a password reset, please ignore this email or contact support if you have concerns.</p>
+              <p>This link will expire in <strong>10 minutes</strong>.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f1f1f1; padding: 10px; text-align: center; color: #888888; font-size: 14px;">
+              <p>If the button above doesn’t work, copy and paste the following link into your browser:</p>
+              <p style="word-wrap: break-word; color: #007bff;">${resetURL}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #007bff; padding: 10px; text-align: center; color: #ffffff; font-size: 12px;">
+              <p>EngaeGPT</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`,
+  };
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success');
+    }
+  });
+};
