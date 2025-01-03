@@ -1169,7 +1169,7 @@ exports.sendResetPasswordURL = async (email, subject, resetURL) => {
           </tr>
           <tr>
             <td style="background-color: #007bff; padding: 10px; text-align: center; color: #ffffff; font-size: 12px;">
-              <p>EngaeGPT</p>
+              <p>EngageGPT - AI for LinkedIn</p>
             </td>
           </tr>
         </table>

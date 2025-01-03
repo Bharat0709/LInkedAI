@@ -28,14 +28,19 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
     }
   }
 
-  // Get member's LinkedIn access token
-  const member = await Member.findById(memberId);
+  const member = await Member.findById(memberId).select(
+    '+linkedinAccessToken +linkedinProfileId'
+  );
+
   if (!member) {
     return next(new AppError('Member not found', 404));
   }
+
   if (!member.linkedinAccessToken) {
     return next(new AppError('LinkedIn is not connected for this member', 400));
   }
+
+  // Decrypt the tokens
   const accessToken = decryptToken(member.linkedinAccessToken);
   const profileUrn = decryptToken(member.linkedinProfileId);
 

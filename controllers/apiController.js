@@ -683,3 +683,56 @@ async function detectTopic(postContent) {
   });
   return result.response.text();
 }
+
+exports.determinePersona = async (writingPreferences, samplePosts) => {
+  const parts = [
+    {
+      text: `
+  Analyze the following writing preferences and the provided array of sample posts to derive the persona of the writer. Use the information provided to construct a detailed and accurate description:
+  
+  Writing Preferences:
+  ${writingPreferences}
+  
+  Array of Sample Posts:
+  [
+    ${samplePosts
+      .map((post, index) => `Post ${index + 1}: "${post}"`)
+      .join(',\n')}
+  ]
+  
+  Instructions:
+  1. Analyze each post to identify:
+     - Dominant tone (e.g., formal, conversational, motivational).
+     - Style of writing (concise, elaborate, technical, creative, etc.).
+     - Intent behind the post (informing, persuading, entertaining, or connecting with the audience).
+     - Target audience inferred from the content, language, and themes.
+  2. Summarize the persona of the writer based on common patterns and traits observed across all posts.
+  3. Highlight strengths of the writer’s approach (e.g., clarity, engagement, creativity) and suggest areas for improvement.
+  4. Ensure the output is concise yet comprehensive and limited to 200 words.
+
+  Output Format: (Don't use double quotes OR ** in the ouput)
+  - Tone: [Description]
+  - Style: [Description]
+  - Intent: [Description]
+  - Target Audience: [Description]
+  - Persona Summary: [Comprehensive and insightful summary based on the above points]
+  `,
+    },
+    { text: '\n' },
+  ];
+
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 120,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+
+  return result.response.text();
+};

@@ -70,6 +70,12 @@ Router.post(
   memberController.createMember
 );
 
+Router.post(
+  '/createPersona/:id',
+  authController.isUserLoggedIn,
+  memberController.createMemberPersona
+);
+
 Router.get(
   '/all',
   authController.isUserLoggedIn,

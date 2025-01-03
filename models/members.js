@@ -116,6 +116,11 @@ const MemberSchema = new mongoose.Schema({
   },
   linkedinAccessToken: {
     type: String,
+    select: false,
+  },
+  writingPersona: {
+    type: String,
+    default: '',
   },
   isLinkedinConnected: {
     type: Boolean,
