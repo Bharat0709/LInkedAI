@@ -2,13 +2,10 @@ const express = require('express');
 const organizationAuthController = require('../controllers/orgAuthController');
 const authController = require('../controllers/authController');
 const organizationController = require('../controllers/organizationController');
+const upload = require('../middlewares/multer');
 
 const Router = express.Router();
-Router.get(
-  '/auth',
-  authController.isUserLoggedIn,
-  organizationAuthController.verifyOrganizationDetails
-);
+
 Router.post('/auth/signup', organizationAuthController.signupOrganization);
 Router.post('/auth/login', organizationAuthController.loginOrganization);
 Router.post('/auth/forgot-password', organizationAuthController.forgotPassword);
@@ -27,10 +24,24 @@ Router.post(
   authController.isUserLoggedIn,
   organizationController.Organizationfeedback
 );
+
+Router.get(
+  '/auth',
+  authController.isUserLoggedIn,
+  organizationAuthController.verifyOrganizationDetails
+);
+
 Router.get('/auth/google', organizationAuthController.googleAuth);
 Router.get(
   '/auth/google/callback',
   organizationAuthController.googleAuthCallback
+);
+
+Router.put(
+  '/profile/update',
+  authController.isUserLoggedIn,
+  upload.single('profilePicture'),
+  organizationController.updateProfile
 );
 
 module.exports = Router;

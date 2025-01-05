@@ -1,5 +1,35 @@
+const dotenv = require('dotenv');
+const catchAsync = require('./catchAsync');
+dotenv.config();
 
-const fetchGoogleSheetDataService = async (googleSheetUrl) => {
+exports.fetchGoogleSheetData = catchAsync(async (req, res, next) => {
+  const { googleSheetUrl } = req.body;
+
+  if (!googleSheetUrl) {
+    return next(new AppError('Google Sheets URL is required.', 400));
+  }
+
+  try {
+    const sheetData = await googleSheetData(googleSheetUrl);
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: sheetData,
+    });
+  } catch (error) {
+    console.error('Error fetching Google Sheets data:', error);
+
+    return next(
+      new AppError(
+        error.message || 'Internal Server Error',
+        error.statusCode || 500
+      )
+    );
+  }
+});
+
+async function googleSheetData(googleSheetUrl) {
   try {
     // Extract the Google Sheets ID from the URL
     const sheetIdMatch = googleSheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -8,12 +38,29 @@ const fetchGoogleSheetDataService = async (googleSheetUrl) => {
     }
 
     const sheetId = sheetIdMatch[1];
-    console.log(sheetId);
 
-    // Construct the API URL
-    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/?key=${process.env.GOOGLE_API_KEY}`;
+    // Step 1: Get the spreadsheet metadata to fetch sheet names
+    const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?key=${process.env.GOOGLE_API_KEY}`;
+    const metadataResponse = await fetch(metadataUrl);
 
-    // Fetch data from the Google Sheets API
+    if (!metadataResponse.ok) {
+      const errorData = await metadataResponse.json();
+      const errorMessage =
+        errorData?.error?.message || 'Failed to fetch spreadsheet metadata.';
+      throw new Error(errorMessage);
+    }
+
+    const metadata = await metadataResponse.json();
+    const sheetNames = metadata.sheets.map((sheet) => sheet.properties.title);
+
+    const sheetName = sheetNames[0];
+    if (!sheetName) {
+      throw new Error('No sheets available in the spreadsheet.');
+    }
+
+    const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(
+      sheetName
+    )}?key=${process.env.GOOGLE_API_KEY}`;
     const response = await fetch(apiUrl);
 
     if (!response.ok) {
@@ -30,14 +77,12 @@ const fetchGoogleSheetDataService = async (googleSheetUrl) => {
     }
 
     const [headers, ...rows] = data.values;
-    console.log(headers, rows);
 
-    return { headers, rows };
+    return { sheetNames, headers, rows };
   } catch (error) {
+    console.error('Error:', error.message);
     throw new Error(
       error.message || 'An error occurred while fetching the data.'
     );
   }
-};
-
-module.exports = fetchGoogleSheetDataService;
+}

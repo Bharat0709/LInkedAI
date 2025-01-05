@@ -3,6 +3,7 @@ const memberController = require('../controllers/memberController');
 const authController = require('../controllers/authController');
 const linkedInAuthController = require('../controllers/memberLinkedInAuth');
 const linkedInController = require('../controllers/linkedInController');
+const integrationUtils = require('../utils/integrations');
 const Router = express.Router();
 
 Router.get('/auth/linkedin', linkedInAuthController.linkedinAuth);
@@ -81,4 +82,11 @@ Router.get(
   authController.isUserLoggedIn,
   memberController.getAllMembersOfOrganization
 );
+
+Router.post(
+  '/integrations/googleSheet',
+  authController.isUserLoggedIn,
+  integrationUtils.fetchGoogleSheetData
+);
+
 module.exports = Router;

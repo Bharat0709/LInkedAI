@@ -23,10 +23,8 @@ const createSendToken = async (
   if (!user) {
     throw new AppError('User data is missing.', 400);
   }
-  console.log(user, statusCode, isOrganization, isMember);
 
   const token = signToken(user._id, isOrganization, isMember);
-  console.log(token);
 
   const cookieOptions = {
     expires: new Date(

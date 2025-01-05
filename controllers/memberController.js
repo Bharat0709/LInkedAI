@@ -1,4 +1,6 @@
 const AppError = require('./../utils/appError');
+const dotenv = require('dotenv');
+dotenv.config();
 const catchAsync = require('./../utils/catchAsync');
 const Organization = require('../models/organization');
 const Member = require('../models/members');
@@ -6,7 +8,6 @@ const rateLimitMiddleware = require('../middlewares/rateLimiter');
 const { generateConnectionToken } = require('../utils/randomString');
 const { sendNewMemberInviteEmail } = require('./mailController');
 const { createSendToken } = require('./../middlewares/tokenUtils');
-const { fetchGoogleSheetDataService } = require('../utils/integrations');
 const apiController = require('./apiController');
 
 exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
@@ -338,7 +339,6 @@ exports.addConnectionToken = catchAsync(async (req, res, next) => {
 exports.disconnectLinkedIn = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.organization.id;
-  console.log(req.params);
   try {
     const member = await Member.findOne({ _id: memberId, organizationId });
     if (!member) {
@@ -407,31 +407,4 @@ exports.createMemberPersona = catchAsync(async (req, res, next) => {
       writingPersona: member.writingPersona,
     },
   });
-});
-
-exports.fetchGoogleSheetData = catchAsync(async (req, res, next) => {
-  const url = req.query.url;
-
-  if (!url) {
-    return next(new AppError('Google Sheets URL is required.', 400));
-  }
-
-  try {
-    const sheetData = await fetchGoogleSheetDataService(url);
-
-    // Send success response
-    res.status(200).json({
-      status: 'success',
-      data: sheetData,
-    });
-  } catch (error) {
-    console.error('Error fetching Google Sheets data:', error);
-
-    return next(
-      new AppError(
-        error.message || 'Internal Server Error',
-        error.statusCode || 500
-      )
-    );
-  }
 });
