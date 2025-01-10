@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { newDBConnection } = require('../db');
 const validator = require('validator');
 
 const MemberSchema = new mongoose.Schema({
@@ -134,5 +135,5 @@ const MemberSchema = new mongoose.Schema({
   },
 });
 
-const Member = mongoose.model('members', MemberSchema);
+const Member = newDBConnection.model('members', MemberSchema);
 module.exports = Member;

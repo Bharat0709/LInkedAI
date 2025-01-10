@@ -10,7 +10,7 @@ const rateLimitOpts = {
 const rateLimiter = new RateLimiterMemory(rateLimitOpts);
 
 const rateLimitMiddleware = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
+  const userId = req.member.id;
 
   try {
     await rateLimiter.consume(userId);

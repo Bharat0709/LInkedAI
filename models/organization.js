@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { newDBConnection } = require('../db');
 const crypto = require('crypto');
 
 const organizationSchema = new mongoose.Schema(
@@ -11,7 +12,7 @@ const organizationSchema = new mongoose.Schema(
     },
     credits: {
       type: Number,
-      default: 100,
+      default: 500,
     },
     totalCreditsUsed: {
       type: Number,
@@ -120,6 +121,6 @@ organizationSchema.methods.createPasswordResetToken = function () {
   return resetToken;
 };
 
-const Organization = mongoose.model('Organization', organizationSchema);
+const Organization = newDBConnection.model('Organization', organizationSchema);
 
 module.exports = Organization;

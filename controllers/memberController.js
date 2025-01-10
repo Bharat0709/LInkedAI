@@ -1,14 +1,15 @@
-const AppError = require('./../utils/appError');
-const dotenv = require('dotenv');
-dotenv.config();
-const catchAsync = require('./../utils/catchAsync');
 const Organization = require('../models/organization');
 const Member = require('../models/members');
-const rateLimitMiddleware = require('../middlewares/rateLimiter');
-const { generateConnectionToken } = require('../utils/randomString');
-const { sendNewMemberInviteEmail } = require('./mailController');
-const { createSendToken } = require('./../middlewares/tokenUtils');
+const OldUser = require('../models/OldUser');
+const dotenv = require('dotenv');
+dotenv.config();
 const apiController = require('./apiController');
+const { sendNewMemberInviteEmail } = require('./mailController');
+const rateLimitMiddleware = require('../middlewares/rateLimiter');
+const { createSendToken } = require('./../middlewares/tokenUtils');
+const { generateConnectionToken } = require('../utils/randomString');
+const AppError = require('./../utils/appError');
+const catchAsync = require('./../utils/catchAsync');
 
 exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
   const user = req.member;
@@ -161,6 +162,21 @@ exports.createMember = catchAsync(async (req, res, next) => {
       email,
       newMember.connectionToken
     );
+
+    const oldMember = await OldUser.findOne({ email });
+
+    if (oldMember) {
+      console.log('Old Member Found');
+      console.log(oldMember);
+      newMember.name = oldMember.name;
+      newMember.email = oldMember.email;
+      newMember.leaderBoardProfileVisibility =
+        oldMember.leaderBoardProfileVisibility;
+      newMember.daysActive = oldMember.daysActive;
+      newMember.currentStreak = oldMember.currentStreak;
+      newMember.totalCreditsUsed = oldMember.totalCreditsUsed;
+      newMember.credits = oldMember.credits;
+    }
 
     const data = await newMember.save();
 

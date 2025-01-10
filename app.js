@@ -33,7 +33,8 @@ const corsOptions = {
           'chrome-extension://jhimkoakppegefmkecmgabjcbhbokiba',
         ],
   methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: 'Content-Type,Authorization',
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
@@ -83,6 +84,7 @@ app.all('*', (req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+  console.log(err);
   res.status(err.statusCode || 500).json({
     status: err.status || 'error',
     message: err.message || 'Something went wrong!',

@@ -1,34 +1,24 @@
-const app = require('./app');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
-const DB = process.env.DATABASE;
+const app = require('./app');
+dotenv.config();
+require('./db');
+
 const PORT = Number(process.env.PORT) || 8000;
 
-dotenv.config();
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
-  console.log(`Server started in ${process.env.NODE_ENV}`);
+// Create server variable for graceful shutdown
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
 });
 
-mongoose.connect(DB);
-
-const db = mongoose.connection;
-
-db.on('error', (error) => {
-  console.error('MongoDB connection error:', error);
-});
-
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
-
+// Graceful shutdown
 process.on('uncaughtException', (err) => {
-  console.log(err.name, err.message);
+  console.error('Uncaught Exception:', err.message);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => {
-  console.log(err.name, err.message);
+  console.error('Unhandled Rejection:', err.message);
   server.close(() => {
     process.exit(1);
   });

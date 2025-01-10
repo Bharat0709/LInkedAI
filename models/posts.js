@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { newDBConnection } = require('../db');
 
 const PostSchema = new mongoose.Schema({
   organizationId: {
@@ -68,5 +69,5 @@ const PostSchema = new mongoose.Schema({
   },
 });
 
-const Post = mongoose.model('posts', PostSchema);
+const Post = newDBConnection.model('posts', PostSchema);
 module.exports = Post;
