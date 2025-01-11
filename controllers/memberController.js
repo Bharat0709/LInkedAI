@@ -1,10 +1,14 @@
 const Organization = require('../models/organization');
 const Member = require('../models/members');
+const ContentCalendar = require('../models/contentCalender');
 const OldUser = require('../models/OldUser');
 const dotenv = require('dotenv');
 dotenv.config();
 const apiController = require('./apiController');
-const { sendNewMemberInviteEmail } = require('./mailController');
+const {
+  sendNewMemberInviteEmail,
+  sendSurveyForm,
+} = require('./mailController');
 const rateLimitMiddleware = require('../middlewares/rateLimiter');
 const { createSendToken } = require('./../middlewares/tokenUtils');
 const { generateConnectionToken } = require('../utils/randomString');
@@ -166,8 +170,6 @@ exports.createMember = catchAsync(async (req, res, next) => {
     const oldMember = await OldUser.findOne({ email });
 
     if (oldMember) {
-      console.log('Old Member Found');
-      console.log(oldMember);
       newMember.name = oldMember.name;
       newMember.email = oldMember.email;
       newMember.leaderBoardProfileVisibility =
@@ -242,8 +244,11 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
       return next(new AppError('Organization not found', 404));
     }
 
-    const existingMember = await Member.findById(userId);
-    if (!existingMember || existingMember.organizationId !== organizationId) {
+    const existingMember = await Member.findById(userId.toString());
+    if (
+      !existingMember ||
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
       return next(
         new AppError(
           'Member not found or does not belong to the organization',
@@ -421,6 +426,126 @@ exports.createMemberPersona = catchAsync(async (req, res, next) => {
     data: {
       memberId: member._id,
       writingPersona: member.writingPersona,
+    },
+  });
+});
+
+exports.submitSurvey = catchAsync(async (req, res, next) => {
+  const { formData } = req.body;
+
+  const {
+    usability,
+    performance,
+    missingFeatures,
+    reason,
+    email,
+    overallSatisfaction,
+  } = formData;
+
+  // Validate the required fields
+  if (!usability || !performance || !overallSatisfaction || !reason) {
+    return next(
+      new AppError(
+        'Usability, performance, overall satisfaction, and reason are required fields.',
+        400
+      )
+    );
+  }
+
+  try {
+    await sendSurveyForm(
+      usability,
+      performance,
+      missingFeatures,
+      reason,
+      email,
+      overallSatisfaction
+    );
+    res.status(200).json({
+      status: 'success',
+      message: 'Feedback submitted successfully. Thank you!',
+    });
+  } catch (error) {
+    next(new AppError('Error submitting the survey feedback.', 500));
+  }
+});
+
+exports.addContentCalendar = catchAsync(async (req, res, next) => {
+  const memberId = req.params.id;
+  const organizationId = req.organization.id;
+  const { calenderData } = req.body;
+  if (!Array.isArray(calenderData) || calenderData.length === 0) {
+    return next(
+      new AppError('Calendar data must be an array and cannot be empty.', 400)
+    );
+  }
+
+  const member = await Member.findOne({ _id: memberId, organizationId });
+  if (!member) {
+    return next(
+      new AppError(
+        'Member not found or does not belong to the organization.',
+        404
+      )
+    );
+  }
+
+  const calendarEntries = [];
+
+  for (let data of calenderData) {
+    const { title, date, time } = data;
+
+    if (!title || !date || !time) {
+      return next(
+        new AppError(
+          'Title, Date, and Time are required fields for each calendar entry.',
+          400
+        )
+      );
+    }
+
+    // Create a new content calendar entry
+    const calendarEntry = new ContentCalendar({
+      topic: title,
+      date: new Date(String(date)),
+      time: time,
+      memberId,
+      organizationId,
+      status: 'Planned',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    calendarEntries.push(calendarEntry);
+  }
+  await ContentCalendar.insertMany(calendarEntries);
+
+  res.status(201).json({
+    status: 'success',
+    message: 'Content calendar entries have been successfully added.',
+    data: {
+      contentCalendar: calendarEntries,
+    },
+  });
+});
+
+exports.getContentCalendar = catchAsync(async (req, res, next) => {
+  const memberId = req.params.id;
+  const organizationId = req.organization.id;
+
+  const contentCalendar = await ContentCalendar.find({
+    memberId,
+    organizationId,
+  }).sort({ date: 1 });
+
+  if (!contentCalendar || contentCalendar.length === 0) {
+    return next(new AppError('No content calendar entries found.', 404));
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Content calendar entries fetched successfully.',
+    data: {
+      contentCalendar,
     },
   });
 });

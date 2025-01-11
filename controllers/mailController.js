@@ -1190,3 +1190,121 @@ exports.sendResetPasswordURL = async (email, subject, resetURL) => {
     }
   });
 };
+
+exports.sendSurveyForm = async (
+  usability,
+  performance,
+  missingFeatures,
+  reason,
+  email,
+  overallSatisfaction
+) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+  var data = {
+    from: from_who,
+    to: 'pahwabharat15@gmail.com',
+    subject: 'Survey Form',
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survey Feedback</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    .container {
+      width: 100%;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .email-wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #007bff;
+      padding: 20px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .content {
+      padding: 20px;
+      color: #333333;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .content h2 {
+      margin-top: 0;
+      color: #007bff;
+    }
+    .footer {
+      background-color: #f1f1f1;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      color: #888888;
+    }
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="email-wrapper">
+      <!-- Header -->
+      <div class="header">
+        Survey Feedback Received
+      </div>
+      <!-- Content -->
+      <div class="content">
+        <h2>Hi there,</h2>
+        <p>We’ve received a new survey response. Here are the details:</p>
+        <p><strong>Usability:</strong> <span class="highlight">${usability}</span></p>
+        <p><strong>Missing Features:</strong> ${
+          missingFeatures || 'Not provided'
+        }</p>
+        <p><strong>Performance:</strong> <span class="highlight">${performance}</span></p>
+        <p><strong>Overall Satisfaction:</strong> <span class="highlight">${overallSatisfaction}</span></p>
+        <p><strong>Reason for Uninstalling:</strong> ${reason}</p>
+        <p><strong>User Email:</strong> ${email || 'Not provided'}</p>
+        <p>Thank you for taking the time to review this feedback!</p>
+      </div>
+      <!-- Footer -->
+      <div class="footer">
+        <p>EngageGPT - AI for LinkedIn</p>
+        <p>
+          <a href="https://engagegpt.in">Visit our website</a> | 
+          <a href="mailto:engagegpt@gmail.com">Contact Support</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+  };
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('success');
+    }
+  });
+};

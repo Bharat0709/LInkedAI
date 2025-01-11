@@ -2,13 +2,15 @@ const mongoose = require('mongoose');
 const { newDBConnection } = require('../db');
 
 const PostSchema = new mongoose.Schema({
-  organizationId: {
-    type: String,
-    required: [true, 'Organization ID is required'],
-  },
   memberId: {
-    type: String,
-    required: [true, 'Member ID is required'],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Member',
+    required: true,
+  },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
   author: {
     name: {
@@ -69,5 +71,5 @@ const PostSchema = new mongoose.Schema({
   },
 });
 
-const Post = newDBConnection.model('posts', PostSchema);
+const Post = newDBConnection.model('Post', PostSchema);
 module.exports = Post;

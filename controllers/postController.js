@@ -10,6 +10,8 @@ exports.upsertPostsData = catchAsync(async (req, res, next) => {
   const memberId = req.member.id;
   const posts = req.body;
 
+  console.log(organizationId, memberId);
+
   if (!Array.isArray(posts) || posts.length === 0) {
     return res.status(400).json({
       message: 'Posts data must be a non-empty array',
@@ -26,6 +28,7 @@ exports.upsertPostsData = catchAsync(async (req, res, next) => {
     if (!existingMember) {
       return next(new AppError('Member not found', 404));
     }
+    console.log(existingMember, existingOrganization);
 
     const memberName = existingMember.name;
     const filteredPosts = posts.filter((post) => post.author === memberName);

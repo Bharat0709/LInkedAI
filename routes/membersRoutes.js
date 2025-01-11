@@ -22,6 +22,12 @@ Router.post(
 );
 
 Router.get(
+  '/content-calender/:id',
+  authController.isUserLoggedIn,
+  memberController.getContentCalendar
+);
+
+Router.get(
   '/:organizationId/:memberId',
   authController.isUserLoggedIn,
   memberController.getMemberDetailsByIds
@@ -87,6 +93,14 @@ Router.post(
   '/integrations/googleSheet',
   authController.isUserLoggedIn,
   integrationUtils.fetchGoogleSheetData
+);
+
+Router.post('/survey', memberController.submitSurvey);
+
+Router.post(
+  '/content-calender/:id',
+  authController.isUserLoggedIn,
+  memberController.addContentCalendar
 );
 
 module.exports = Router;

@@ -32,8 +32,9 @@ const MemberSchema = new mongoose.Schema({
     default: 100,
   },
   organizationId: {
-    type: String,
-    required: [true, 'Please Provide an Organization'],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
   role: {
     type: String,
@@ -135,5 +136,5 @@ const MemberSchema = new mongoose.Schema({
   },
 });
 
-const Member = newDBConnection.model('members', MemberSchema);
+const Member = newDBConnection.model('Member', MemberSchema);
 module.exports = Member;

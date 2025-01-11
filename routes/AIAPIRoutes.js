@@ -22,9 +22,15 @@ Router.post(
 );
 
 Router.post(
-  '/generate-post',
+  '/generate-post/persona',
   authController.isUserLoggedIn,
-  apiController.generateOrganizationPostContentGemini
+  apiController.generateOrganizationPostContentUsePersona
+);
+
+Router.post(
+  '/generate-post/template',
+  authController.isUserLoggedIn,
+  apiController.generateOrganizationPostContentUseTemplate
 );
 
 Router.post(

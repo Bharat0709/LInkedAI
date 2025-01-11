@@ -32,6 +32,7 @@ Router.get(
 );
 
 Router.get('/auth/google', organizationAuthController.googleAuth);
+
 Router.get(
   '/auth/google/callback',
   organizationAuthController.googleAuthCallback
