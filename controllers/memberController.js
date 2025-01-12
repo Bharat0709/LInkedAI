@@ -532,13 +532,13 @@ exports.getContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.id;
   const organizationId = req.organization.id;
 
-  const contentCalendar = await ContentCalendar.find({
+  let contentCalendar = await ContentCalendar.find({
     memberId,
     organizationId,
   }).sort({ date: 1 });
 
   if (!contentCalendar || contentCalendar.length === 0) {
-    return next(new AppError('No content calendar entries found.', 404));
+    contentCalendar == [];
   }
 
   res.status(200).json({
