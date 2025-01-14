@@ -6,101 +6,34 @@ const linkedInController = require('../controllers/linkedInController');
 const integrationUtils = require('../utils/integrations');
 const Router = express.Router();
 
+// Authentication Routes
 Router.get('/auth/linkedin', linkedInAuthController.linkedinAuth);
+Router.get('/auth/linkedin/callback', linkedInAuthController.linkedinAuthCallback);
+
+// Content Calendar Routes
+Router.get('/content-calendar/:id', authController.isUserLoggedIn, memberController.getContentCalendar);
+Router.post('/content-calendar/:id', authController.isUserLoggedIn, memberController.addContentCalendar);
+Router.put('/content-calendar/:id/:contentId', authController.isUserLoggedIn, memberController.updateContentCalendar);
+Router.delete('/content-calendar/:id/:contentId', authController.isUserLoggedIn, memberController.deleteContentCalendar);
+
+// Member Routes
 Router.post('/checkMember', memberController.checkMemberExists);
-
-Router.get(
-  '/auth/linkedin/callback',
-  linkedInAuthController.linkedinAuthCallback
-);
-
-Router.post(
-  '/linkedin/share/:id',
-  authController.isUserLoggedIn,
-  linkedInController.parseFormData,
-  linkedInController.shareLinkedInPost
-);
-
-Router.get(
-  '/content-calender/:id',
-  authController.isUserLoggedIn,
-  memberController.getContentCalendar
-);
-
-Router.get(
-  '/:organizationId/:memberId',
-  authController.isUserLoggedIn,
-  memberController.getMemberDetailsByIds
-);
-
-Router.put(
-  '/:id',
-  authController.isUserLoggedIn,
-  memberController.updateMemberDetails
-);
-
+Router.get('/:organizationId/:memberId', authController.isUserLoggedIn, memberController.getMemberDetailsByIds);
+Router.put('/:id', authController.isUserLoggedIn, memberController.updateMemberDetails);
 Router.post('/addConnectionToken', memberController.addConnectionToken);
+Router.get('/users', authController.isUserLoggedIn, memberController.getAllUsers);
+Router.post('/daysactive', authController.isUserLoggedIn, memberController.updateDaysActive);
+Router.post('/linkedin/disconnect/:memberId', authController.isUserLoggedIn, memberController.disconnectLinkedIn);
+Router.post('/lbprofilevisibility', authController.isUserLoggedIn, memberController.updateLeaderboardProfileVisibility);
+Router.post('/tagPost', authController.isUserLoggedIn, memberController.updatePostTagging);
+Router.post('/create', authController.isUserLoggedIn, memberController.createMember);
+Router.post('/createPersona/:id', authController.isUserLoggedIn, memberController.createMemberPersona);
+Router.get('/all', authController.isUserLoggedIn, memberController.getAllMembersOfOrganization);
 
-Router.get(
-  '/users',
-  authController.isUserLoggedIn,
-  memberController.getAllUsers
-);
+// Integration Routes
+Router.post('/integrations/googleSheet', authController.isUserLoggedIn, integrationUtils.fetchGoogleSheetData);
 
-Router.post(
-  '/daysactive',
-  authController.isUserLoggedIn,
-  memberController.updateDaysActive
-);
-
-Router.post(
-  '/linkedin/disconnect/:memberId',
-  authController.isUserLoggedIn,
-  memberController.disconnectLinkedIn
-);
-
-Router.post(
-  '/lbprofilevisibility',
-  authController.isUserLoggedIn,
-  memberController.updateLeaderboardProfileVisibility
-);
-
-Router.post(
-  '/tagPost',
-  authController.isUserLoggedIn,
-  memberController.updatePostTagging
-);
-
-Router.post(
-  '/create',
-  authController.isUserLoggedIn,
-  memberController.createMember
-);
-
-Router.post(
-  '/createPersona/:id',
-  authController.isUserLoggedIn,
-  memberController.createMemberPersona
-);
-
-Router.get(
-  '/all',
-  authController.isUserLoggedIn,
-  memberController.getAllMembersOfOrganization
-);
-
-Router.post(
-  '/integrations/googleSheet',
-  authController.isUserLoggedIn,
-  integrationUtils.fetchGoogleSheetData
-);
-
+// Survey Route
 Router.post('/survey', memberController.submitSurvey);
-
-Router.post(
-  '/content-calender/:id',
-  authController.isUserLoggedIn,
-  memberController.addContentCalendar
-);
 
 module.exports = Router;

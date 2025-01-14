@@ -473,8 +473,8 @@ exports.submitSurvey = catchAsync(async (req, res, next) => {
 exports.addContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.id;
   const organizationId = req.organization.id;
-  const { calenderData } = req.body;
-  if (!Array.isArray(calenderData) || calenderData.length === 0) {
+  const { calendarData } = req.body;
+  if (!Array.isArray(calendarData) || calendarData.length === 0) {
     return next(
       new AppError('Calendar data must be an array and cannot be empty.', 400)
     );
@@ -492,7 +492,7 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
 
   const calendarEntries = [];
 
-  for (let data of calenderData) {
+  for (let data of calendarData) {
     const { title, date, time } = data;
 
     if (!title || !date || !time) {
@@ -507,7 +507,7 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
     // Create a new content calendar entry
     const calendarEntry = new ContentCalendar({
       topic: title,
-      date: new Date(String(date)),
+      date: date,
       time: time,
       memberId,
       organizationId,
@@ -547,5 +547,92 @@ exports.getContentCalendar = catchAsync(async (req, res, next) => {
     data: {
       contentCalendar,
     },
+  });
+});
+
+exports.updateContentCalendar = catchAsync(async (req, res, next) => {
+  const memberId = req.params.id;
+  const organizationId = req.organization.id;
+  const contentId = req.params.contentId;
+  const updatedData = req.body;
+  const { topic, date, time, status } = updatedData;
+
+  if (!topic || !date || !time || !status) {
+    return next(
+      new AppError(
+        'Missing required fields: topic, date, time, and status are required.',
+        400
+      )
+    );
+  }
+
+  // Verify Member and Organization
+  const member = await Member.findOne({ _id: memberId, organizationId });
+  if (!member) {
+    return next(
+      new AppError(
+        'Member not found or does not belong to the organization.',
+        404
+      )
+    );
+  }
+
+  const calendarEntry = await ContentCalendar.findOne({
+    _id: contentId,
+    memberId,
+    organizationId,
+  });
+
+  if (!calendarEntry) {
+    return next(new AppError('Content Calendar entry not found.', 404));
+  }
+
+  calendarEntry.topic = topic;
+  calendarEntry.date = date;
+  calendarEntry.time = time;
+  calendarEntry.status = status;
+  calendarEntry.updatedAt = Date.now();
+
+  await calendarEntry.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Content Calendar entry updated successfully.',
+    data: {
+      contentCalendar: calendarEntry,
+    },
+  });
+});
+
+exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
+  const memberId = req.params.id;
+  const organizationId = req.organization.id;
+  const contentId = req.params.contentId;
+  console.log(memberId, organizationId, contentId);
+
+  // Verify Member and Organization
+  const member = await Member.findOne({ _id: memberId, organizationId });
+  if (!member) {
+    return next(
+      new AppError(
+        'Member not found or does not belong to the organization.',
+        404
+      )
+    );
+  }
+
+  const deletedEntry = await ContentCalendar.findOneAndDelete({
+    _id: contentId,
+    memberId,
+    organizationId,
+  });
+
+  if (!deletedEntry) {
+    return next(new AppError('Content Calendar entry not found.', 404));
+  }
+
+  res.status(204).json({
+    status: 'success',
+    message: 'Content Calendar entry deleted successfully.',
   });
 });
