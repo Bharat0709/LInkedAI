@@ -262,7 +262,9 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
     const updatedUser = await Member.findByIdAndUpdate(
       userId,
       {
-        lastSyncedAt: new Date().toLocaleString('en-GB'),
+        lastSyncedAt: new Date().toLocaleString('en-GB', {
+          timeZone: 'Asia/Kolkata',
+        }),
         name: fullName,
         connectionsCount,
         profileViews,
@@ -274,8 +276,8 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
         stepsToCompleteProfile,
       },
       {
-        new: true, // Return the updated document
-        runValidators: true, // Ensure validation rules are enforced
+        new: true,
+        runValidators: true,
       }
     );
 
