@@ -832,8 +832,6 @@ exports.sendNewUserEmail = async (user) => {
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };
@@ -923,8 +921,6 @@ exports.helpRequest = async (user, helpMessage) => {
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };
@@ -1012,8 +1008,6 @@ exports.feedback = async (user, rating, feedback) => {
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };
@@ -1123,8 +1117,6 @@ exports.sendNewMemberInviteEmail = async (
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };
@@ -1185,8 +1177,6 @@ exports.sendResetPasswordURL = async (email, subject, resetURL) => {
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };
@@ -1303,8 +1293,6 @@ exports.sendSurveyForm = async (
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };

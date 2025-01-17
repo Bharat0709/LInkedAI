@@ -4,14 +4,13 @@ const catchAsync = require('./../utils/catchAsync');
 
 exports.addtocollection = catchAsync(async (req, res, next) => {
   try {
-    const userId = req.user._id; 
+    const userId = req.user._id;
     const { collectionId, collectionName, postURL, postDescription } = req.body;
     let collection;
 
     if (collectionId && collectionId != null) {
       collection = await Collection.findById(collectionId);
     } else {
-
       collection = new Collection({
         name: collectionName,
         userId: userId,

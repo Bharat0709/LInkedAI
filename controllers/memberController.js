@@ -608,7 +608,6 @@ exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.id;
   const organizationId = req.organization.id;
   const contentId = req.params.contentId;
-  console.log(memberId, organizationId, contentId);
 
   // Verify Member and Organization
   const member = await Member.findOne({ _id: memberId, organizationId });

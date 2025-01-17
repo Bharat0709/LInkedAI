@@ -3,6 +3,11 @@ const dotenv = require('dotenv');
 const generateIV = () => crypto.randomBytes(16);
 dotenv.config();
 
+if (!process.env.ENCRYPTION_KEY) {
+  console.error('ENCRYPTION_KEY is missing in environment variables!');
+  process.exit(1);
+}
+
 const generateState = () => {
   return crypto.randomBytes(16).toString('hex');
 };
