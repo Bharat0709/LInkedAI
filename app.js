@@ -56,20 +56,27 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session Configuration
+// Session configuration
 app.use(
   session({
     secret: process.env.JWT_SECRET,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     store: MongoStore.create({
-      mongoUrl: DB, // Your MongoDB connection string
+      mongoUrl: DB,
+      ttl: 24 * 60 * 60,
     }),
     cookie: {
-      secure: NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 3600000,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: 'lax',
+      domain:
+        process.env.NODE_ENV === 'production'
+          ? 'https://engagegpt.in'
+          : undefined,
     },
+    name: 'sessionId',
   })
 );
 
