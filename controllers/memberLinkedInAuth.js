@@ -10,11 +10,17 @@ exports.linkedinAuth = async (req, res, next) => {
   try {
     const state = generateState();
 
-    // Store both state and session ID
-    req.session.state = state;
-    req.session.originalSessionId = req.sessionID;
+    // Store state in session
+    req.session.linkedInState = state;
+    req.session.originalUrl = req.get('Referer') || '/';
 
-    await new Promise((resolve) => req.session.save(resolve));
+    // Ensure session is saved before redirect
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        resolve();
+      });
+    });
 
     const params = {
       response_type: 'code',
@@ -23,12 +29,6 @@ exports.linkedinAuth = async (req, res, next) => {
       scope: process.env.LINKEDIN_SCOPE,
       state: state,
     };
-
-    // Log the original session info
-    console.log('Original Auth Session:', {
-      sessionID: req.sessionID,
-      state: state,
-    });
 
     const authUrl = `${process.env.LINKEDIN_BASE_URL}?${querystring.stringify(
       params
@@ -41,37 +41,25 @@ exports.linkedinAuth = async (req, res, next) => {
 
 exports.linkedinAuthCallback = async (req, res, next) => {
   try {
-    console.log('Callback Session Info:', {
-      currentSessionID: req.sessionID,
-      state: req.query.state,
-      sessionState: req.session?.state,
+    const { code, state } = req.query;
+    // Add more detailed logging
+    console.log('Callback Session Data:', {
+      sessionID: req.sessionID,
+      linkedInState: req.session?.linkedInState,
+      receivedState: state,
+      sessionExists: !!req.session,
     });
 
-    if (!req.session) {
-      console.error('No session in callback');
-      return res.redirect(
-        `${process.env.CLIENT_URL}/dashboard/quick-post?error=No session found`
-      );
+    if (!req.session || !req.session.linkedInState) {
+      throw new AppError('Session expired or invalid.', 401);
     }
-
-    if (!req.session.state) {
-      throw new AppError('No state found in session.', 401);
-    }
-
-    const { code, state } = req.query;
-
-    if (!state) {
-      throw new AppError('No state parameter received in callback.', 401);
-    }
-
-    if (state !== req.session.state) {
+    if (state !== req.session.linkedInState) {
       console.error('State mismatch:', {
         receivedState: state,
-        sessionState: req.session.state,
+        sessionState: req.session.linkedInState,
       });
-      throw new AppError('State parameter mismatch.', 401);
+      throw new AppError('Invalid state parameter.', 401);
     }
-
     // Clear state after verification
     delete req.session.state;
 

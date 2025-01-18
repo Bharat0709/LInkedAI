@@ -56,12 +56,12 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session configuration
+// In your app.js, update the session configuration
 app.use(
   session({
     secret: process.env.JWT_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Change to false to avoid creating empty sessions
     store: MongoStore.create({
       mongoUrl: DB,
       ttl: 24 * 60 * 60,
@@ -74,11 +74,9 @@ app.use(
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Add sameSite configuration
       domain:
-        process.env.NODE_ENV === 'production'
-          ? 'https://engagegpt.in'
-          : undefined,
+        process.env.NODE_ENV === 'production' ? 'engagegpt.in' : undefined,
     },
     name: 'sessionId',
   })
