@@ -12,8 +12,8 @@ const authRouter = require('./routes/authRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const aiRouter = require('./routes/AIAPIRoutes');
 const mailRouter = require('./routes/mailRoutes');
-const postRouter = require('./routes/postsRoutes');
 const MongoStore = require('connect-mongo');
+const postRouter = require('./routes/postsRoutes');
 const passport = require('passport');
 const app = express();
 const DB = process.env.DATABASE;
@@ -35,7 +35,7 @@ const corsOptions = {
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'https://staging.engagegpt.in',
+          'http://localhost:3000',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
@@ -63,7 +63,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: DB,
+      mongoUrl: DB, // Your MongoDB connection string
     }),
     cookie: {
       secure: NODE_ENV === 'production',

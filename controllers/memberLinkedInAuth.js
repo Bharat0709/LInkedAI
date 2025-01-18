@@ -11,6 +11,9 @@ exports.linkedinAuth = async (req, res, next) => {
     const state = generateState();
     req.session.state = state;
 
+    console.log('Generated state:', state); // Debugging
+    console.log('Session state:', req.session.state); // Debugging
+
     const baseURL = `${process.env.LINKEDIN_BASE_URL}`;
     const params = {
       response_type: 'code',
@@ -30,10 +33,16 @@ exports.linkedinAuth = async (req, res, next) => {
 
 exports.linkedinAuthCallback = async (req, res, next) => {
   try {
+    if (!req.session || !req.session.state) {
+      throw new AppError('Session expired or invalid.', 401);
+    }
     const { code, state } = req.query;
     if (state !== req.session.state) {
       throw new AppError('Invalid state parameter.', 401);
     }
+
+    console.log('State from query:', state); // Debugging
+    console.log('Session state:', req.session.state); // Debugging
     delete req.session.state;
 
     const tokenResponse = await axios.post(
