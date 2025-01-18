@@ -33,7 +33,7 @@ const corsOptions = {
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'http://localhost:3000',
+          'https://staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
