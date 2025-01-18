@@ -9,54 +9,49 @@ dotenv.config();
 exports.linkedinAuth = async (req, res, next) => {
   try {
     const state = generateState();
+
+    // Store both state and session ID
     req.session.state = state;
+    req.session.originalSessionId = req.sessionID;
 
-    // Ensure session is saved before redirect
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          reject(err);
-        }
-        resolve();
-      });
-    });
-
-    console.log('Generated state:', state);
-    console.log('Session state:', req.session.state);
-    console.log('Session ID:', req.sessionID);
+    await new Promise((resolve) => req.session.save(resolve));
 
     const params = {
       response_type: 'code',
       client_id: process.env.LINKEDIN_CLIENT_ID,
       redirect_uri: process.env.LINKEDIN_REDIRECT_URL,
       scope: process.env.LINKEDIN_SCOPE,
-      state,
+      state: state,
     };
+
+    // Log the original session info
+    console.log('Original Auth Session:', {
+      sessionID: req.sessionID,
+      state: state,
+    });
 
     const authUrl = `${process.env.LINKEDIN_BASE_URL}?${querystring.stringify(
       params
     )}`;
     res.redirect(authUrl);
   } catch (err) {
-    console.error('Error in linkedinAuth:', err);
-    next(new AppError('LinkedIn authentication initialization failed.', 401));
+    next(new AppError('Authentication failed.', 401));
   }
 };
 
 exports.linkedinAuthCallback = async (req, res, next) => {
   try {
-    // Enhanced debug logging
-    console.log('Callback Session Data:', {
-      sessionExists: !!req.session,
-      sessionID: req.sessionID,
+    console.log('Callback Session Info:', {
+      currentSessionID: req.sessionID,
+      state: req.query.state,
       sessionState: req.session?.state,
-      queryState: req.query?.state,
-      cookies: req.cookies,
     });
 
     if (!req.session) {
-      throw new AppError('No session found in callback.', 401);
+      console.error('No session in callback');
+      return res.redirect(
+        `${process.env.CLIENT_URL}/dashboard/quick-post?error=No session found`
+      );
     }
 
     if (!req.session.state) {
