@@ -18,8 +18,6 @@ const app = express();
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// CORS Configuration
-
 const corsOptions = {
   origin:
     NODE_ENV === 'production'
@@ -30,7 +28,7 @@ const corsOptions = {
         ]
       : NODE_ENV === 'staging'
       ? [
-          'https://engagegpt-git-analytics-bharat0709s-projects.vercel.app',
+          'https://staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ]
