@@ -65,6 +65,10 @@ app.use(
     store: MongoStore.create({
       mongoUrl: DB,
       ttl: 24 * 60 * 60,
+      touchAfter: 24 * 3600,
+      collectionName: 'userSessions',
+      autoRemove: 'interval',
+      autoRemoveInterval: 24 * 60,
     }),
     cookie: {
       secure: process.env.NODE_ENV === 'production',
