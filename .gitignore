@@ -3,3 +3,6 @@ node_modules/
 
 # Ignore environment configuration files
 .env
+.env.staging
+.env.production
+.codegpt

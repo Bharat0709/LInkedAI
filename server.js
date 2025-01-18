@@ -1,52 +1,33 @@
-const app = require('./app');
 const dotenv = require('dotenv');
-const os = require('os');
-const mongoose = require('mongoose');
+const app = require('./app');
 dotenv.config();
-const port = process.env.PORT || 8000;
-
-dotenv.config({ path: './.env' });
-const DB = process.env.DATABASE;
-// Get local IP address
-const getLocalIp = () => {
-  const networkInterfaces = os.networkInterfaces();
-  for (const interfaceName in networkInterfaces) {
-    // @ts-ignore
-    for (const address of networkInterfaces[interfaceName]) {
-      if (address.family === 'IPv4' && !address.internal) {
-        return address.address;
-      }
-    }
-  }
-  return '127.0.0.1';
-};
+require('./db');
 
 const PORT = Number(process.env.PORT) || 8000;
-const ipAddress = getLocalIp();
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://${ipAddress}:${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Current Environment: ${process.env.NODE_ENV.toUpperCase()}`);
 });
 
-mongoose.connect(DB);
+// Graceful shutdown
+const shutdown = (signal) => {
+  console.log(`Received ${signal}. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('Closed all remaining connections.');
+    process.exit(0);
+  });
+};
 
-const db = mongoose.connection;
-
-db.on('error', (error) => {
-  console.error('MongoDB connection error:', error);
-});
-
-db.once('open', () => {
-  console.log('Connected to MongoDB');
-});
+process.on('SIGINT', () => shutdown('SIGINT')); // For Ctrl + C
+process.on('SIGTERM', () => shutdown('SIGTERM')); // For deployment shutdown
 
 process.on('uncaughtException', (err) => {
-  console.log(err.name, err.message);
+  console.error('Uncaught Exception:', err.message);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (err) => {
-  console.log(err.name, err.message);
+  console.error('Unhandled Rejection:', err.message);
   server.close(() => {
     process.exit(1);
   });

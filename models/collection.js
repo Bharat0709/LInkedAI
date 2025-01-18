@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const { newDBConnection } = require('../server');
 
 // Schema for posts in a collection
 const postSchema = new mongoose.Schema({
@@ -10,15 +11,15 @@ const postSchema = new mongoose.Schema({
 // Schema for collections
 const collectionSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   creationDate: { type: Date, default: Date.now },
   posts: [postSchema],
 });
 
 // Define model for collections
-const Collection = mongoose.model("Collection", collectionSchema);
+const Collection = newDBConnection.model('Collection', collectionSchema);
 
 // Define model for posts in a collection
-const Post = mongoose.model("Post", postSchema);
+const Post = newDBConnection.model('Post', postSchema);
 
 module.exports = { Collection, Post };

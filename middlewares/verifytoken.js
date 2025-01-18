@@ -1,17 +1,25 @@
 const admin = require('../config/firebase-config');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
+
 class Middleware {
-	async decodeToken(req, res, next) {
-		const token = req.headers.authorization.split(' ')[1];
-		try {
-			const decodeValue = await admin.auth().verifyIdToken(token);
-			if (decodeValue) {
-				return next();
-			}
-			return res.json({ message: 'Unauthorized' });
-		} catch (e) {
-			return res.json({ message: 'Internal Error' });
-		}
-	}
+  decodeToken = catchAsync(async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(
+        new AppError('Authorization header is missing or invalid.', 401)
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decodeValue = await admin.auth().verifyIdToken(token);
+
+    if (!decodeValue) {
+      return next(new AppError('Unauthorized access.', 401));
+    }
+
+    next();
+  });
 }
 
 module.exports = new Middleware();

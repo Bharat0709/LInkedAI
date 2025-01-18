@@ -1,4 +1,5 @@
 const catchAsync = require('./../utils/catchAsync');
+const AppError = require('./../utils/appError');
 const dotenv = require('dotenv');
 dotenv.config();
 const axios = require('axios');
@@ -9,6 +10,7 @@ const {
   HarmBlockThreshold,
 } = require('@google/generative-ai');
 const Member = require('../models/members');
+const Organization = require('../models/organization');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
@@ -264,12 +266,14 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 
     const user = req.member;
 
-    // Check if the user has enough credits
     if (user.credits < 10) {
       return res.status(403).json({ error: 'Insufficient credits' });
     }
 
-    const generatedPostContent = await getPostContent(postType, selectedTone);
+    const generatedPostContent = await getPostContentMember(
+      postType,
+      selectedTone
+    );
     // Deduct 10 credits from the
     user.credits -= 10;
     user.totalCreditsUsed += 10;
@@ -288,10 +292,172 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   }
 });
 
-async function getPostContent(postType, selectedTone) {
+exports.generateOrganizationPostContentUsePersona = catchAsync(
+  async (req, res, next) => {
+    try {
+      const { postType, language, persona, selectedTone } = req.body;
+
+      const user = req.organization;
+
+      if (user.credits < 10) {
+        return next(new AppError('Insufficient Credits', 400));
+      }
+
+      const generatedPostContent = await getPostContentPersonaOrg(
+        postType,
+        selectedTone,
+        language,
+        persona
+      );
+      user.credits -= 10;
+      user.totalCreditsUsed += 10;
+      await Organization.findByIdAndUpdate(user._id, {
+        credits: user.credits,
+      });
+      await Organization.findByIdAndUpdate(user._id, {
+        totalCreditsUsed: user.totalCreditsUsed,
+      });
+      res.json({
+        generatedPostContent: generatedPostContent,
+        remainingCredits: user.credits,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+async function getPostContentPersonaOrg(
+  postType,
+  selectedTone,
+  language,
+  persona
+) {
   const parts = [
     {
-      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in ${language} for me with the following specifications:
+      - Do not include ** or * before, after or in between the words in the response
+
+      Post Topic is about ${postType} and u follow this persona of the user -
+      Persona - ${persona} - 
+      use this above only if this has some content in it and dont follow below instructions,  if not follow the below requirements
+
+      Requirements:
+      - Include emojis to add a touch of personality.
+      - Incorporate relevant hashtags for increased visibility.
+      - Start the post with a compelling hook line to engage the audience.
+      - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
+      - Should have one link attached that is related to post content helpful for the audience if any
+      - Prompt followers to share their thoughts or experiences related to the post.
+      - Ensure the post fits within LinkedIn's character limit for optimal engagement
+      - Leverage current events or industry trends to make the post timely and relevant.
+      - Use simple and easy to undestand words in the post
+      - The post should not seem to be written by AI
+      `,
+    },
+    { text: '\n' },
+  ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 1200,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+  return result.response.text();
+}
+
+exports.generateOrganizationPostContentUseTemplate = catchAsync(
+  async (req, res, next) => {
+    try {
+      const { postType, language, template, selectedTone } = req.body;
+
+      const user = req.organization;
+
+      if (user.credits < 10) {
+        return next(new AppError('Insufficient Credits', 400));
+      }
+
+      const generatedPostContent = await getPostContentTemplateOrg(
+        postType,
+        selectedTone,
+        language,
+        template
+      );
+      user.credits -= 10;
+      user.totalCreditsUsed += 10;
+      await Organization.findByIdAndUpdate(user._id, {
+        credits: user.credits,
+      });
+      await Organization.findByIdAndUpdate(user._id, {
+        totalCreditsUsed: user.totalCreditsUsed,
+      });
+      res.json({
+        generatedPostContent: generatedPostContent,
+        remainingCredits: user.credits,
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+async function getPostContentTemplateOrg(
+  postType,
+  selectedTone,
+  language,
+  template
+) {
+  const parts = [
+    {
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in ${language} for me with the following specifications:
+
+      - Do not include ** or * before, after or in between the words in the response
+
+      Post Topic is about ${postType} and u follow this template given by the user.
+      Template - ${template} -
+      Use this above only if this has some content in it and dont follow below instructions,  if not follow the below requirements
+
+      Requirements:
+      - Include emojis to add a touch of personality.
+      - Do not include ** or * before, after or in between the words in the response
+      - Incorporate relevant hashtags for increased visibility.
+      - Start the post with a compelling hook line to engage the audience.
+      - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
+      - Should have one link attached that is related to post content helpful for the audience if any
+      - Prompt followers to share their thoughts or experiences related to the post.
+      - Ensure the post fits within LinkedIn's character limit for optimal engagement
+      - Leverage current events or industry trends to make the post timely and relevant.
+      - Use simple and easy to undestand words in the post
+      - The post should not seem to be written by AI
+      `,
+    },
+    { text: '\n' },
+  ];
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 1200,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+  return result.response.text();
+}
+
+async function getPostContentMember(postType, selectedTone) {
+  const parts = [
+    {
+      text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in for me with the following specifications:
 
       Post Topic is about ${postType}
 
@@ -349,7 +515,7 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
     await Member.findByIdAndUpdate(user._id, {
       totalCreditsUsed: user.totalCreditsUsed,
     });
-    // Send the generated template back to the frontend
+
     res.status(200).json({
       generatedTemplateContent: generatedTemplateContent,
       remainingCredits: user.credits,
@@ -568,7 +734,6 @@ exports.detectTopicGemini = async (postContent) => {
     const detectedTopic = await detectTopic(postContent);
     return detectedTopic;
   } catch (error) {
-    // Handle errors appropriately
     console.log(error);
   }
 };
@@ -608,3 +773,56 @@ async function detectTopic(postContent) {
   });
   return result.response.text();
 }
+
+exports.determinePersona = async (writingPreferences, samplePosts) => {
+  const parts = [
+    {
+      text: `
+  Analyze the following writing preferences and the provided array of sample posts to derive the persona of the writer. Use the information provided to construct a detailed and accurate description:
+  
+  Writing Preferences:
+  ${writingPreferences}
+  
+  Array of Sample Posts:
+  [
+    ${samplePosts
+      .map((post, index) => `Post ${index + 1}: "${post}"`)
+      .join(',\n')}
+  ]
+  
+  Instructions:
+  1. Analyze each post to identify:
+     - Dominant tone (e.g., formal, conversational, motivational).
+     - Style of writing (concise, elaborate, technical, creative, etc.).
+     - Intent behind the post (informing, persuading, entertaining, or connecting with the audience).
+     - Target audience inferred from the content, language, and themes.
+  2. Summarize the persona of the writer based on common patterns and traits observed across all posts.
+  3. Highlight strengths of the writer’s approach (e.g., clarity, engagement, creativity) and suggest areas for improvement.
+  4. Ensure the output is concise yet comprehensive and limited to 200 words.
+
+  Output Format: (Don't use double quotes OR ** in the ouput)
+  - Tone: [Description]
+  - Style: [Description]
+  - Intent: [Description]
+  - Target Audience: [Description]
+  - Persona Summary: [Comprehensive and insightful summary based on the above points]
+  `,
+    },
+    { text: '\n' },
+  ];
+
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 120,
+  };
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+
+  return result.response.text();
+};

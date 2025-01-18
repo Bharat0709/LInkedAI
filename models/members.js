@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { newDBConnection } = require('../db');
 const validator = require('validator');
 
 const MemberSchema = new mongoose.Schema({
@@ -31,8 +32,9 @@ const MemberSchema = new mongoose.Schema({
     default: 100,
   },
   organizationId: {
-    type: String,
-    required: [true, 'Please Provide an Organization'],
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true,
   },
   role: {
     type: String,
@@ -111,9 +113,28 @@ const MemberSchema = new mongoose.Schema({
     default: [],
   },
   lastSyncedAt: {
+    type: String,
+    default: '',
+  },
+  linkedinAccessToken: {
+    type: String,
+    select: false,
+  },
+  writingPersona: {
+    type: String,
+    default: '',
+  },
+  isLinkedinConnected: {
+    type: Boolean,
+    default: false,
+  },
+  tokenExpiresIn: {
     type: Date,
+  },
+  linkedinProfileId: {
+    type: String,
   },
 });
 
-const Member = mongoose.model('members', MemberSchema);
+const Member = newDBConnection.model('Member', MemberSchema);
 module.exports = Member;

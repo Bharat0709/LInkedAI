@@ -1,17 +1,48 @@
 const express = require('express');
-const organizationController = require('../controllers/orgAuthController');
+const organizationAuthController = require('../controllers/orgAuthController');
 const authController = require('../controllers/authController');
+const organizationController = require('../controllers/organizationController');
+const upload = require('../middlewares/multer');
 
-const router = express.Router();
+const Router = express.Router();
 
-router.get(
-  '/',
-  authController.isUserLoggedIn,
-  organizationController.verifyOrganizationDetails
+Router.post('/auth/signup', organizationAuthController.signupOrganization);
+Router.post('/auth/login', organizationAuthController.loginOrganization);
+Router.post('/auth/forgot-password', organizationAuthController.forgotPassword);
+Router.post(
+  '/auth/reset-password/:token',
+  organizationAuthController.resetPassword
 );
-router.post('/signup', organizationController.signupOrganization);
-router.post('/login', organizationController.loginOrganization);
-router.get('/google', organizationController.googleAuth);
-router.get('/google/callback', organizationController.googleAuthCallback);
+Router.post(
+  '/mail/help',
+  authController.isUserLoggedIn,
+  organizationController.sendHelpRequest
+);
 
-module.exports = router;
+Router.post(
+  '/mail/feedback',
+  authController.isUserLoggedIn,
+  organizationController.Organizationfeedback
+);
+
+Router.get(
+  '/auth',
+  authController.isUserLoggedIn,
+  organizationAuthController.verifyOrganizationDetails
+);
+
+Router.get('/auth/google', organizationAuthController.googleAuth);
+
+Router.get(
+  '/auth/google/callback',
+  organizationAuthController.googleAuthCallback
+);
+
+Router.put(
+  '/profile/update',
+  authController.isUserLoggedIn,
+  upload.single('profilePicture'),
+  organizationController.updateProfile
+);
+
+module.exports = Router;

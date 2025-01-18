@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { newDBConnection } = require('../db');
+const crypto = require('crypto');
 
 const organizationSchema = new mongoose.Schema(
   {
@@ -8,6 +10,14 @@ const organizationSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    credits: {
+      type: Number,
+      default: 500,
+    },
+    totalCreditsUsed: {
+      type: Number,
+      default: 0,
+    },
     password: {
       type: String,
       minlength: 8,
@@ -15,8 +25,8 @@ const organizationSchema = new mongoose.Schema(
     },
     oauthProvider: {
       type: String,
-      enum: ['google', 'github', 'none'],
-      default: 'none',
+      enum: ['google', 'github', 'password'],
+      default: 'password',
     },
     oauthId: {
       type: String,
@@ -24,11 +34,11 @@ const organizationSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      default: 'Anonymous', // Default name if not provided
+      default: 'EngageGPT User',
     },
     profilePicture: {
-      type: String, // URL for the profile picture
-      default: null, // Null if no profile picture is available
+      type: String,
+      default: null,
     },
     billingDetails: {
       addressLine1: { type: String },
@@ -51,22 +61,66 @@ const organizationSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    plan: {
-      type: String,
-      enum: ['basic', 'pro', 'enterprise'],
-      default: 'basic',
+    subscription: {
+      plan: {
+        type: String,
+        enum: ['basic', 'pro', 'enterprise'],
+        default: 'basic',
+      },
+      status: {
+        type: String,
+        enum: ['active', 'inactive', 'canceled'],
+        default: 'active',
+      },
+      renewalDate: {
+        type: Date,
+        default: null,
+      },
     },
-    credits: {
-      type: Number,
-      default: 0,
+    activityLog: [
+      {
+        action: { type: String },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
     },
   },
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
+    timestamps: true,
   }
 );
 
-const Organization = mongoose.model('Organization', organizationSchema);
+organizationSchema.pre('save', function (next) {
+  this.updatedAt = Date.now();
+  next();
+});
+
+organizationSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // Token valid for 10 minutes
+  return resetToken;
+};
+
+const Organization = newDBConnection.model('Organization', organizationSchema);
 
 module.exports = Organization;
