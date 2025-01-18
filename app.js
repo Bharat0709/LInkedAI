@@ -22,7 +22,7 @@ const corsOptions = {
   origin:
     NODE_ENV === 'production'
       ? [
-          'https://engagegpt.in',
+          'https://www.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ]
@@ -33,7 +33,7 @@ const corsOptions = {
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'http://localhost:3000',
+          'https://staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
