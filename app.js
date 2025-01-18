@@ -13,8 +13,10 @@ const organizationRouter = require('./routes/organizationRoutes');
 const aiRouter = require('./routes/AIAPIRoutes');
 const mailRouter = require('./routes/mailRoutes');
 const postRouter = require('./routes/postsRoutes');
+const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const app = express();
+const DB = process.env.DATABASE;
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -60,6 +62,9 @@ app.use(
     secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: DB,
+    }),
     cookie: {
       secure: NODE_ENV === 'production',
       httpOnly: true,

@@ -806,24 +806,24 @@ exports.sendNewUserEmail = async (user) => {
         <ul style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; list-style-type: none;">
           <li style="margin-bottom: 10px;">
             <strong>Name:</strong> 
-            <span style="color: #555;">${user?.name || 'Not Defined'}</span>
+            <span style="color: #555;">${user?.name}</span>
           </li>
           <li style="margin-bottom: 10px;">
             <strong>Email:</strong> 
-            <span style="color: #555;">${user?.email || 'Not Defined'}</span>
+            <span style="color: #555;">${user?.email}</span>
           </li>
           <li style="margin-bottom: 10px;">
             <strong>Profile Link:</strong> 
             <a href="${
-              user?.profileLink || 'Not Defined'
+              user?.profileLink
             }" style="color: #1a73e8; text-decoration: none;">${
-      user?.profileLink || 'Not Defined'
+      user?.profileLink
     }</a>
           </li>
           <li style="margin-bottom: 10px;">
             <strong>Account Created At:</strong> 
             <span style="color: #555;">${new Date(
-              user?.accountCreatedAt || 'Not Defined'
+              user.accountCreatedAt
             ).toLocaleString()}</span>
           </li>
         </ul>
@@ -1293,115 +1293,6 @@ exports.sendSurveyForm = async (
   mailgun.messages().send(data, function (err, body) {
     if (err) {
       console.log(err);
-    }
-  });
-};
-
-exports.sendNewMemberInviteEmail = async (
-  OrganizationName,
-  MemberName,
-  MemberEmail,
-  ConnectionToken
-) => {
-  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
-  var data = {
-    from: from_who,
-    to: MemberEmail,
-    subject: 'New Member Invite',
-    html: `
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connect Your LinkedIn Profile to EngageGPT</title>
-  <style>
-    body {
-      font-family: sans-serif; /* Use a generic sans-serif font for wider compatibility */
-      line-height: 1.6;
-      color: #333;
-      background-color: #fff; /* Set white background for better contrast */
-      padding: 20px;
-      margin: 0 auto; /* Center the content horizontally */
-      max-width: 600px; /* Limit email width for better mobile viewing */
-    }
-
-    .container {
-      background-color: #f4f4f9; /* Light gray background for the container */
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
-    }
-
-    h1 {
-      color: #007bff; /* Maintain blue accent color */
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 24px; /* Increase heading size */
-    }
-
-    p {
-      margin: 0 0 15px;
-      font-size: 16px;
-      color: #555;
-    }
-
-    .token {
-      font-weight: bold;
-      color: #fff; /* Use white text for better contrast on blue background */
-      background-color: #007bff;
-      padding: 10px 20px; /* Increase padding for better readability */
-      border-radius: 8px;
-      text-align: center;
-      margin: 20px 0;
-      display: inline-block; /* Display as inline-block for better layout */
-    }
-
-    a {
-      color: #007bff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 14px;
-      color: #555;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <h1>Connect Your LinkedIn Profile to EngageGPT</h1>
-  <p>Dear <strong>${MemberName}</strong>,</p>
-  <p>An admin from <strong>${OrganizationName}</strong> on EngageGPT would like you to connect your LinkedIn profile to access the EngageGPT dashboard.</p>
-  <p>This connection allows you to leverage powerful EngageGPT features directly within the EngageGPT platform.</p>
-  <ol style="list-style: disc inside none; padding-left: 20px;">  <li>Download the EngageGPT Chrome extension: <a href="https://chrome.google.com/webstore/detail/engagegpt-extension">Download extension</a></li>
-    <li>Copy your EngageGPT token below and paste it into the EngageGPT Chrome extension to connect your LinkedIn profile.</li>
-  </ol>
-  <p class="token">Your EngageGPT token: <strong>${ConnectionToken}</strong></p>
-  <p>By keeping the EngageGPT Chrome extension installed, you ensure seamless connection and data flow.</p>
-  <p>Feel free to reply to this email if you have any questions.</p>
-  <div class="footer">
-    <p>Thank you,</p>
-    <p>The EngageGPT Team</p>
-  </div>
-</div>
-
-</body>
-</html>`,
-  };
-  mailgun.messages().send(data, function (err, body) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log('success');
     }
   });
 };

@@ -19,7 +19,6 @@ exports.linkedinAuth = async (req, res, next) => {
       scope: `${process.env.LINKEDIN_SCOPE}`,
       state,
     };
-
     const authUrl = `${baseURL}?${querystring.stringify(params)}`;
 
     res.redirect(authUrl);
@@ -32,7 +31,6 @@ exports.linkedinAuth = async (req, res, next) => {
 exports.linkedinAuthCallback = async (req, res, next) => {
   try {
     const { code, state } = req.query;
-
     if (state !== req.session.state) {
       throw new AppError('Invalid state parameter.', 401);
     }
