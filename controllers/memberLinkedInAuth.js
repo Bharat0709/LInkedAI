@@ -42,13 +42,7 @@ exports.linkedinAuth = async (req, res, next) => {
 exports.linkedinAuthCallback = async (req, res, next) => {
   try {
     const { code, state } = req.query;
-    // Add more detailed logging
-    console.log('Callback Session Data:', {
-      sessionID: req.sessionID,
-      linkedInState: req.session?.linkedInState,
-      receivedState: state,
-      sessionExists: !!req.session,
-    });
+
 
     if (!req.session || !req.session.linkedInState) {
       throw new AppError('Session expired or invalid.', 401);
