@@ -105,8 +105,6 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Security middleware
-const helmet = require('helmet');
 app.use(helmet());
 
 // Apply rate limiting
