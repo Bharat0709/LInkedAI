@@ -20,72 +20,126 @@ const DB = process.env.DATABASE;
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Session store configuration with error handling
+const sessionStore = MongoStore.create({
+  mongoUrl: DB,
+  ttl: 24 * 60 * 60,
+  touchAfter: 24 * 3600,
+  collectionName: 'userSessions',
+  autoRemove: 'interval',
+  autoRemoveInterval: 24 * 60,
+  mongoOptions: {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+  },
+});
+
+sessionStore.on('error', function (error) {
+  console.error('Session Store Error:', error);
+});
+
+// Enhanced CORS configuration
 const corsOptions = {
   origin:
     NODE_ENV === 'production'
       ? [
           'https://www.engagegpt.in',
+          'https://engagegpt.in',
+          'https://api.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ]
       : NODE_ENV === 'staging'
       ? [
           'https://staging.engagegpt.in',
+          'https://api.staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'https://staging.engagegpt.in',
+          'http://localhost:3000',
+          'http://localhost:8000',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
-  methods: 'GET,POST,PUT,DELETE',
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cookie',
+    'X-Requested-With',
+  ],
   credentials: true,
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
+// Session configuration
+const sessionConfig = {
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    domain: process.env.NODE_ENV === 'production' ? '.engagegpt.in' : undefined,
+    path: '/',
+  },
+  name: 'sessionId',
+  proxy: process.env.NODE_ENV === 'production',
+  rolling: true, // Refresh session with each request
+};
+
+// Rate limiting configuration
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Security middleware
+const helmet = require('helmet');
+app.use(helmet());
+
+// Apply rate limiting
+app.use('/api/', limiter);
+
+// CORS configuration
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-// Parsing Request Body (30mb limit, adjust if needed)
+// Body parsing middleware with size limits
 app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ extended: true, limit: '30mb' }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '30mb' }));
 
-// Static Files (serve build folder or public assets)
+// Static files serving
 app.use(express.static(path.join(__dirname, 'build')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In your app.js, update the session configuration
-app.use(
-  session({
-    secret: process.env.JWT_SECRET,
-    resave: false,
-    saveUninitialized: false, // Change to false to avoid creating empty sessions
-    store: MongoStore.create({
-      mongoUrl: DB,
-      ttl: 24 * 60 * 60,
-      touchAfter: 24 * 3600,
-      collectionName: 'userSessions',
-      autoRemove: 'interval',
-      autoRemoveInterval: 24 * 60,
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'prod',
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain:
-        process.env.NODE_ENV === 'production' ? 'engagegpt.in' : undefined,
-    },
-    name: 'sessionId',
-  })
-);
+// Session middleware
+app.use(session(sessionConfig));
 
+// Passport initialization
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Serving Manifest and Favicon
+// Session monitoring middleware
+app.use((req, res, next) => {
+  if (req.session) {
+    req.session.touch();
+  }
+  next();
+});
+
+// Serving static files
 app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
@@ -101,46 +155,107 @@ app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/auth', authRouter);
 
-// Default Route for Health Check
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is healthy',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Default route
 app.get('/', (req, res) => {
-  console.log('Server is up and running');
   res.status(200).json({
     message: 'Server is up and running',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Handle Undefined Routes
+// Handle undefined routes
 app.all('*', (req, res, next) => {
-  next(new AppError(`Can't find ${req.originalUrl} on this server`), 404);
+  next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 
-// Error Handling Middleware
+// Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err); // Log error details for debugging (do not expose sensitive details in production)
-  res.status(err.statusCode || 500).json({
-    status: err.status || 'error',
-    message: err.message || 'Something went wrong!',
-  });
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
+  // Don't leak error details in production
+  if (NODE_ENV === 'production') {
+    res.status(err.statusCode).json({
+      status: err.status,
+      message: err.isOperational ? err.message : 'Something went wrong!',
+    });
+  } else {
+    // Development error response with full error details
+    console.error('ERROR 💥', err);
+    res.status(err.statusCode).json({
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
+  }
 });
 
-// Logging Middleware (only in development mode)
+// Logging configuration
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
-  // For production, log critical requests or errors only
-  app.use(morgan('combined'));
+  // Use combined format for production logging
+  app.use(
+    morgan('combined', {
+      skip: function (req, res) {
+        return res.statusCode < 400;
+      }, // Log only errors
+    })
+  );
 }
 
-// Graceful Shutdown: Catch SIGTERM & SIGINT signals and shutdown the server gracefully
-const shutdown = (signal) => {
-  console.log(`Received ${signal}. Shutting down gracefully...`);
+// Graceful shutdown handling
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+
+  // Create a timeout for force shutdown
+  const forcedShutdownTimeout = setTimeout(() => {
+    console.error(
+      'Could not close connections in time, forcefully shutting down'
+    );
+    process.exit(1);
+  }, 30000);
+
+  // Attempt graceful shutdown
   server.close(() => {
-    console.log('Closed all remaining connections.');
-    process.exit(0);
+    console.log('HTTP server closed');
+
+    // Close MongoDB connections
+    mongoose.connection.close(false, () => {
+      console.log('MongoDB connection closed');
+      clearTimeout(forcedShutdownTimeout);
+      process.exit(0);
+    });
   });
 };
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+// Handle termination signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.error(err);
+  process.exit(1);
+});
 
 module.exports = app;
