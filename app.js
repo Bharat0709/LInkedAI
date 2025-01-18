@@ -21,6 +21,7 @@ const DB = process.env.DATABASE;
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Session store configuration with error handling
 const sessionStore = MongoStore.create({
   mongoUrl: DB,
   ttl: 24 * 60 * 60,
@@ -52,13 +53,13 @@ const corsOptions = {
       : NODE_ENV === 'staging'
       ? [
           'https://staging.engagegpt.in',
-          'https://staging.api.engagegpt.in',
+          'https://api.staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'http://localhost:3000',
-          'http://localhost:8000',
+          'https://staging.engagegpt.in',
+          'https://api.staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
@@ -104,6 +105,8 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Security middleware
+const helmet = require('helmet');
 app.use(helmet());
 
 // Apply rate limiting
