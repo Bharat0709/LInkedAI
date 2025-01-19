@@ -56,18 +56,6 @@ exports.verifyOTP = catchAsync(async (req, res, next) => {
   next();
 });
 
-exports.addtoWaitlist = catchAsync(async (req, res, next) => {
-  const { email } = req.body;
-
-  const existingUser = await Waitlist.findOne({ email });
-  if (existingUser) {
-    return next(new AppError('Email is already in the waitlist.', 400));
-  }
-
-  const newUser = await Waitlist.create({ email });
-  res.status(201).json(newUser);
-});
-
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

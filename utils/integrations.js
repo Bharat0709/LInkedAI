@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 const catchAsync = require('./catchAsync');
+const AppError = require('./appError');
 dotenv.config();
 
 exports.fetchGoogleSheetData = catchAsync(async (req, res, next) => {

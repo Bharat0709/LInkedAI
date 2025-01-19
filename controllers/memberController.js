@@ -1,6 +1,7 @@
 const Organization = require('../models/organization');
 const Member = require('../models/members');
 const ContentCalendar = require('../models/contentCalender');
+const mailController = require('./mailController');
 const OldUser = require('../models/OldUser');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -262,7 +263,9 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
     const updatedUser = await Member.findByIdAndUpdate(
       userId,
       {
-        lastSyncedAt: new Date().toLocaleString('en-GB'),
+        lastSyncedAt: new Date().toLocaleString('en-GB', {
+          timeZone: 'Asia/Kolkata',
+        }),
         name: fullName,
         connectionsCount,
         profileViews,
@@ -274,8 +277,8 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
         stepsToCompleteProfile,
       },
       {
-        new: true, // Return the updated document
-        runValidators: true, // Ensure validation rules are enforced
+        new: true,
+        runValidators: true,
       }
     );
 
@@ -353,6 +356,7 @@ exports.addConnectionToken = catchAsync(async (req, res, next) => {
   member.profilePicture = profilePicture;
   const isMember = true;
   const isOrganization = false;
+  await mailController.sendNewUserEmail(member);
   await member.save();
   createSendToken(member, 200, res, isOrganization, isMember);
 });
@@ -608,7 +612,6 @@ exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.id;
   const organizationId = req.organization.id;
   const contentId = req.params.contentId;
-  console.log(memberId, organizationId, contentId);
 
   // Verify Member and Organization
   const member = await Member.findOne({ _id: memberId, organizationId });

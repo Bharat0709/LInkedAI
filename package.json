@@ -15,6 +15,7 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
+    "connect-mongo": "^5.1.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
@@ -23,6 +24,7 @@
     "express-rate-limit": "^7.2.0",
     "express-session": "^1.18.1",
     "firebase-admin": "^13.0.2",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "linkedin-private-api": "^1.1.2",
     "mailgun-js": "^0.22.0",
@@ -35,7 +37,9 @@
     "passport-google-oauth20": "^2.0.0",
     "passport-linkedin-oauth2": "^2.0.0",
     "rate-limiter-flexible": "^5.0.0",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "engines": {
     "node": ">=16.0.0 <21.0.0"

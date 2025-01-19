@@ -80,7 +80,6 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
 
     await new Promise((resolve, reject) => {
       blobStream.on('error', (error) => {
-        console.error('Error uploading to Firebase:', error);
         reject(new AppError('Failed to upload profile picture.', 500));
       });
 

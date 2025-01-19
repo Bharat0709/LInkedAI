@@ -9,6 +9,7 @@ const Router = express.Router();
 // Authentication Routes
 Router.get('/auth/linkedin', linkedInAuthController.linkedinAuth);
 Router.get('/auth/linkedin/callback', linkedInAuthController.linkedinAuthCallback);
+Router.post('/linkedin/share/:id', linkedInController.parseFormData , linkedInController.shareLinkedInPost);
 
 // Content Calendar Routes
 Router.get('/content-calendar/:id', authController.isUserLoggedIn, memberController.getContentCalendar);
