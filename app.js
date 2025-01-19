@@ -15,6 +15,7 @@ const mailRouter = require('./routes/mailRoutes');
 const MongoStore = require('connect-mongo');
 const postRouter = require('./routes/postsRoutes');
 const passport = require('passport');
+const helmet = require('helmet');
 const app = express();
 const DB = process.env.DATABASE;
 
@@ -57,8 +58,8 @@ const corsOptions = {
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'http://localhost:3000',
-          'http://localhost:8000',
+          'https://staging.engagegpt.in',
+          'https://api.staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
@@ -104,8 +105,6 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Security middleware
-const helmet = require('helmet');
 app.use(helmet());
 
 // Apply rate limiting
