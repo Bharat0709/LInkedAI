@@ -12,7 +12,7 @@ const {
 const Member = require('../models/members');
 const Organization = require('../models/organization');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
-const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 const safetySettings = [
   {
