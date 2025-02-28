@@ -14,8 +14,12 @@ const aiRouter = require('./routes/AIAPIRoutes');
 const mailRouter = require('./routes/mailRoutes');
 const MongoStore = require('connect-mongo');
 const postRouter = require('./routes/postsRoutes');
+const scheduler = require('./controllers/linkedInController');
+const postScheduledPosts = scheduler.schedulePosts;
 const passport = require('passport');
+const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cron = require('node-cron');
 const app = express();
 const DB = process.env.DATABASE;
 
@@ -58,7 +62,7 @@ const corsOptions = {
           /^chrome-extension:\/\/.*/,
         ]
       : [
-          'https://staging.engagegpt.in',
+          'http://localhost:3000',
           'https://api.staging.engagegpt.in',
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
@@ -95,14 +99,17 @@ const sessionConfig = {
   rolling: true, // Refresh session with each request
 };
 
-// Rate limiting configuration
-const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+cron.schedule('* * * * *', () => {
+  console.log('⏳ Running scheduled post check...');
+  postScheduledPosts();
 });
 
 app.use(helmet());

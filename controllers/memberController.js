@@ -119,7 +119,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 });
 
 exports.createMember = catchAsync(async (req, res, next) => {
-  const { name, email } = req.body;
+  const { name, email, timeZone } = req.body;
   const organizationId = req.organization?._id;
 
   if (!organizationId || !req.organization) {
@@ -148,6 +148,7 @@ exports.createMember = catchAsync(async (req, res, next) => {
     const newMember = new Member({
       name,
       email,
+      timeZone: timeZone,
       organizationId: existingOrganization._id.toString(),
       connectionToken,
     });
@@ -264,7 +265,7 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
       userId,
       {
         lastSyncedAt: new Date().toLocaleString('en-GB', {
-          timeZone: 'Asia/Kolkata',
+          timeZone: existingMember?.timeZone || 'Asia/Kolkata',
         }),
         name: fullName,
         connectionsCount,

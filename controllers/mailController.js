@@ -1296,3 +1296,105 @@ exports.sendSurveyForm = async (
     }
   });
 };
+
+exports.sendPostStatusEmail = async (
+  email,
+  post,
+  status,
+  errorMessage = ''
+) => {
+  var mailgun = new Mailgun({ apiKey: api_key, domain: domain });
+
+  const isSuccess = status.toLowerCase() === 'posted';
+  const subject = isSuccess
+    ? '✅ Your LinkedIn Post was Successfully Published!'
+    : '⚠️ Error Posting to LinkedIn';
+
+  const linkedinPostLink = `https://www.linkedin.com/feed/update/${post.postId}`;
+
+  const emailBody = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${subject}</title>
+  </head>
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f7f7f7;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f7f7f7; padding: 20px;">
+      <tr>
+        <td align="center">
+          <table width="600px" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <tr>
+              <td style="background-color: ${
+                isSuccess ? '#28a745' : '#dc3545'
+              }; padding: 20px; text-align: center; color: #ffffff; font-size: 24px; font-weight: bold;">
+                ${subject}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px; color: #333333; font-size: 16px; line-height: 1.5;">
+                <p>Hi,</p>
+                <p>
+                  ${
+                    isSuccess
+                      ? 'Your LinkedIn post has been successfully published!'
+                      : 'Unfortunately, we encountered an issue while posting your content to LinkedIn.'
+                  }
+                </p>
+                <h3>Post Details:</h3>
+                <p><strong>Content:</strong> ${post.content}</p>
+                <p><strong>Post Date:</strong> ${post.postDate}</p>
+                <p><strong>Post Time:</strong> ${post.postTime}</p>
+                
+                ${
+                  isSuccess
+                    ? `
+                <p style="text-align: center; margin: 20px 0;">
+                  <a href="${linkedinPostLink}" target="_blank" style="display: inline-block; background-color: #007bff; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-size: 16px;">
+                    View on LinkedIn
+                  </a>
+                </p>`
+                    : `
+                <p><strong>Error Details:</strong> ${
+                  errorMessage || 'Unknown error occurred.'
+                }</p>
+                <p>Please try again or contact support if the issue persists.</p>
+                `
+                }
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #f1f1f1; padding: 10px; text-align: center; color: #888888; font-size: 14px;">
+                <p>For further assistance, please contact our support team.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background-color: #007bff; padding: 10px; text-align: center; color: #ffffff; font-size: 12px;">
+                <p>EngageGPT - AI for LinkedIn</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+
+  // Send the email using Mailgun
+  const data = {
+    from: from_who,
+    to: email,
+    subject: subject,
+    html: emailBody,
+  };
+
+  mailgun.messages().send(data, function (err, body) {
+    if (err) {
+      console.log('❌ Error sending post status email:', err);
+    } else {
+      console.log('✅ Post status email sent successfully:', body);
+    }
+  });
+};

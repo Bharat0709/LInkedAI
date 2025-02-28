@@ -7,9 +7,13 @@ const integrationUtils = require('../utils/integrations');
 const Router = express.Router();
 
 // Authentication Routes
+Router.post('/linkedin/schedule/:id',  authController.isUserLoggedIn ,linkedInController.parseFormData , linkedInController.createScheduledPost);
+Router.post('/linkedin/share/:id',authController.isUserLoggedIn, linkedInController.parseFormData , linkedInController.shareLinkedInPost);
 Router.get('/auth/linkedin', linkedInAuthController.linkedinAuth);
 Router.get('/auth/linkedin/callback', linkedInAuthController.linkedinAuthCallback);
-Router.post('/linkedin/share/:id', linkedInController.parseFormData , linkedInController.shareLinkedInPost);
+Router.get('/linkedin/history/:id',  authController.isUserLoggedIn ,linkedInController.getScheduledPosts);
+Router.put('/linkedin/history/:id' , authController.isUserLoggedIn , linkedInController.parseFormData ,  linkedInController.updateScheduledPost);
+Router.delete('/linkedin/history/:id' , authController.isUserLoggedIn ,linkedInController.deleteScheduledPost);
 
 // Content Calendar Routes
 Router.get('/content-calendar/:id', authController.isUserLoggedIn, memberController.getContentCalendar);

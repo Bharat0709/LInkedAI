@@ -38,7 +38,8 @@ const organizationSchema = new mongoose.Schema(
     },
     profilePicture: {
       type: String,
-      default: null,
+      default:
+        'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
     },
     billingDetails: {
       addressLine1: { type: String },

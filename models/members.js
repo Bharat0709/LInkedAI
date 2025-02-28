@@ -13,6 +13,10 @@ const MemberSchema = new mongoose.Schema({
     unique: true,
     required: [true, 'Please Provide an Email'],
   },
+  timeZone: {
+    type: String,
+    default: 'Asia/Kolkata',
+  },
   profileLink: {
     type: String,
     default: '',
@@ -20,7 +24,7 @@ const MemberSchema = new mongoose.Schema({
   profilePicture: {
     type: String,
     default:
-      'https://media.licdn.com/dms/image/v2/D4D03AQFzfL-Dlu4_NA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1699953383322?e=1740009600&v=beta&t=nW7qaP2BRn2vQBWOB7GpyWY1m_5F7-lKyp12TYVnAwQ',
+      'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
   },
   active: {
     type: Boolean,
