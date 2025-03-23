@@ -433,6 +433,12 @@ exports.updateScheduledPost = catchAsync(async (req, res, next) => {
     updatedMedia = [...updatedMedia, ...newMedia];
   }
 
+  const localDateTime = `${postDate} ${postTime}`;
+  const utcDateTime = moment
+    .tz(localDateTime, 'DD-MM-YYYY HH:mm:ss', timeZone)
+    .utc()
+    .format();
+
   // Update the post
   scheduledPost.content = content || scheduledPost.content;
   scheduledPost.postDate = postDate || scheduledPost.postDate;
@@ -441,6 +447,7 @@ exports.updateScheduledPost = catchAsync(async (req, res, next) => {
   scheduledPost.timeZone = timeZone || scheduledPost.timeZone;
   scheduledPost.status = status || scheduledPost.status;
   scheduledPost.media = updatedMedia;
+  scheduledPost.effectivePostTime = utcDateTime;
 
   await scheduledPost.save();
 
