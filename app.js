@@ -15,7 +15,9 @@ const mailRouter = require('./routes/mailRoutes');
 const MongoStore = require('connect-mongo');
 const postRouter = require('./routes/postsRoutes');
 const scheduler = require('./controllers/linkedInController');
+const reportScheduler = require('./controllers/reportController');
 const postScheduledPosts = scheduler.schedulePosts;
+const generateReport = reportScheduler.generateDailyReport;
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -110,6 +112,16 @@ const limiter = rateLimit({
 cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
   postScheduledPosts();
+});
+
+cron.schedule('30 11 * * *', async () => {
+  console.log('📊 Running daily user report job at 11:30 AM...');
+  try {
+    await generateReport();
+    console.log('✅ Daily user report job completed successfully.');
+  } catch (error) {
+    console.error('❌ Error running daily report job:', error);
+  }
 });
 
 app.use(helmet());
