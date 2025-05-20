@@ -297,8 +297,184 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.updateMemberSettings = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+  const { timeZone, leaderBoardProfileVisibility, postSavingPreferences } =
+    req.body;
+
+  try {
+    // Verify organization exists
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await Member.findById(memberId);
+    if (
+      !existingMember ||
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    // Prepare update object with only the fields that need to be updated
+    const updateFields = {};
+
+    // Add fields to update object only if they exist in the request
+    if (timeZone) updateFields.timeZone = timeZone;
+
+    // Handle post saving preferences update
+    if (postSavingPreferences) {
+      // Get the current member data to merge preferences properly
+      updateFields.postSavingPreferences = {
+        ...existingMember.postSavingPreferences, // Keep existing preferences as base
+        ...postSavingPreferences, // Override with new preferences
+      };
+
+      // Special handling for nested arrays if they exist in the request
+      if (postSavingPreferences.keywords) {
+        updateFields.postSavingPreferences.keywords =
+          postSavingPreferences.keywords;
+      }
+      if (postSavingPreferences.excludeKeywords) {
+        updateFields.postSavingPreferences.excludeKeywords =
+          postSavingPreferences.excludeKeywords;
+      }
+      if (postSavingPreferences.customCategories) {
+        updateFields.postSavingPreferences.customCategories =
+          postSavingPreferences.customCategories;
+      }
+      if (postSavingPreferences.postTypes) {
+        updateFields.postSavingPreferences.postTypes =
+          postSavingPreferences.postTypes;
+      }
+    }
+
+    // Only proceed if there are fields to update
+    if (Object.keys(updateFields).length === 0) {
+      return next(new AppError('No valid fields to update', 400));
+    }
+
+    const updatedMember = await Member.findByIdAndUpdate(
+      memberId,
+      updateFields,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: updatedMember,
+    });
+  } catch (error) {
+    next(new AppError('Error updating member settings', 500));
+  }
+});
+
 exports.getMemberDetailsByIds = catchAsync(async (req, res, next) => {
   const { organizationId, memberId } = req.params;
+  try {
+    const organization = await Organization.findById(organizationId);
+    if (!organization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    const member = await Member.findOne({
+      _id: memberId,
+      organizationId,
+    });
+
+    if (!member) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: member,
+    });
+  } catch (error) {
+    next(new AppError('Error retrieving member details', 500));
+  }
+});
+
+exports.updateFeedFilterSettings = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId;
+  const organizationId = req.organization.id;
+  const { feedFilterSettings } = req.body;
+
+  try {
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await Member.findById(memberId);
+    if (
+      !existingMember ||
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    // Validate that feedFilterSettings is provided
+    if (!feedFilterSettings) {
+      return next(new AppError('Feed filter settings are required', 400));
+    }
+
+    // Update the member's feed filter settings
+    const updatedMember = await Member.findByIdAndUpdate(
+      memberId,
+      { feedFilterSettings },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: {
+        feedFilterSettings: updatedMember.feedFilterSettings,
+      },
+    });
+  } catch (error) {
+    next(new AppError('Error updating feed filter settings', 500));
+  }
+});
+
+exports.getMemberDetailsById = catchAsync(async (req, res, next) => {
+  const { memberId } = req.params;
+  const organizationId = req.organization.id;
   try {
     const organization = await Organization.findById(organizationId);
     if (!organization) {

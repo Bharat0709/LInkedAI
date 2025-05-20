@@ -14,4 +14,5 @@ Router.get(
   authController.isUserLoggedIn,
   postController.getPostsByMemberAndOrganization
 );
+
 module.exports = Router;

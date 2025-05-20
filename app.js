@@ -12,6 +12,7 @@ const authRouter = require('./routes/authRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
 const aiRouter = require('./routes/AIAPIRoutes');
 const mailRouter = require('./routes/mailRoutes');
+const hiringPostsRouter = require('./routes/hiringPosts');
 const MongoStore = require('connect-mongo');
 const postRouter = require('./routes/postsRoutes');
 const scheduler = require('./controllers/linkedInController');
@@ -69,7 +70,7 @@ const corsOptions = {
           'https://www.linkedin.com',
           /^chrome-extension:\/\/.*/,
         ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
     'Authorization',
@@ -171,6 +172,7 @@ app.use('/api/v1/members', memberRouter);
 app.use('/api/v1/mail', mailRouter);
 app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/posts', postRouter);
+app.use('/api/v1/hiring-posts', hiringPostsRouter);
 app.use('/api/v1/auth', authRouter);
 
 // Health check route

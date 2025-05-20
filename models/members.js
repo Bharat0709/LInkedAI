@@ -138,7 +138,109 @@ const MemberSchema = new mongoose.Schema({
   linkedinProfileId: {
     type: String,
   },
+  appPassword: {
+    type: String,
+    select: false,
+  },
+  emailProvider: {
+    type: String,
+    enum: ['gmail', 'outlook', 'yahoo', 'custom', ''],
+    default: '',
+  },
+  postSavingPreferences: {
+    enabled: {
+      type: Boolean,
+      default: false,
+    },
+    enableCustomKeywords: {
+      type: Boolean,
+      default: false,
+    },
+    keywords: {
+      type: [String],
+      default: [],
+    },
+    excludeKeywords: {
+      type: [String],
+      default: [],
+    },
+    saveAllPosts: {
+      type: Boolean,
+      default: false,
+    },
+    maxPostsPerDay: {
+      type: Number,
+      default: 100,
+    },
+    minCharCount: {
+      type: Number,
+      default: 50,
+    },
+    postTypes: {
+      type: [String],
+      enum: ['text', 'image', 'video', 'document', 'link', 'poll', 'all'],
+      default: ['all'],
+    },
+    autoTagPosts: {
+      type: Boolean,
+      default: false,
+    },
+    customCategories: {
+      type: [
+        {
+          name: String,
+          keywords: [String],
+          color: {
+            type: String,
+            default: '#3498db',
+          },
+        },
+      ],
+      default: [],
+    },
+    autoDetectEmailAddresses: {
+      type: Boolean,
+      default: true,
+    },
+    autoDetectFormLinks: {
+      type: Boolean,
+      default: true,
+    },
+    saveFrequency: {
+      type: String,
+      enum: ['realtime', 'hourly', 'daily'],
+      default: 'realtime',
+    },
+  },
+  feedFilterSettings: {
+    enabled: {
+      type: Boolean,
+      default: true,
+    },
+    hideKeywords: {
+      type: [String],
+      default: [],
+    },
+  },
 });
+
+MemberSchema.methods.setAppPassword = async function (password) {
+  const cipher = crypto.createCipher('aes-256-cbc', process.env.ENCRYPTION_KEY);
+  let encrypted = cipher.update(password, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  this.appPassword = encrypted;
+};
+
+MemberSchema.methods.getAppPassword = async function () {
+  if (!this.appPassword) return null;
+  const decipher = crypto.createDecipher(
+    'aes-256-cbc',
+    process.env.ENCRYPTION_KEY
+  );
+  let decrypted = decipher.update(this.appPassword, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+};
 
 const Member = newDBConnection.model('Member', MemberSchema);
 module.exports = Member;

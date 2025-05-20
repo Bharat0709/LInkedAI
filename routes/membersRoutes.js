@@ -23,7 +23,10 @@ Router.delete('/content-calendar/:id/:contentId', authController.isUserLoggedIn,
 
 // Member Routes
 Router.post('/checkMember', memberController.checkMemberExists);
+Router.get('/member-profile/:memberId', authController.isUserLoggedIn, memberController.getMemberDetailsById);
 Router.get('/:organizationId/:memberId', authController.isUserLoggedIn, memberController.getMemberDetailsByIds);
+Router.patch('/feed-filters/:memberId' , authController.isUserLoggedIn , memberController.updateFeedFilterSettings);
+Router.put('/settings/:memberId', authController.isUserLoggedIn, memberController.updateMemberSettings);
 Router.put('/:id', authController.isUserLoggedIn, memberController.updateMemberDetails);
 Router.post('/addConnectionToken', memberController.addConnectionToken);
 Router.get('/users', authController.isUserLoggedIn, memberController.getAllUsers);
@@ -34,7 +37,7 @@ Router.post('/tagPost', authController.isUserLoggedIn, memberController.updatePo
 Router.post('/create', authController.isUserLoggedIn, memberController.createMember);
 Router.post('/createPersona/:id', authController.isUserLoggedIn, memberController.createMemberPersona);
 Router.get('/all', authController.isUserLoggedIn, memberController.getAllMembersOfOrganization);
-
+    
 // Integration Routes
 Router.post('/integrations/googleSheet', authController.isUserLoggedIn, integrationUtils.fetchGoogleSheetData);
 

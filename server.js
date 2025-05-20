@@ -20,8 +20,8 @@ const shutdown = (signal) => {
   });
 };
 
-process.on('SIGINT', () => shutdown('SIGINT')); // For Ctrl + C
-process.on('SIGTERM', () => shutdown('SIGTERM')); // For deployment shutdown
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err.message);

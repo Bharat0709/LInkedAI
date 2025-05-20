@@ -2,6 +2,7 @@ const express = require('express');
 const organizationAuthController = require('../controllers/orgAuthController');
 const authController = require('../controllers/authController');
 const organizationController = require('../controllers/organizationController');
+const hiringPostsController = require('../controllers/hiringPostsController');
 const upload = require('../middlewares/multer');
 
 const Router = express.Router();
@@ -29,6 +30,12 @@ Router.get(
   '/auth',
   authController.isUserLoggedIn,
   organizationAuthController.verifyOrganizationDetails
+);
+
+Router.get(
+  '/:organizationId/hiring-posts',
+  authController.isUserLoggedIn,
+  hiringPostsController.getOrganizationHiringPosts
 );
 
 Router.get('/auth/google', organizationAuthController.googleAuth);
