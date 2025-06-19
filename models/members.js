@@ -150,7 +150,7 @@ const MemberSchema = new mongoose.Schema({
   postSavingPreferences: {
     enabled: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     enableCustomKeywords: {
       type: Boolean,
@@ -220,6 +220,113 @@ const MemberSchema = new mongoose.Schema({
     hideKeywords: {
       type: [String],
       default: [],
+    },
+  },
+  summary: {
+    professionalProfile: {
+      currentRole: {
+        type: String,
+        default: '', // e.g., "Software Developer", "Digital Marketer", "Student"
+      },
+      profileDescription: {
+        type: String,
+        default: '', // e.g., "Experienced software developer with a passion for building scalable applications."
+      },
+      experienceLevel: {
+        type: String,
+        enum: [
+          'entry',
+          'junior',
+          'mid',
+          'senior',
+          'executive',
+          'student',
+          'fresher',
+        ],
+        default: 'entry',
+      },
+      industry: {
+        type: String,
+        default: '', // e.g., "Technology", "Healthcare", "Finance", "Education"
+      },
+      functionalArea: {
+        type: [String],
+        default: [], // e.g., ["Marketing", "Sales", "Development", "Design"]
+      },
+      companySize: {
+        type: String,
+        enum: [
+          'startup',
+          'small',
+          'medium',
+          'large',
+          'enterprise',
+          'freelancer',
+        ],
+        default: 'small',
+      },
+      location: {
+        city: {
+          type: String,
+          default: '',
+        },
+        country: {
+          type: String,
+          default: 'India',
+        },
+        workMode: {
+          type: String,
+          enum: ['remote', 'onsite', 'hybrid', 'flexible'],
+          default: 'hybrid',
+        },
+      },
+    },
+  },
+  leadGenerationGoals: {
+    primaryObjective: {
+      type: String,
+      enum: [
+        'job_search',
+        'client_acquisition',
+        'partnership_building',
+        'networking',
+        'brand_building',
+        'knowledge_sharing',
+        'recruitment',
+        'sales_prospecting',
+        'investment_seeking',
+        'mentorship',
+      ],
+      default: 'networking',
+    },
+    targetAudience: {
+      roles: {
+        type: [String],
+        default: [], // e.g., ["HR Manager", "CTO", "Marketing Director"]
+      },
+      industries: {
+        type: [String],
+        default: [], // e.g., ["SaaS", "E-commerce", "FinTech"]
+      },
+      companySizes: {
+        type: [String],
+        enum: ['startup', 'small', 'medium', 'large', 'enterprise'],
+        default: [],
+      },
+      seniority: {
+        type: [String],
+        enum: ['entry', 'junior', 'mid', 'senior', 'executive', 'founder'],
+        default: [],
+      },
+    },
+    serviceOfferings: {
+      type: [String],
+      default: [], // e.g., ["Web Development", "Digital Marketing", "Consulting"]
+    },
+    businessType: {
+      type: String,
+      enum: ['b2b', 'b2c', 'b2b2c', 'freelancer', 'job_seeker', 'entrepreneur'],
+      default: 'b2b',
     },
   },
 });

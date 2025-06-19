@@ -25,10 +25,13 @@ Router.delete('/content-calendar/:id/:contentId', authController.isUserLoggedIn,
 Router.post('/checkMember', memberController.checkMemberExists);
 Router.get('/member-profile/:memberId', authController.isUserLoggedIn, memberController.getMemberDetailsById);
 Router.get('/:organizationId/:memberId', authController.isUserLoggedIn, memberController.getMemberDetailsByIds);
-Router.patch('/feed-filters/:memberId' , authController.isUserLoggedIn , memberController.updateFeedFilterSettings);
-Router.put('/settings/:memberId', authController.isUserLoggedIn, memberController.updateMemberSettings);
+Router.get('/summary/:memberId', authController.isUserLoggedIn, memberController.getMemberSummary);
+Router.put('/lead-generation-settings/:memberId', authController.isUserLoggedIn, memberController.updateLeadGenerationGoals);
 Router.put('/:id', authController.isUserLoggedIn, memberController.updateMemberDetails);
+Router.put('/summary/:memberId', authController.isUserLoggedIn, memberController.updateCompleteSummary);
+Router.put('/settings/:memberId', authController.isUserLoggedIn, memberController.updateMemberSettings);
 Router.post('/addConnectionToken', memberController.addConnectionToken);
+Router.patch('/feed-filters/:memberId' , authController.isUserLoggedIn , memberController.updateFeedFilterSettings);
 Router.get('/users', authController.isUserLoggedIn, memberController.getAllUsers);
 Router.post('/daysactive', authController.isUserLoggedIn, memberController.updateDaysActive);
 Router.post('/linkedin/disconnect/:memberId', authController.isUserLoggedIn, memberController.disconnectLinkedIn);

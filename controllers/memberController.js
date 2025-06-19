@@ -300,8 +300,7 @@ exports.updateMemberDetails = catchAsync(async (req, res, next) => {
 exports.updateMemberSettings = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId || req.member.id;
   const organizationId = req.organization.id;
-  const { timeZone, leaderBoardProfileVisibility, postSavingPreferences } =
-    req.body;
+  const { timeZone, postSavingPreferences } = req.body;
 
   try {
     // Verify organization exists
@@ -815,4 +814,294 @@ exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
     status: 'success',
     message: 'Content Calendar entry deleted successfully.',
   });
+});
+
+// Update Member Summary (Professional Profile)
+exports.updateMemberSummary = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+  const { professionalProfile } = req.body;
+
+  try {
+    // Verify organization exists
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await Member.findById(memberId);
+    if (
+      !existingMember ||
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    // Validate that professionalProfile is provided
+    if (!professionalProfile) {
+      return next(new AppError('Professional profile data is required', 400));
+    }
+
+    // Prepare update object - merge with existing summary data
+    const updateFields = {
+      summary: {
+        ...existingMember.summary, // Keep existing summary data
+        professionalProfile: {
+          ...existingMember.summary?.professionalProfile, // Keep existing professional profile as base
+          ...professionalProfile, // Override with new data
+        },
+      },
+    };
+
+    // Special handling for nested objects and arrays
+    if (professionalProfile.functionalArea) {
+      updateFields.summary.professionalProfile.functionalArea =
+        professionalProfile.functionalArea;
+    }
+
+    if (professionalProfile.location) {
+      updateFields.summary.professionalProfile.location = {
+        ...existingMember.summary?.professionalProfile?.location,
+        ...professionalProfile.location,
+      };
+    }
+
+    // Update the member's summary
+    const updatedMember = await Member.findByIdAndUpdate(
+      memberId,
+      updateFields,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: {
+        summary: updatedMember.summary,
+      },
+    });
+  } catch (error) {
+    next(new AppError('Error updating member summary', 500));
+  }
+});
+
+// Update Lead Generation Goals
+exports.updateLeadGenerationGoals = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+  const { leadGenerationGoals } = req.body;
+
+  try {
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Get existing member to merge with current leadGenerationGoals
+    const existingMember = await Member.findById(memberId);
+
+    // Merge existing leadGenerationGoals with new data
+    const updatedLeadGenerationGoals = {
+      ...(existingMember.leadGenerationGoals?.toObject?.() || {}),
+      ...leadGenerationGoals,
+      targetAudience: {
+        ...(existingMember.leadGenerationGoals?.targetAudience?.toObject?.() ||
+          {}),
+        ...(leadGenerationGoals.targetAudience || {}),
+      },
+    };
+
+    // Update with complete object
+    const updatedMember = await Member.findByIdAndUpdate(
+      memberId,
+      {
+        leadGenerationGoals: updatedLeadGenerationGoals,
+      },
+      {
+        new: true,
+        runValidators: true,
+        select: 'leadGenerationGoals',
+      }
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        leadGenerationGoals: updatedMember.leadGenerationGoals,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating lead generation goals:', error);
+    next(
+      new AppError(
+        `Error updating lead generation goals: ${error.message}`,
+        500
+      )
+    );
+  }
+});
+// Update Complete Summary (Both Professional Profile and Lead Generation Goals)
+exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+  const { summary } = req.body;
+
+  try {
+    // Verify organization exists
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await Member.findById(memberId);
+    if (
+      !existingMember ||
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    // Validate that summary is provided
+    if (!summary) {
+      return next(new AppError('Summary data is required', 400));
+    }
+
+    // Prepare update object - merge with existing summary data
+    const updateFields = {
+      summary: {
+        ...existingMember.summary, // Keep existing summary data as base
+        ...summary, // Override with new summary data
+      },
+    };
+
+    // Special handling for professionalProfile if provided
+    if (summary.professionalProfile) {
+      updateFields.summary.professionalProfile = {
+        ...summary.professionalProfile,
+      };
+
+      // Handle nested objects
+      if (summary.professionalProfile.location) {
+        updateFields.summary.professionalProfile.location = {
+          ...summary.professionalProfile.location,
+        };
+      }
+
+      // Handle arrays
+      if (summary.professionalProfile.functionalArea) {
+        updateFields.summary.professionalProfile.functionalArea =
+          summary.professionalProfile.functionalArea;
+      }
+    }
+
+    // Special handling for leadGenerationGoals if provided
+    if (summary.leadGenerationGoals) {
+      updateFields.summary.leadGenerationGoals = {
+        ...summary.leadGenerationGoals,
+      };
+
+      // Handle nested targetAudience object
+      if (summary.leadGenerationGoals.targetAudience) {
+        updateFields.summary.leadGenerationGoals.targetAudience = {
+          ...summary.leadGenerationGoals.targetAudience,
+        };
+      }
+
+      // Handle arrays
+      if (summary.leadGenerationGoals.serviceOfferings) {
+        updateFields.summary.leadGenerationGoals.serviceOfferings =
+          summary.leadGenerationGoals.serviceOfferings;
+      }
+    }
+
+    // Update the member's complete summary
+    const updatedMember = await Member.findByIdAndUpdate(
+      memberId,
+      updateFields,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!updatedMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: {
+        summary: updatedMember.summary,
+      },
+    });
+  } catch (error) {
+    next(new AppError('Error updating complete summary', 500));
+  }
+});
+
+// Get Member Summary
+exports.getMemberSummary = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+
+  try {
+    // Verify organization exists
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Get member with summary data
+    const member = await Member.findOne({
+      _id: memberId,
+      organizationId,
+    }).select('summary name email currentRole');
+
+    if (!member) {
+      return next(
+        new AppError(
+          'Member not found or does not belong to the organization',
+          404
+        )
+      );
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      data: {
+        member: {
+          id: member._id,
+          name: member.name,
+          email: member.email,
+          summary: member.summary || {
+            professionalProfile: {},
+            leadGenerationGoals: {},
+          },
+        },
+      },
+    });
+  } catch (error) {
+    next(new AppError('Error retrieving member summary', 500));
+  }
 });
