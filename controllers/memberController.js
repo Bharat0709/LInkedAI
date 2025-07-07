@@ -1,15 +1,16 @@
 const Organization = require('../models/organization');
 const Member = require('../models/members');
 const ContentCalendar = require('../models/contentCalender');
-const mailController = require('./mailController');
 const OldUser = require('../models/OldUser');
 const dotenv = require('dotenv');
 dotenv.config();
 const apiController = require('./apiController');
+const { sendSurveyForm, sendNewUserEmail } = require('../services/email/admin');
 const {
   sendNewMemberInviteEmail,
-  sendSurveyForm,
-} = require('./mailController');
+  sendExtensionConnectedConfirmation,
+  sendMilestoneEmail,
+} = require('../services/email/member');
 const rateLimitMiddleware = require('../middlewares/rateLimiter');
 const { createSendToken } = require('./../middlewares/tokenUtils');
 const { generateConnectionToken } = require('../utils/randomString');
@@ -18,6 +19,7 @@ const catchAsync = require('./../utils/catchAsync');
 
 exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
   const user = req.member;
+
   res.status(200).json({
     status: 'success',
     user,
@@ -49,6 +51,23 @@ exports.updateDaysActive = catchAsync(async (req, res, next) => {
     daysActive: user.daysActive,
     currentStreak: user.currentStreak,
   });
+
+  // 👉 Milestone email logic
+  const isMilestone = activeDays % 10 === 0;
+
+  if (isMilestone) {
+    sendMilestoneEmail({
+      name: user.name,
+      email: user.email,
+      daysActive: user.daysActive,
+    })
+      .then(() => {
+        console.log(`✅ Milestone email sent for ${activeDays} days`);
+      })
+      .catch((err) => {
+        console.error('❌ Failed to send milestone email:', err);
+      });
+  }
 
   res.status(200).json({
     success: true,
@@ -162,7 +181,7 @@ exports.createMember = catchAsync(async (req, res, next) => {
       newMember._id
     );
 
-    await sendNewMemberInviteEmail(
+    sendNewMemberInviteEmail(
       existingOrganization.name,
       name,
       email,
@@ -189,6 +208,7 @@ exports.createMember = catchAsync(async (req, res, next) => {
       data: data,
     });
   } catch (error) {
+    console.log('Error creating member:', error);
     next(new AppError('Error creating member', 500));
   }
 });
@@ -532,7 +552,8 @@ exports.addConnectionToken = catchAsync(async (req, res, next) => {
   member.profilePicture = profilePicture;
   const isMember = true;
   const isOrganization = false;
-  await mailController.sendNewUserEmail(member);
+  sendNewUserEmail(member);
+  sendExtensionConnectedConfirmation(member);
   await member.save();
   createSendToken(member, 200, res, isOrganization, isMember);
 });
@@ -633,7 +654,7 @@ exports.submitSurvey = catchAsync(async (req, res, next) => {
   }
 
   try {
-    await sendSurveyForm(
+    sendSurveyForm(
       usability,
       performance,
       missingFeatures,
@@ -816,6 +837,49 @@ exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteMemberAccount = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId;
+  const organizationId = req.organization.id;
+
+  try {
+    // Verify organization exists
+    const existingOrganization = await Organization.findById(organizationId);
+    if (!existingOrganization) {
+      return next(new AppError('Organization not found', 404));
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await Member.findById(memberId);
+    if (!existingMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    if (
+      existingMember.organizationId.toString() !== organizationId.toString()
+    ) {
+      return next(
+        new AppError('Member does not belong to the organization', 403)
+      );
+    }
+
+    // Delete the member
+    const deletedMember = await Member.findByIdAndDelete(memberId);
+
+    if (!deletedMember) {
+      return next(new AppError('Member not found', 404));
+    }
+
+    // Send success response
+    res.status(200).json({
+      status: 'success',
+      message: 'Member account deleted successfully',
+      data: null,
+    });
+  } catch (error) {
+    next(new AppError('Error deleting member account', 500));
+  }
+});
+
 // Update Member Summary (Professional Profile)
 exports.updateMemberSummary = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId || req.member.id;
@@ -953,6 +1017,7 @@ exports.updateLeadGenerationGoals = catchAsync(async (req, res, next) => {
     );
   }
 });
+
 // Update Complete Summary (Both Professional Profile and Lead Generation Goals)
 exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId || req.member.id;

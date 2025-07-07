@@ -1,8 +1,8 @@
 const AppError = require('../utils/appError');
 const catchAsync = require('./../utils/catchAsync');
-const mailController = require('./mailController');
 const { bucket } = require('../utils/firebaseConfig');
 const Organization = require('../models/organization');
+const { sendFeedback, sendHelpRequest } = require('../services/email/admin');
 
 exports.sendHelpRequest = catchAsync(async (req, res, next) => {
   const { helpTextContent } = req.body;
@@ -12,13 +12,10 @@ exports.sendHelpRequest = catchAsync(async (req, res, next) => {
   }
 
   const organization = req.organization;
-
   if (!organization || !organization.email) {
     return next(new AppError('Organization details are missing.', 404));
   }
-
-  await mailController.helpRequest(organization, helpTextContent);
-
+  sendHelpRequest(organization, helpTextContent);
   res.status(200).json({
     status: 'success',
     message: 'Help request has been sent successfully.',
@@ -37,8 +34,7 @@ exports.Organizationfeedback = catchAsync(async (req, res, next) => {
   if (!organization || !organization.email) {
     return next(new AppError('Organization details are missing.', 404));
   }
-
-  await mailController.feedback(organization, rating, feedbackContent);
+  sendFeedback(organization, rating, feedbackContent);
 
   res.status(200).json({
     status: 'success',
@@ -106,3 +102,4 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
     },
   });
 });
+

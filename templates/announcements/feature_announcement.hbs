@@ -1,0 +1,71 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>New Features in EngageGPT</title>
+    <style>
+      body { margin: 0; padding: 0; background-color: #f5f7fa; font-family:
+      'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }
+      .email-wrapper { max-width: 640px; margin: 40px auto; background: #ffffff;
+      border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); overflow:
+      hidden; } .email-header { background-color: #0c4a6e; color: #ffffff;
+      text-align: center; padding: 30px 20px; font-size: 22px; font-weight: 600;
+      } .email-body { padding: 30px 25px; font-size: 16px; line-height: 1.7; }
+      .feature-list { margin: 24px 0; padding-left: 0; list-style: none; }
+      .feature-list li { padding: 12px 0; border-bottom: 1px solid #eee; } 
+      .feature-title { font-weight: 600; color: #0c4a6e; } .cta-container {
+      text-align: center; margin: 30px 0 10px 0; } .cta-button {
+      background-color: #007bff; color: #ffffff; text-decoration: none; padding:
+      14px 28px; font-size: 16px; font-weight: bold; border-radius: 6px;
+      display: inline-block; transition: background 0.3s ease; }
+      .cta-button:hover { background-color: #0056b3; } .email-footer {
+      background-color: #f0f2f5; padding: 20px; text-align: center; font-size:
+      13px; color: #777; border-top: 1px solid #e1e1e1; } .email-footer a {
+      color: #0c4a6e; text-decoration: none; margin: 0 6px; } @media (max-width:
+      600px) { .email-body { padding: 20px 15px; } .email-header { font-size:
+      20px; padding: 20px 15px; } .cta-button { padding: 12px 20px; font-size:
+      15px; } }
+    </style>
+  </head>
+  <body>
+    <div class='email-wrapper'>
+      <div class='email-header'>
+        🚀 New Features Just Dropped!
+      </div>
+      <div class='email-body'>
+        <p>Hi <strong>{{name}}</strong>,</p>
+        <p>We’ve been working hard at EngageGPT, and we’re excited to announce
+          the latest features just added to your dashboard:</p>
+
+        <ul class='feature-list'>
+          {{#each features}}
+            <li>
+              <span class='feature-title'>{{this.title}}</span><br />
+              {{this.description}}
+            </li>
+          {{/each}}
+        </ul>
+
+        <div class='cta-container'>
+          <a
+            href='https://engagegpt.in/dashboard'
+            target='_blank'
+            class='cta-button'
+          >Try Them Out Now</a>
+        </div>
+
+        <p>Got feedback or ideas? Reply to this email — we’d love to hear from
+          you!</p>
+        <p>Cheers,<br />The EngageGPT Team</p>
+      </div>
+      <div class='email-footer'>
+        &copy;
+        {{year}}
+        EngageGPT. All rights reserved.<br />
+        <a href='https://engagegpt.in'>Website</a>
+        |
+        <a href='mailto:engagegpt@gmail.com'>Support</a>
+      </div>
+    </div>
+  </body>
+</html>

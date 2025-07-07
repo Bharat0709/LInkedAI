@@ -2,30 +2,40 @@ require('dotenv').config();
 const morgan = require('morgan');
 const express = require('express');
 const cors = require('cors');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const bodyParser = require('body-parser');
-const AppError = require('./utils/appError');
 const session = require('express-session');
-const memberRouter = require('./routes/membersRoutes');
-const authRouter = require('./routes/authRoutes');
-const organizationRouter = require('./routes/organizationRoutes');
-const aiRouter = require('./routes/AIAPIRoutes');
-const mailRouter = require('./routes/mailRoutes');
-const hiringPostsRouter = require('./routes/hiringPosts');
 const MongoStore = require('connect-mongo');
-const postRouter = require('./routes/postsRoutes');
-const scheduler = require('./controllers/linkedInController');
-const reportScheduler = require('./controllers/reportController');
-const postScheduledPosts = scheduler.schedulePosts;
-const generateReport = reportScheduler.generateDailyReport;
 const passport = require('passport');
-const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const cron = require('node-cron');
-const app = express();
-const DB = process.env.DATABASE;
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 
+// UTILS
+const AppError = require('./utils/appError');
+
+// ROUTES
+const aiRouter = require('./routes/AIAPIRoutes');
+const mailRouter = require('./routes/mailRoutes');
+const authRouter = require('./routes/authRoutes');
+const postRouter = require('./routes/postsRoutes');
+const memberRouter = require('./routes/membersRoutes');
+const hiringPostsRouter = require('./routes/hiringPosts');
+const organizationRouter = require('./routes/organizationRoutes');
+
+// CONTROLLERS
+const scheduler = require('./controllers/linkedInController');
+const postScheduledPosts = scheduler.schedulePosts;
+
+const app = express();
+
+// ENVIRONMENT VARIABLES
+const DB = process.env.DATABASE;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Session store configuration with error handling
@@ -99,45 +109,63 @@ const sessionConfig = {
   },
   name: 'sessionId',
   proxy: process.env.NODE_ENV === 'production',
-  rolling: true, // Refresh session with each request
+  rolling: true,
 };
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+const createRateLimiter = (windowMs, max, message) =>
+  rateLimit({
+    windowMs,
+    max,
+    message: { error: message },
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+      console.warn(`Rate limit exceeded for IP: ${req.ip}`);
+      res.status(429).json({ error: message });
+    },
+  });
+
+const limiter = createRateLimiter(
+  15 * 60 * 1000,
+  200,
+  'Too many requests from this IP, please try again later.'
+);
+
+const authLimiter = createRateLimiter(
+  15 * 60 * 1000,
+  10,
+  'Too many authentication attempts, please try again later.'
+);
 
 cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
   postScheduledPosts();
 });
 
-cron.schedule('30 11 * * *', async () => {
-  console.log('📊 Running daily user report job at 11:30 AM...');
-  try {
-    await generateReport();
-    console.log('✅ Daily user report job completed successfully.');
-  } catch (error) {
-    console.error('❌ Error running daily report job:', error);
-  }
-});
-
+app.use(cors(corsOptions));
 app.use(helmet());
+app.use(compression());
+app.use(mongoSanitize());
+app.use(xss());
+app.use(
+  hpp({
+    whitelist: ['sort', 'fields', 'page', 'limit'],
+  })
+);
 
-// Apply rate limiting
 app.use('/api/', limiter);
 
-// CORS configuration
-app.use(cors(corsOptions));
+app.use(
+  express.json({
+    limit: '30mb',
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(cookieParser());
-
-// Body parsing middleware with size limits
-app.use(express.json({ limit: '30mb' }));
-app.use(express.urlencoded({ extended: true, limit: '30mb' }));
-app.use(bodyParser.json({ limit: '30mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(bodyParser.json({ limit: '10mb' }));
 
 // Static files serving
 app.use(express.static(path.join(__dirname, 'build')));
@@ -167,13 +195,13 @@ app.get('/manifest.json', (req, res) => {
 });
 
 // API Routes
-app.use('/api/v1/organization', organizationRouter);
-app.use('/api/v1/members', memberRouter);
-app.use('/api/v1/mail', mailRouter);
 app.use('/api/v1/ai', aiRouter);
-app.use('/api/v1/posts', postRouter);
-app.use('/api/v1/hiring-posts', hiringPostsRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/mail', mailRouter);
+app.use('/api/v1/posts', postRouter);
+app.use('/api/v1/members', memberRouter);
+app.use('/api/v1/hiring-posts', hiringPostsRouter);
+app.use('/api/v1/organization', organizationRouter);
 
 // Health check route
 app.get('/health', (req, res) => {

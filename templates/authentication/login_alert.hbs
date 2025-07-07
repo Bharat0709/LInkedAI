@@ -1,0 +1,55 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>New Login Alert</title>
+    <style>
+      body { margin: 0; padding: 0; background-color: #f5f7fa; font-family:
+      'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; } .container
+      { max-width: 600px; margin: 40px auto; background-color: #fff;
+      border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); overflow:
+      hidden; } .header { background-color: #198754; color: white; text-align:
+      center; padding: 30px 20px; font-size: 22px; font-weight: 700; } .body {
+      padding: 30px 25px; font-size: 16px; line-height: 1.6; } .details {
+      background-color: #f8f9fa; border-left: 5px solid #198754; padding: 16px
+      20px; border-radius: 6px; margin: 20px 0; } .footer { background-color:
+      #f0f2f5; padding: 20px; text-align: center; font-size: 13px; color: #777;
+      border-top: 1px solid #e1e1e1; } .footer a { color: #0c4a6e;
+      text-decoration: none; } @media (max-width: 600px) { .body { padding: 20px
+      15px; } .header { font-size: 20px; padding: 20px 15px; } }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <div class='header'>
+        🔔 New Login Detected
+      </div>
+      <div class='body'>
+        <p>Hi <strong>{{name}}</strong>,</p>
+
+        <p>We noticed a new login to your EngageGPT account:</p>
+
+        <div class='details'>
+          <strong>Device:</strong>
+          {{device}}<br />
+          <strong>Location:</strong>
+          {{location}}<br />
+          <strong>Time:</strong>
+          {{time}}
+          IST
+        </div>
+
+        <p>If this was you, no further action is needed.</p>
+        <p>If you don’t recognize this login, we recommend changing your
+          password immediately to secure your account.</p>
+
+        <p>Stay secure,<br />The EngageGPT Team</p>
+      </div>
+      <div class='footer'>
+        &copy;
+        {{year}}
+        EngageGPT. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>System Maintenance Notification</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #0c4a6e;
+      color: #ffffff;
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .body {
+      padding: 30px 25px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .highlight {
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .cta {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .cta a {
+      display: inline-block;
+      background-color: #0c4a6e;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .cta a:hover {
+      background-color: #083c56;
+    }
+
+    .footer {
+      background-color: #f0f2f5;
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      border-top: 1px solid #e1e1e1;
+    }
+
+    .footer a {
+      color: #0c4a6e;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+
+    @media (max-width: 600px) {
+      .body {
+        padding: 20px 15px;
+      }
+
+      .header {
+        font-size: 20px;
+        padding: 20px 15px;
+      }
+
+      .cta a {
+        padding: 10px 20px;
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      🛠 Scheduled Maintenance Notification
+    </div>
+    <div class="body">
+      <p>Hi <strong>{{name}}</strong>,</p>
+      <p>We would like to inform you that <strong>EngageGPT</strong> will be undergoing a scheduled system maintenance window.</p>
+
+      <p>The system will be temporarily unavailable from:</p>
+      <p class="highlight">{{startTime}}</p>
+      <p>to</p>
+      <p class="highlight">{{endTime}}</p>
+
+      <p>During this time, access to EngageGPT's dashboard and AI tools will be restricted.</p>
+
+      <p>We recommend planning your tasks accordingly. We apologize for any inconvenience caused and appreciate your patience.</p>
+
+      <div class="cta">
+        <a href="https://engagegpt.in/support" target="_blank">Contact Support</a>
+      </div>
+
+      <p>Thanks for being part of EngageGPT!</p>
+      <p>— The EngageGPT Team</p>
+    </div>
+    <div class="footer">
+      &copy; {{year}} EngageGPT. All rights reserved.<br />
+      <a href="https://engagegpt.in">Website</a> |
+      <a href="mailto:engagegpt@gmail.com">Support</a>
+    </div>
+  </div>
+</body>
+</html>

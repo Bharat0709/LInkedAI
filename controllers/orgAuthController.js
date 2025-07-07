@@ -8,7 +8,10 @@ const catchAsync = require('./../utils/catchAsync');
 const { signToken, createSendToken } = require('./../middlewares/tokenUtils');
 const Organization = require('./../models/organization');
 const { encryptToken } = require('../utils/linkedInAuth');
-const { sendResetPasswordURL } = require('./mailController');
+const {
+  sendPasswordChangedConfirmation,
+  sendResetPasswordURL,
+} = require('../services/email/organization');
 dotenv.config();
 
 exports.signupOrganization = catchAsync(async (req, res, next) => {
@@ -161,9 +164,7 @@ exports.googleAuthCallback = async (req, res, next) => {
     if (err || !user) {
       return next(new AppError('Authentication failed.', 401));
     }
-
     const token = await createGoogleAuthToken(user, res, true);
-
     res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${token}`);
   })(req, res, next);
 };
@@ -231,6 +232,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   organization.resetPasswordExpires = undefined;
 
   await organization.save();
-
+  sendPasswordChangedConfirmation(organization);
   await createSendToken(organization, 200, res, true, false);
 });

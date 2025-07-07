@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>System Outage Alert</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #dc3545;
+      color: #fff;
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .body {
+      padding: 30px 25px;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    .highlight {
+      font-weight: bold;
+      color: #dc3545;
+    }
+
+    .note {
+      background-color: #fff3cd;
+      border-left: 5px solid #ffc107;
+      padding: 15px 20px;
+      margin: 20px 0;
+      color: #856404;
+      border-radius: 6px;
+    }
+
+    .cta {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .cta a {
+      background-color: #0c4a6e;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+    }
+
+    .cta a:hover {
+      background-color: #083c56;
+    }
+
+    .footer {
+      background-color: #f0f2f5;
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #777;
+      border-top: 1px solid #e1e1e1;
+    }
+
+    .footer a {
+      color: #0c4a6e;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+
+    @media (max-width: 600px) {
+      .body {
+        padding: 20px 15px;
+      }
+
+      .header {
+        font-size: 20px;
+        padding: 20px 15px;
+      }
+
+      .cta a {
+        padding: 10px 20px;
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      ⚠️ Temporary System Outage
+    </div>
+    <div class="body">
+      <p>Hi <strong>{{name}}</strong>,</p>
+      <p>We are currently experiencing a <span class="highlight">temporary outage</span> affecting certain EngageGPT services.</p>
+
+      <div class="note">
+        <strong>Outage Start:</strong> {{outageStart}}<br>
+        <strong>Expected Restoration:</strong> {{expectedRestoration}}
+      </div>
+
+      <p>Our engineering team is actively working to identify and resolve the issue as quickly as possible. We understand how important uninterrupted access is for you and your team.</p>
+
+      <p>We sincerely apologize for the inconvenience and appreciate your patience and understanding during this time.</p>
+
+      <div class="cta">
+        <a href="https://engagegpt.in/status" target="_blank">Check Live Status</a>
+      </div>
+
+      <p>If you have urgent questions or need assistance, please don’t hesitate to reach out to our support team.</p>
+      <p>Warm regards,<br/>The EngageGPT Team</p>
+    </div>
+    <div class="footer">
+      &copy; {{year}} EngageGPT. All rights reserved.<br />
+      <a href="https://engagegpt.in">Website</a> |
+      <a href="mailto:engagegpt@gmail.com">Support</a>
+    </div>
+  </div>
+</body>
+</html>

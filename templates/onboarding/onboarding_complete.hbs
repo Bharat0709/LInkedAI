@@ -1,0 +1,66 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>Onboarding Completed</title>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f7f9fc; margin:
+      0; padding: 20px; color: #333; } .email-container { max-width: 600px;
+      margin: auto; background-color: #ffffff; padding: 30px; border-radius:
+      12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); } .header { background-color:
+      #198754; color: white; padding: 20px; border-radius: 8px 8px 0 0;
+      font-size: 22px; font-weight: bold; text-align: center; } .content {
+      padding: 20px; font-size: 16px; line-height: 1.6; } .cta-button { display:
+      inline-block; background-color: #007bff; color: white; padding: 12px 20px;
+      border-radius: 6px; text-decoration: none; font-weight: bold; } .footer {
+      margin-top: 30px; text-align: center; font-size: 14px; color: #888; }
+    </style>
+  </head>
+  <body>
+    <div class='email-container'>
+      <div class='header'>
+        🎉 Onboarding Complete
+      </div>
+      <div class='content'>
+        <p>Hi <strong>{{name}}</strong>,</p>
+        <p>Congratulations! You’ve successfully completed all the onboarding
+          steps:</p>
+        <ul>
+          <li>👥 Added your first team member</li>
+          <li>🔗 Connected the EngageGPT Chrome Extension</li>
+          <li>📊 Synced your LinkedIn profile</li>
+        </ul>
+
+        <p>You’re now fully ready to use all EngageGPT features:</p>
+        <ul>
+          <li>🚀 Explore the Dashboard</li>
+          <li>✍️ Generate LinkedIn content in seconds</li>
+          <li>💬 Create engaging comments with AI</li>
+          <li>📥 Save and organize posts automatically</li>
+          <li>📆 Plan and schedule using the Content Calendar</li>
+          <li>🔄 Automate posting and much more...</li>
+        </ul>
+
+        <p style='text-align: center; margin-top: 20px;'>
+          <a
+            class='cta-button'
+            href='https://engagegpt.in/dashboard'
+            target='_blank'
+          >Go to Dashboard</a>
+        </p>
+
+        <p>If you ever need assistance, just hit reply or visit our Support
+          page.</p>
+        <p>Welcome aboard 🎉,<br />The EngageGPT Team</p>
+      </div>
+      <div class='footer'>
+        &copy;
+        {{year}}
+        EngageGPT. All rights reserved.<br />
+        <a href='https://engagegpt.in'>engagegpt.in</a>
+        |
+        <a href='mailto:engagegpt@gmail.com'>Support</a>
+      </div>
+    </div>
+  </body>
+</html>

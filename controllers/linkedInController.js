@@ -8,7 +8,7 @@ const dotenv = require('dotenv');
 const { bucket } = require('../utils/firebaseConfig');
 const moment = require('moment-timezone');
 const ScheduledPost = require('../models/scheduledPost');
-const mailController = require('./mailController');
+const { sendPostStatusEmail } = require('../services/email/member');
 
 const upload = multer().any();
 dotenv.config();
@@ -581,9 +581,8 @@ const postToLinkedIn = async (post) => {
       status: 'Posted',
       postId: response.data?.id,
     });
-    console.log(`✅ Post ${post._id} successfully shared on LinkedIn`);
 
-    await mailController.sendPostStatusEmail(
+    sendPostStatusEmail(
       member.email,
       {
         _id: post._id,
@@ -605,7 +604,7 @@ const postToLinkedIn = async (post) => {
 
     const member = await Member.findById(post.memberId).select('+email');
     if (member) {
-      await mailController.sendPostStatusEmail(
+      await sendPostStatusEmail(
         member.email,
         {
           _id: post._id,

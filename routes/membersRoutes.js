@@ -40,7 +40,7 @@ Router.post('/tagPost', authController.isUserLoggedIn, memberController.updatePo
 Router.post('/create', authController.isUserLoggedIn, memberController.createMember);
 Router.post('/createPersona/:id', authController.isUserLoggedIn, memberController.createMemberPersona);
 Router.get('/all', authController.isUserLoggedIn, memberController.getAllMembersOfOrganization);
-    
+Router.delete('/deleteAccount/:memberId' , authController.isUserLoggedIn , memberController.deleteMemberAccount );
 // Integration Routes
 Router.post('/integrations/googleSheet', authController.isUserLoggedIn, integrationUtils.fetchGoogleSheetData);
 
