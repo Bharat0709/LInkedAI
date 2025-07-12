@@ -36,9 +36,7 @@ Router.get('/users', authController.isUserLoggedIn, memberController.getAllUsers
 Router.post('/daysactive', authController.isUserLoggedIn, memberController.updateDaysActive);
 Router.post('/linkedin/disconnect/:memberId', authController.isUserLoggedIn, memberController.disconnectLinkedIn);
 Router.post('/lbprofilevisibility', authController.isUserLoggedIn, memberController.updateLeaderboardProfileVisibility);
-Router.post('/tagPost', authController.isUserLoggedIn, memberController.updatePostTagging);
 Router.post('/create', authController.isUserLoggedIn, memberController.createMember);
-Router.post('/createPersona/:id', authController.isUserLoggedIn, memberController.createMemberPersona);
 Router.get('/all', authController.isUserLoggedIn, memberController.getAllMembersOfOrganization);
 Router.delete('/deleteAccount/:memberId' , authController.isUserLoggedIn , memberController.deleteMemberAccount );
 // Integration Routes

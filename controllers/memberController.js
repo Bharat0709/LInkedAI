@@ -4,7 +4,6 @@ const ContentCalendar = require('../models/contentCalender');
 const OldUser = require('../models/OldUser');
 const dotenv = require('dotenv');
 dotenv.config();
-const apiController = require('./apiController');
 const { sendSurveyForm, sendNewUserEmail } = require('../services/email/admin');
 const {
   sendNewMemberInviteEmail,
@@ -91,19 +90,6 @@ exports.updateLeaderboardProfileVisibility = [
       success: true,
       user,
     });
-  }),
-];
-
-exports.updatePostTagging = [
-  rateLimitMiddleware,
-  catchAsync(async (req, res, next) => {
-    const { tagPost } = req.body;
-    const user = req.member;
-
-    user.tagPost = tagPost;
-    await Member.findByIdAndUpdate(user._id, { tagPost: user.tagPost });
-
-    res.status(200).json({ success: true, user });
   }),
 ];
 
@@ -591,44 +577,6 @@ exports.disconnectLinkedIn = catchAsync(async (req, res, next) => {
   } catch (error) {
     next(new AppError('Error disconnecting LinkedIn', 500));
   }
-});
-
-exports.createMemberPersona = catchAsync(async (req, res, next) => {
-  const memberId = req.params.id;
-  const organizationId = req.organization.id;
-  const { preferences, postSamples } = req.body;
-
-  if (!preferences || !Array.isArray(postSamples) || postSamples.length === 0) {
-    return next(
-      new AppError('Preferences and sample posts are required.', 400)
-    );
-  }
-  const member = await Member.findOne({ _id: memberId, organizationId });
-  if (!member) {
-    return next(new AppError('Member not found', 404));
-  }
-
-  // Call a function to analyze the persona based on preferences and sample posts
-  const persona = await apiController.determinePersona(
-    preferences,
-    postSamples
-  );
-  if (!persona) {
-    return next(new AppError('Failed to determine writer persona.', 500));
-  }
-
-  member.writingPersona = persona;
-  await member.save();
-
-  // Send success response
-  res.status(200).json({
-    status: 'success',
-    message: 'Writing preferences and persona saved successfully.',
-    data: {
-      memberId: member._id,
-      writingPersona: member.writingPersona,
-    },
-  });
 });
 
 exports.submitSurvey = catchAsync(async (req, res, next) => {

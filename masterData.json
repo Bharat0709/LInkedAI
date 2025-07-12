@@ -1,0 +1,76 @@
+{
+  "metadata": {
+    "version": "3.0.0",
+    "lastUpdated": "2025-07-10T10:00:00Z",
+    "environment": "production",
+    "configId": "master-config-001"
+  },
+  "platform": {
+    "name": "EngageGPT AI for LinkedIn",
+    "version": "2.2.0",
+    "maintenanceMode": false,
+    "emergencyShutdown": false,
+    "announcement": {
+      "active": false,
+      "message": "",
+      "type": "info",
+      "startDate": null,
+      "endDate": null
+    }
+  },
+  "features": {},
+  "aiServices": {
+    "chatGPT": {
+      "id": "chatgpt",
+      "name": "ChatGPT",
+      "enabled": true,
+      "status": "active",
+      "priority": 2
+    },
+    "gemini": {
+      "id": "gemini",
+      "name": "Gemini",
+      "enabled": true,
+      "status": "active",
+      "priority": 1
+    },
+    "mistral": {
+      "id": "mistral",
+      "name": "Mistral",
+      "enabled": true,
+      "status": "active",
+      "priority": 4
+    },
+    "groq": {
+      "id": "groq",
+      "name": "Groq",
+      "enabled": true,
+      "status": "active",
+      "priority": 3
+    },
+    "deepseek": {
+      "id": "deepseek",
+      "name": "Deepseek",
+      "enabled": false,
+      "status": "maintainance",
+      "priority": 5
+    }
+  },
+  "subscriptionPlans": {
+    "free": {
+      "id": "free",
+      "name": "Free Plan",
+      "enabled": true
+    },
+    "pro": {
+      "id": "pro",
+      "name": "Pro Plan",
+      "enabled": false
+    },
+    "enterprise": {
+      "id": "enterprise",
+      "name": "Enterprise Plan",
+      "enabled": false
+    }
+  }
+}

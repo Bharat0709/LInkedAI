@@ -48,6 +48,7 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^7.0.3",
     "nodemailer-express-handlebars": "^7.0.0",
+    "openai": "^5.8.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-linkedin-oauth2": "^2.0.0",

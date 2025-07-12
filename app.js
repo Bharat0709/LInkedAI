@@ -15,12 +15,14 @@ const helmet = require('helmet');
 const cron = require('node-cron');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
+const masterData = require('./masterData.json');
 
 // UTILS
 const AppError = require('./utils/appError');
 
 // ROUTES
-const aiRouter = require('./routes/AIAPIRoutes');
+const geminiRouter = require('./routes/geminiRoutes');
+const openaiRouter = require('./routes/openAIRoutes');
 const mailRouter = require('./routes/mailRoutes');
 const authRouter = require('./routes/authRoutes');
 const postRouter = require('./routes/postsRoutes');
@@ -195,7 +197,8 @@ app.get('/manifest.json', (req, res) => {
 });
 
 // API Routes
-app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/ai', geminiRouter);
+app.use('/api/v1/openai', openaiRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/mail', mailRouter);
 app.use('/api/v1/posts', postRouter);
@@ -211,6 +214,10 @@ app.get('/health', (req, res) => {
     environment: NODE_ENV,
     timestamp: new Date().toISOString(),
   });
+});
+
+app.get('/api/v1/master-data', (req, res) => {
+  res.status(200).json({ masterData });
 });
 
 // Default route
