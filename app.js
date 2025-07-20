@@ -16,6 +16,7 @@ const cron = require('node-cron');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const masterData = require('./masterData.json');
+const envArray = require('./utils/envArray');
 
 // UTILS
 const AppError = require('./utils/appError');
@@ -23,7 +24,6 @@ const AppError = require('./utils/appError');
 // ROUTES
 const geminiRouter = require('./routes/geminiRoutes');
 const openaiRouter = require('./routes/openAIRoutes');
-const mailRouter = require('./routes/mailRoutes');
 const authRouter = require('./routes/authRoutes');
 const postRouter = require('./routes/postsRoutes');
 const memberRouter = require('./routes/membersRoutes');
@@ -60,37 +60,11 @@ sessionStore.on('error', function (error) {
 
 // Enhanced CORS configuration
 const corsOptions = {
-  origin:
-    NODE_ENV === 'production'
-      ? [
-          'https://www.engagegpt.in',
-          'https://engagegpt.in',
-          'https://api.engagegpt.in',
-          'https://www.linkedin.com',
-          /^chrome-extension:\/\/.*/,
-        ]
-      : NODE_ENV === 'staging'
-      ? [
-          'https://staging.engagegpt.in',
-          'https://api.staging.engagegpt.in',
-          'https://www.linkedin.com',
-          /^chrome-extension:\/\/.*/,
-        ]
-      : [
-          'http://localhost:3000',
-          'https://api.staging.engagegpt.in',
-          'https://www.linkedin.com',
-          /^chrome-extension:\/\/.*/,
-        ],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Cookie',
-    'X-Requested-With',
-  ],
+  origin: envArray('CORS_ORIGINS'),
+  methods: envArray('CORS_METHODS', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']),
+  allowedHeaders: envArray('CORS_ALLOWED_HEADERS'),
   credentials: true,
-  maxAge: 86400, // 24 hours
+  maxAge: parseInt(process.env.CORS_MAX_AGE || '86400', 10),
   preflightContinue: false,
   optionsSuccessStatus: 204,
 };
@@ -102,15 +76,15 @@ const sessionConfig = {
   saveUninitialized: false,
   store: sessionStore,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    domain: process.env.NODE_ENV === 'production' ? '.engagegpt.in' : undefined,
+    maxAge: 86400000,
+    sameSite: process.env.COOKIE_SAMESITE || 'lax',
+    domain: process.env.COOKIE_DOMAIN || undefined,
     path: '/',
   },
   name: 'sessionId',
-  proxy: process.env.NODE_ENV === 'production',
+  proxy: process.env.COOKIE_SECURE === 'true',
   rolling: true,
 };
 
@@ -127,17 +101,8 @@ const createRateLimiter = (windowMs, max, message) =>
     },
   });
 
-const limiter = createRateLimiter(
-  15 * 60 * 1000,
-  200,
-  'Too many requests from this IP, please try again later.'
-);
-
-const authLimiter = createRateLimiter(
-  15 * 60 * 1000,
-  10,
-  'Too many authentication attempts, please try again later.'
-);
+const limiter = createRateLimiter(15 * 60 * 1000, 200, 'Too many requests from this IP, please try again later.');
+const authLimiter = createRateLimiter(15 * 60 * 1000, 10, 'Too many authentication attempts, please try again later.');
 
 cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
@@ -156,6 +121,7 @@ app.use(
 );
 
 app.use('/api/', limiter);
+app.use('/api/v1/auth', authLimiter);
 
 app.use(
   express.json({
@@ -197,14 +163,13 @@ app.get('/manifest.json', (req, res) => {
 });
 
 // API Routes
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/organization', organizationRouter);
 app.use('/api/v1/ai', geminiRouter);
 app.use('/api/v1/openai', openaiRouter);
-app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/mail', mailRouter);
+app.use('/api/v1/member', memberRouter);
 app.use('/api/v1/posts', postRouter);
-app.use('/api/v1/members', memberRouter);
 app.use('/api/v1/hiring-posts', hiringPostsRouter);
-app.use('/api/v1/organization', organizationRouter);
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -246,7 +211,6 @@ app.use((err, req, res, next) => {
       message: err.isOperational ? err.message : 'Something went wrong!',
     });
   } else {
-    // Development error response with full error details
     console.error('ERROR 💥', err);
     res.status(err.statusCode).json({
       status: err.status,
@@ -257,7 +221,6 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Logging configuration
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
@@ -266,27 +229,23 @@ if (NODE_ENV === 'development') {
     morgan('combined', {
       skip: function (req, res) {
         return res.statusCode < 400;
-      }, // Log only errors
+      },
     })
   );
 }
 
 // Graceful shutdown handling
-const gracefulShutdown = (signal) => {
+const gracefulShutdown = signal => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
-
   // Create a timeout for force shutdown
   const forcedShutdownTimeout = setTimeout(() => {
-    console.error(
-      'Could not close connections in time, forcefully shutting down'
-    );
+    console.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
   }, 30000);
 
   // Attempt graceful shutdown
   server.close(() => {
     console.log('HTTP server closed');
-
     // Close MongoDB connections
     mongoose.connection.close(false, () => {
       console.log('MongoDB connection closed');
@@ -299,7 +258,7 @@ const gracefulShutdown = (signal) => {
 // Handle termination signals
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', err => {
   console.error('UNHANDLED REJECTION! 💥 Shutting down...');
   console.error(err);
   server.close(() => {
@@ -307,7 +266,7 @@ process.on('unhandledRejection', (err) => {
   });
 });
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   console.error(err);
   process.exit(1);

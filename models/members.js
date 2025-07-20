@@ -6,55 +6,74 @@ const MemberSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please Provide Your Name'],
+    trim: true,
+    maxlength: [100, 'Name cannot exceed 100 characters'],
   },
   email: {
     type: String,
     validate: [validator.isEmail, 'Please Provide a Valid Email'],
     unique: true,
     required: [true, 'Please Provide an Email'],
+    lowercase: true,
+    trim: true,
   },
   timeZone: {
     type: String,
-    default: 'Asia/Kolkata',
+    default: 'Asia/Calcutta',
   },
   profileLink: {
     type: String,
     default: '',
+    validate: {
+      validator: function (v) {
+        return !v || validator.isURL(v);
+      },
+      message: 'Please provide a valid URL',
+    },
   },
   profilePicture: {
     type: String,
-    default:
-      'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
+    default: 'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
   },
   active: {
     type: Boolean,
     default: true,
     select: false,
   },
-  credits: {
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  creditsLeft: {
     type: Number,
-    default: 100,
+    default: 50,
+  },
+  creditLimitperDay: {
+    type: Number,
+    default: 50,
+  },
+  plan: {
+    type: String,
+    enum: ['trial', 'pro', 'enterprise'],
+    default: 'trial',
+  },
+  planStatus: {
+    type: String,
+    enum: ['active', 'inactive', 'canceled', 'trial', 'expired'],
+    default: 'trial',
   },
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
     required: true,
+    index: true,
   },
   role: {
     type: String,
-    enum: ['member', 'profile', 'admin', 'owner'],
+    enum: ['member', 'profile', 'self', 'admin', 'owner'],
     default: 'profile',
   },
-  plan: {
-    type: String,
-    enum: ['Free', 'Plus', 'Pro', 'Ultra'],
-    default: 'Free',
-  },
   leaderBoardProfileVisibility: {
-    type: Boolean,
-    default: true,
-  },
-  tagPost: {
     type: Boolean,
     default: true,
   },
@@ -73,10 +92,6 @@ const MemberSchema = new mongoose.Schema({
   lastActive: {
     type: Date,
     default: Date.now(),
-  },
-  currentStreak: {
-    type: Number,
-    default: 0,
   },
   connectionToken: {
     type: String,
@@ -138,14 +153,19 @@ const MemberSchema = new mongoose.Schema({
   linkedinProfileId: {
     type: String,
   },
-  appPassword: {
-    type: String,
-    select: false,
-  },
   emailProvider: {
     type: String,
     enum: ['gmail', 'outlook', 'yahoo', 'custom', ''],
     default: '',
+  },
+  aiModels: {
+    type: [String],
+    enum: ['gemini', 'chatgpt', 'mistral', 'groq'],
+    default: ['gemini', 'chatgpt'],
+  },
+  hasCustomAIComments: {
+    type: Boolean,
+    default: false,
   },
   postSavingPreferences: {
     enabled: {
@@ -159,10 +179,22 @@ const MemberSchema = new mongoose.Schema({
     keywords: {
       type: [String],
       default: [],
+      validate: {
+        validator: function (v) {
+          return v.length <= 50;
+        },
+        message: 'Cannot have more than 50 keywords',
+      },
     },
     excludeKeywords: {
       type: [String],
       default: [],
+      validate: {
+        validator: function (v) {
+          return v.length <= 50;
+        },
+        message: 'Cannot have more than 50 exclude keywords',
+      },
     },
     saveAllPosts: {
       type: Boolean,
@@ -171,6 +203,8 @@ const MemberSchema = new mongoose.Schema({
     maxPostsPerDay: {
       type: Number,
       default: 100,
+      min: 1,
+      max: 1000,
     },
     minCharCount: {
       type: Number,
@@ -220,59 +254,61 @@ const MemberSchema = new mongoose.Schema({
     hideKeywords: {
       type: [String],
       default: [],
+      validate: {
+        validator: function (v) {
+          return v.length <= 100;
+        },
+        message: 'Cannot have more than 100 hide keywords',
+      },
     },
   },
   summary: {
     professionalProfile: {
       currentRole: {
         type: String,
-        default: '', // e.g., "Software Developer", "Digital Marketer", "Student"
+        default: '',
+        maxlength: [100, 'Current role cannot exceed 100 characters'],
       },
       profileDescription: {
         type: String,
-        default: '', // e.g., "Experienced software developer with a passion for building scalable applications."
+        default: '',
+        maxlength: [500, 'Profile description cannot exceed 500 characters'],
       },
       experienceLevel: {
         type: String,
-        enum: [
-          'entry',
-          'junior',
-          'mid',
-          'senior',
-          'executive',
-          'student',
-          'fresher',
-        ],
+        enum: ['entry', 'junior', 'mid', 'senior', 'executive', 'student', 'fresher'],
         default: 'entry',
       },
       industry: {
         type: String,
-        default: '', // e.g., "Technology", "Healthcare", "Finance", "Education"
+        default: '',
+        maxlength: [100, 'Industry cannot exceed 100 characters'],
       },
       functionalArea: {
         type: [String],
-        default: [], // e.g., ["Marketing", "Sales", "Development", "Design"]
+        default: [],
+        validate: {
+          validator: function (v) {
+            return v.length <= 10;
+          },
+          message: 'Cannot have more than 10 functional areas',
+        },
       },
       companySize: {
         type: String,
-        enum: [
-          'startup',
-          'small',
-          'medium',
-          'large',
-          'enterprise',
-          'freelancer',
-        ],
+        enum: ['startup', 'small', 'medium', 'large', 'enterprise', 'freelancer'],
         default: 'small',
       },
       location: {
         city: {
           type: String,
           default: '',
+          maxlength: [100, 'City cannot exceed 100 characters'],
         },
         country: {
           type: String,
           default: 'India',
+          maxlength: [100, 'Country cannot exceed 100 characters'],
         },
         workMode: {
           type: String,
@@ -285,28 +321,29 @@ const MemberSchema = new mongoose.Schema({
   leadGenerationGoals: {
     primaryObjective: {
       type: String,
-      enum: [
-        'job_search',
-        'client_acquisition',
-        'partnership_building',
-        'networking',
-        'brand_building',
-        'knowledge_sharing',
-        'recruitment',
-        'sales_prospecting',
-        'investment_seeking',
-        'mentorship',
-      ],
+      enum: ['job_search', 'client_acquisition', 'partnership_building', 'networking', 'brand_building', 'knowledge_sharing', 'recruitment', 'sales_prospecting', 'investment_seeking', 'mentorship'],
       default: 'networking',
     },
     targetAudience: {
       roles: {
         type: [String],
-        default: [], // e.g., ["HR Manager", "CTO", "Marketing Director"]
+        default: [],
+        validate: {
+          validator: function (v) {
+            return v.length <= 20;
+          },
+          message: 'Cannot have more than 20 target roles',
+        },
       },
       industries: {
         type: [String],
-        default: [], // e.g., ["SaaS", "E-commerce", "FinTech"]
+        default: [],
+        validate: {
+          validator: function (v) {
+            return v.length <= 20;
+          },
+          message: 'Cannot have more than 20 target industries',
+        },
       },
       companySizes: {
         type: [String],
@@ -321,7 +358,13 @@ const MemberSchema = new mongoose.Schema({
     },
     serviceOfferings: {
       type: [String],
-      default: [], // e.g., ["Web Development", "Digital Marketing", "Consulting"]
+      default: [],
+      validate: {
+        validator: function (v) {
+          return v.length <= 15;
+        },
+        message: 'Cannot have more than 15 service offerings',
+      },
     },
     businessType: {
       type: String,
@@ -330,24 +373,6 @@ const MemberSchema = new mongoose.Schema({
     },
   },
 });
-
-MemberSchema.methods.setAppPassword = async function (password) {
-  const cipher = crypto.createCipher('aes-256-cbc', process.env.ENCRYPTION_KEY);
-  let encrypted = cipher.update(password, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  this.appPassword = encrypted;
-};
-
-MemberSchema.methods.getAppPassword = async function () {
-  if (!this.appPassword) return null;
-  const decipher = crypto.createDecipher(
-    'aes-256-cbc',
-    process.env.ENCRYPTION_KEY
-  );
-  let decrypted = decipher.update(this.appPassword, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
-};
 
 const Member = newDBConnection.model('Member', MemberSchema);
 module.exports = Member;

@@ -10,9 +10,13 @@ const organizationSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
-    credits: {
-      type: Number,
-      default: 500,
+    timeZone: {
+      type: String,
+      default: 'Asia/Calcutta',
+    },
+    lastActive: {
+      type: Date,
+      default: Date.now,
     },
     totalCreditsUsed: {
       type: Number,
@@ -25,7 +29,7 @@ const organizationSchema = new mongoose.Schema(
     },
     oauthProvider: {
       type: String,
-      enum: ['google', 'github', 'password'],
+      enum: ['google', 'password'],
       default: 'password',
     },
     oauthId: {
@@ -38,17 +42,7 @@ const organizationSchema = new mongoose.Schema(
     },
     profilePicture: {
       type: String,
-      default:
-        'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
-    },
-    billingDetails: {
-      addressLine1: { type: String },
-      addressLine2: { type: String },
-      city: { type: String },
-      state: { type: String },
-      country: { type: String },
-      postalCode: { type: String },
-      phoneNumber: { type: String },
+      default: 'https://firebasestorage.googleapis.com/v0/b/coldemail-2d11a.appspot.com/o/Avatar.png?alt=media&token=b07b4ca9-074c-465e-985b-7c6e562f2e7b',
     },
     createdAt: {
       type: Date,
@@ -60,28 +54,160 @@ const organizationSchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
+    billingDetails: {
+      addressLine1: { type: String },
+      addressLine2: { type: String },
+      city: { type: String },
+      state: { type: String },
+      country: { type: String },
+      postalCode: { type: String },
+      phoneNumber: { type: String },
+    },
+    invoices: [
+      {
+        invoiceURL: {
+          type: String,
+        },
+        generatedOn: {
+          type: Date,
+        },
+      },
+    ],
     subscription: {
       plan: {
         type: String,
-        enum: ['basic', 'pro', 'enterprise'],
-        default: 'basic',
+        enum: ['trial', 'pro', 'enterprise'],
+        default: 'trial',
       },
       status: {
         type: String,
-        enum: ['active', 'inactive', 'canceled'],
-        default: 'active',
+        enum: ['active', 'inactive', 'canceled', 'trial', 'expired'],
+        default: 'trial',
       },
       renewalDate: {
         type: Date,
         default: null,
       },
+      trialStartDate: {
+        type: Date,
+        default: Date.now,
+      },
+      trialEndDate: {
+        type: Date,
+        default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+      canceledAt: {
+        type: Date,
+        default: null,
+      },
+      purchasedOn: {
+        type: Date,
+        default: null,
+      },
+      isFirstPurchase: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    planUsage: {
+      maxMembers: {
+        type: Number,
+        default: 1,
+      },
+      currentMemberCount: {
+        type: Number,
+        default: 0,
+      },
+      monthlyUsage: {
+        monthStartDate: {
+          type: Date,
+          default: Date.now,
+        },
+        monthEndDate: {
+          type: Date,
+          default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+        postsSaved: {
+          type: Number,
+          default: 0,
+        },
+        maxPostsSavedPerMonth: {
+          type: Number,
+          default: 50,
+        },
+        postsScheduled: {
+          type: Number,
+          default: 0,
+        },
+        maxPostsScheduledPerMonth: {
+          type: Number,
+          default: 10,
+        },
+        contentCalendarDaysAdded: {
+          type: Number,
+          default: 0,
+        },
+        maxContentCalendarDays: {
+          type: Number,
+          default: 30,
+        },
+        emailsSent: {
+          type: Number,
+          default: 0,
+        },
+        maxEmailsPerMonth: {
+          type: Number,
+          default: 0,
+        },
+      },
+      dailyUsage: {
+        date: {
+          type: String,
+          default: () => new Date().toISOString().substring(0, 10),
+        },
+        aiCreditsUsedToday: {
+          viralPostGenerator: {
+            type: Number,
+            default: 0,
+          },
+          maxPostGeneratorCreditsperDay: {
+            type: Number,
+            default: 100,
+          },
+          maxextensionCreditsperDay: {
+            type: Number,
+            default: 50,
+          },
+        },
+      },
+    },
+    planFeatures: {
+      aiModels: {
+        type: [String],
+        enum: ['gemini', 'chatgpt', 'mistral', 'groq'],
+        default: ['gemini', 'chatgpt'],
+      },
+      hasPrioritySupport: {
+        type: Boolean,
+        default: false,
+      },
+      canBuyCredits: {
+        type: Boolean,
+        default: true,
+      },
+    },
+    security: {
+      twoFactorEnabled: { type: Boolean, default: false },
+      lastLoginAt: { type: Date },
+      failedLoginAttempts: { type: Number, default: 0 },
     },
     activityLog: [
       {
         action: { type: String },
         timestamp: { type: Date, default: Date.now },
+        metadata: { type: mongoose.Schema.Types.Mixed },
       },
     ],
     updatedAt: {
@@ -99,6 +225,14 @@ const organizationSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
     },
+    emailVerificationToken: {
+      type: String,
+      select: false,
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -106,6 +240,9 @@ const organizationSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+organizationSchema.index({ email: 1 });
+organizationSchema.index({ emailVerificationToken: 1 });
+organizationSchema.index({ passwordResetToken: 1 });
 
 organizationSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
@@ -114,11 +251,8 @@ organizationSchema.pre('save', function (next) {
 
 organizationSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
-  this.resetPasswordToken = crypto
-    .createHash('sha256')
-    .update(resetToken)
-    .digest('hex');
-  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // Token valid for 10 minutes
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
   return resetToken;
 };
 

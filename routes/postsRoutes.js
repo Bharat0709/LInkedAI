@@ -1,18 +1,10 @@
 const express = require('express');
 const postController = require('../controllers/postController');
-const authController = require('../controllers/authController');
+const { verifyToken } = require('../middlewares/verifytoken');
+const { verifyExtension } = require('../middlewares/verifyExtensionRequest');
 const Router = express.Router();
 
-Router.put(
-  '/:id',
-  authController.isUserLoggedIn,
-  postController.upsertPostsData
-);
-
-Router.get(
-  '/:id',
-  authController.isUserLoggedIn,
-  postController.getPostsByMemberAndOrganization
-);
+Router.put('/:id', verifyExtension, verifyToken, postController.upsertPostsData);
+Router.get('/:id', verifyToken, postController.getPostsByMemberAndOrganization);
 
 module.exports = Router;

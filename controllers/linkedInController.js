@@ -5,7 +5,7 @@ const axios = require('axios');
 const { decryptToken } = require('../utils/linkedInAuth');
 const catchAsync = require('../utils/catchAsync');
 const dotenv = require('dotenv');
-const { bucket } = require('../utils/firebaseConfig');
+const { bucket } = require('../config/firebaseConfig');
 const moment = require('moment-timezone');
 const ScheduledPost = require('../models/scheduledPost');
 const { sendPostStatusEmail } = require('../services/email/member');
@@ -15,7 +15,7 @@ dotenv.config();
 
 exports.parseFormData = upload;
 
-const uploadMediaToFirebase = async (file) => {
+const uploadMediaToFirebase = async file => {
   return new Promise((resolve, reject) => {
     const fileName = `postMedia/${Date.now()}-${file.originalname}`;
     const fileRef = bucket.file(fileName);
@@ -23,7 +23,7 @@ const uploadMediaToFirebase = async (file) => {
       metadata: { contentType: file.mimetype },
     });
 
-    stream.on('error', (err) => reject(err));
+    stream.on('error', err => reject(err));
     stream.on('finish', async () => {
       try {
         await fileRef.makePublic();
@@ -37,7 +37,7 @@ const uploadMediaToFirebase = async (file) => {
   });
 };
 
-const fetchMediaFromFirebase = async (fileUrl) => {
+const fetchMediaFromFirebase = async fileUrl => {
   try {
     const response = await fetch(fileUrl);
 
@@ -67,9 +67,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
     return next(new AppError('organizationId is required', 400));
   }
 
-  const member = await Member.findById(memberId).select(
-    '+linkedinAccessToken +linkedinProfileId'
-  );
+  const member = await Member.findById(memberId).select('+linkedinAccessToken +linkedinProfileId');
 
   if (!member) {
     return next(new AppError('Member not found', 404));
@@ -93,20 +91,15 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
   const postTime = now.format('HH:mm:ss');
 
   if (req.files && req.files.length > 0) {
-    const mediaPromises = req.files.map(async (file) => {
+    const mediaPromises = req.files.map(async file => {
       const isImage = file.mimetype.startsWith('image/');
       const isPDF = file.mimetype === 'application/pdf';
 
       if (!isImage && !isPDF) {
-        throw new AppError(
-          `Unsupported media type: ${file.mimetype}. Only images and PDFs are allowed.`,
-          400
-        );
+        throw new AppError(`Unsupported media type: ${file.mimetype}. Only images and PDFs are allowed.`, 400);
       }
 
-      const recipe = isImage
-        ? 'urn:li:digitalmediaRecipe:feedshare-image'
-        : 'urn:li:digitalmediaRecipe:feedshare-document';
+      const recipe = isImage ? 'urn:li:digitalmediaRecipe:feedshare-image' : 'urn:li:digitalmediaRecipe:feedshare-document';
 
       // Step 1: Register upload request with LinkedIn
       const assetUploadResponse = await axios.post(
@@ -131,10 +124,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
         }
       );
 
-      const uploadUrl =
-        assetUploadResponse.data.value.uploadMechanism[
-          'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-        ].uploadUrl;
+      const uploadUrl = assetUploadResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
 
       const assetUrn = assetUploadResponse.data.value.asset;
 
@@ -163,11 +153,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
 
     const preparedMedia = await Promise.all(mediaPromises);
     // Determine media category based on file type
-    const mediaCategory = req.files.some(
-      (file) => file.mimetype === 'application/pdf'
-    )
-      ? 'DOCUMENT'
-      : 'IMAGE';
+    const mediaCategory = req.files.some(file => file.mimetype === 'application/pdf') ? 'DOCUMENT' : 'IMAGE';
 
     // Prepare the post body with media
     const linkedInPostBody = {
@@ -181,22 +167,17 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
         },
       },
       visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility':
-          req.body.visibility.toUpperCase(),
+        'com.linkedin.ugc.MemberNetworkVisibility': req.body.visibility.toUpperCase(),
       },
     };
 
     try {
-      const response = await axios.post(
-        process.env.LINKEDIN_POST_URL,
-        linkedInPostBody,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axios.post(process.env.LINKEDIN_POST_URL, linkedInPostBody, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       const postedPost = await ScheduledPost.create({
         organizationId,
@@ -221,10 +202,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
         },
       });
     } catch (err) {
-      console.error(
-        'Error posting to LinkedIn:',
-        err.response?.data || err.message
-      );
+      console.error('Error posting to LinkedIn:', err.response?.data || err.message);
       return next(new AppError('Error posting to LinkedIn', 500));
     }
   } else {
@@ -239,22 +217,17 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
         },
       },
       visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility':
-          req.body.visibility.toUpperCase(),
+        'com.linkedin.ugc.MemberNetworkVisibility': req.body.visibility.toUpperCase(),
       },
     };
 
     try {
-      const response = await axios.post(
-        process.env.LINKEDIN_POST_URL,
-        linkedInPostBody,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await axios.post(process.env.LINKEDIN_POST_URL, linkedInPostBody, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       const postedPost = await ScheduledPost.create({
         organizationId,
@@ -278,10 +251,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
         },
       });
     } catch (err) {
-      console.error(
-        'Error posting to LinkedIn:',
-        err.response?.data || err.message
-      );
+      console.error('Error posting to LinkedIn:', err.response?.data || err.message);
       return next(new AppError('Error posting to LinkedIn', 500));
     }
   }
@@ -289,8 +259,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
 
 exports.createScheduledPost = catchAsync(async (req, res, next) => {
   const memberId = req.params.id;
-  const { content, postDate, postTime, visibility, timeZone, status } =
-    req.body;
+  const { content, postDate, postTime, visibility, timeZone, status } = req.body;
 
   const organizationId = req.organization.id;
 
@@ -298,23 +267,17 @@ exports.createScheduledPost = catchAsync(async (req, res, next) => {
     return next(new AppError('organizationId is required', 400));
   }
   // Validate member
-  const member = await Member.findById(memberId).select(
-    '+linkedinAccessToken +linkedinProfileId'
-  );
+  const member = await Member.findById(memberId).select('+linkedinAccessToken +linkedinProfileId');
   if (!member) return next(new AppError('Member not found', 404));
-  if (!member.linkedinAccessToken)
-    return next(new AppError('LinkedIn is not connected for this member', 400));
+  if (!member.linkedinAccessToken) return next(new AppError('LinkedIn is not connected for this member', 400));
   const localDateTime = `${postDate} ${postTime}`;
-  const utcDateTime = moment
-    .tz(localDateTime, 'DD-MM-YYYY HH:mm:ss', timeZone)
-    .utc()
-    .format();
+  const utcDateTime = moment.tz(localDateTime, 'DD-MM-YYYY HH:mm:ss', timeZone).utc().format();
 
   // Upload media to Firebase and store the URLs
   let media = [];
   if (req.files && req.files.length > 0) {
     media = await Promise.all(
-      req.files.map(async (file) => {
+      req.files.map(async file => {
         const url = await uploadMediaToFirebase(file);
         return {
           type: file.mimetype.startsWith('image/') ? 'image' : 'pdf',
@@ -365,15 +328,7 @@ exports.getScheduledPosts = catchAsync(async (req, res, next) => {
 
 exports.updateScheduledPost = catchAsync(async (req, res, next) => {
   const { id: postId } = req.params;
-  const {
-    content,
-    postDate,
-    postTime,
-    visibility,
-    timeZone,
-    status,
-    existingMediaUrls,
-  } = req.body;
+  const { content, postDate, postTime, visibility, timeZone, status, existingMediaUrls } = req.body;
   const organizationId = req.organization.id;
   if (!organizationId) {
     return next(new AppError('organizationId is required', 400));
@@ -402,7 +357,7 @@ exports.updateScheduledPost = catchAsync(async (req, res, next) => {
 
       // Ensure parsedMedia is an array
       if (Array.isArray(parsedMedia)) {
-        updatedMedia = parsedMedia.map((media) => ({
+        updatedMedia = parsedMedia.map(media => ({
           url: media.url,
           type: media.type || 'unknown',
           title: media.title || '',
@@ -420,7 +375,7 @@ exports.updateScheduledPost = catchAsync(async (req, res, next) => {
 
   if (req.files && req.files.length > 0) {
     const newMedia = await Promise.all(
-      req.files.map(async (file) => {
+      req.files.map(async file => {
         const url = await uploadMediaToFirebase(file);
         return {
           type: file.mimetype.startsWith('image/') ? 'image' : 'pdf',
@@ -434,10 +389,7 @@ exports.updateScheduledPost = catchAsync(async (req, res, next) => {
   }
 
   const localDateTime = `${postDate} ${postTime}`;
-  const utcDateTime = moment
-    .tz(localDateTime, 'DD-MM-YYYY HH:mm:ss', timeZone)
-    .utc()
-    .format();
+  const utcDateTime = moment.tz(localDateTime, 'DD-MM-YYYY HH:mm:ss', timeZone).utc().format();
 
   // Update the post
   scheduledPost.content = content || scheduledPost.content;
@@ -480,11 +432,9 @@ exports.deleteScheduledPost = catchAsync(async (req, res, next) => {
   });
 });
 
-const postToLinkedIn = async (post) => {
+const postToLinkedIn = async post => {
   try {
-    const member = await Member.findById(post.memberId).select(
-      '+linkedinAccessToken +linkedinProfileId'
-    );
+    const member = await Member.findById(post.memberId).select('+linkedinAccessToken +linkedinProfileId');
     if (!member || !member.linkedinAccessToken) {
       console.error(`LinkedIn not connected for member ${post.memberId}`);
       await ScheduledPost.findByIdAndUpdate(post._id, { status: 'Failed' });
@@ -496,12 +446,10 @@ const postToLinkedIn = async (post) => {
 
     let media = [];
     if (post.media && post.media.length > 0) {
-      const mediaPromises = post.media.map(async (file) => {
+      const mediaPromises = post.media.map(async file => {
         const { buffer, contentType } = await fetchMediaFromFirebase(file.url);
         const isPDF = contentType === 'application/pdf';
-        const recipe = isPDF
-          ? 'urn:li:digitalmediaRecipe:feedshare-document'
-          : 'urn:li:digitalmediaRecipe:feedshare-image';
+        const recipe = isPDF ? 'urn:li:digitalmediaRecipe:feedshare-document' : 'urn:li:digitalmediaRecipe:feedshare-image';
 
         const assetUploadResponse = await axios.post(
           process.env.LINKEDIN_REGISTER_UPLOAD,
@@ -525,10 +473,7 @@ const postToLinkedIn = async (post) => {
           }
         );
 
-        const uploadUrl =
-          assetUploadResponse.data.value.uploadMechanism[
-            'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-          ].uploadUrl;
+        const uploadUrl = assetUploadResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
         const assetUrn = assetUploadResponse.data.value.asset;
 
         await axios.put(uploadUrl, buffer, {
@@ -546,9 +491,7 @@ const postToLinkedIn = async (post) => {
       media = await Promise.all(mediaPromises);
     }
 
-    const mediaCategory = post.media.some((file) => file.type === 'pdf')
-      ? 'DOCUMENT'
-      : 'IMAGE';
+    const mediaCategory = post.media.some(file => file.type === 'pdf') ? 'DOCUMENT' : 'IMAGE';
 
     const linkedInPostBody = {
       author: `urn:li:person:${profileUrn}`,
@@ -561,21 +504,16 @@ const postToLinkedIn = async (post) => {
         },
       },
       visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility':
-          post.visibility.toUpperCase(),
+        'com.linkedin.ugc.MemberNetworkVisibility': post.visibility.toUpperCase(),
       },
     };
 
-    const response = await axios.post(
-      process.env.LINKEDIN_POST_URL,
-      linkedInPostBody,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const response = await axios.post(process.env.LINKEDIN_POST_URL, linkedInPostBody, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     await ScheduledPost.findByIdAndUpdate(post._id, {
       status: 'Posted',
@@ -594,10 +532,7 @@ const postToLinkedIn = async (post) => {
       'Posted'
     );
   } catch (err) {
-    console.error(
-      `❌ Error posting scheduled post ${post._id}:`,
-      err.response?.data || err.message
-    );
+    console.error(`❌ Error posting scheduled post ${post._id}:`, err.response?.data || err.message);
 
     // Update the status to 'Failed' to prevent retrying and duplicate failure emails
     await ScheduledPost.findByIdAndUpdate(post._id, { status: 'Failed' });

@@ -4,21 +4,10 @@ const Organization = require('../models/organization');
 const rateLimitMiddleware = require('../middlewares/rateLimiter');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const mailController = require('./mailController');
 
 exports.createHiringPost = [
   catchAsync(async (req, res, next) => {
-    const {
-      content,
-      emailAddresses,
-      formLinks,
-      author,
-      authorUrl,
-      likes,
-      comments,
-      postUrl,
-      jobRole,
-    } = req.body;
+    const { content, emailAddresses, formLinks, author, authorUrl, likes, comments, postUrl, jobRole } = req.body;
 
     const user = req.member;
     const organizationId = user.organizationId;
@@ -70,16 +59,7 @@ exports.createHiringPost = [
 exports.getHiringPosts = catchAsync(async (req, res, next) => {
   const user = req.organization;
   const organizationId = user.id;
-  const {
-    status,
-    jobRole,
-    sortBy = 'createdAt',
-    order = 'desc',
-    limit = 50,
-    page = 1,
-    search,
-    memberId,
-  } = req.query;
+  const { status, jobRole, sortBy = 'createdAt', order = 'desc', limit = 50, page = 1, search, memberId } = req.query;
 
   const existingOrganization = await Organization.findById(organizationId);
   if (!existingOrganization) {
@@ -116,11 +96,7 @@ exports.getHiringPosts = catchAsync(async (req, res, next) => {
 
   // Add search functionality
   if (search) {
-    query.$or = [
-      { content: { $regex: search, $options: 'i' } },
-      { author: { $regex: search, $options: 'i' } },
-      { emailAddresses: { $regex: search, $options: 'i' } },
-    ];
+    query.$or = [{ content: { $regex: search, $options: 'i' } }, { author: { $regex: search, $options: 'i' } }, { emailAddresses: { $regex: search, $options: 'i' } }];
   }
 
   // Set up pagination
@@ -131,10 +107,7 @@ exports.getHiringPosts = catchAsync(async (req, res, next) => {
   sort[sortBy] = order === 'desc' ? -1 : 1;
 
   // Find posts with pagination
-  const hiringPosts = await HiringPost.find(query)
-    .sort(sort)
-    .skip(skip)
-    .limit(parseInt(limit));
+  const hiringPosts = await HiringPost.find(query).sort(sort).skip(skip).limit(parseInt(limit));
 
   // Count total documents
   const totalPosts = await HiringPost.countDocuments(query);
@@ -146,10 +119,7 @@ exports.getHiringPosts = catchAsync(async (req, res, next) => {
   });
 
   // Count posts by status - use the current query
-  const statusCounts = await HiringPost.aggregate([
-    { $match: query },
-    { $group: { _id: '$status', count: { $sum: 1 } } },
-  ]);
+  const statusCounts = await HiringPost.aggregate([{ $match: query }, { $group: { _id: '$status', count: { $sum: 1 } } }]);
 
   // Format status counts for easier frontend use
   const formattedStatusCounts = {
@@ -161,7 +131,7 @@ exports.getHiringPosts = catchAsync(async (req, res, next) => {
     rejected: 0,
   };
 
-  statusCounts.forEach((status) => {
+  statusCounts.forEach(status => {
     formattedStatusCounts[status._id] = status.count;
   });
 
@@ -244,7 +214,7 @@ exports.getHiringStats = catchAsync(async (req, res, next) => {
   };
 
   // Count each status
-  posts.forEach((post) => {
+  posts.forEach(post => {
     const status = post.status || 'new'; // Default to 'new' if status is undefined
     if (statusMap[status] !== undefined) {
       statusMap[status]++;
@@ -252,10 +222,7 @@ exports.getHiringStats = catchAsync(async (req, res, next) => {
   });
 
   // Count by status using aggregation as a fallback
-  const userStatusCounts = await HiringPost.aggregate([
-    { $match: userQuery },
-    { $group: { _id: '$status', count: { $sum: 1 } } },
-  ]);
+  const userStatusCounts = await HiringPost.aggregate([{ $match: userQuery }, { $group: { _id: '$status', count: { $sum: 1 } } }]);
 
   // Format status counts
   const formattedUserStatusCounts = {
@@ -268,7 +235,7 @@ exports.getHiringStats = catchAsync(async (req, res, next) => {
 
   // Use aggregation results if they exist
   if (userStatusCounts && userStatusCounts.length > 0) {
-    userStatusCounts.forEach((status) => {
+    userStatusCounts.forEach(status => {
       if (status._id && formattedUserStatusCounts[status._id] !== undefined) {
         formattedUserStatusCounts[status._id] = status.count;
       }
@@ -294,13 +261,8 @@ exports.getOrganizationHiringPosts = catchAsync(async (req, res, next) => {
   const user = req.member;
 
   // Ensure user belongs to this organization or is admin
-  if (
-    user.organizationId.toString() !== organizationId &&
-    !['admin', 'owner'].includes(user.role)
-  ) {
-    return next(
-      new AppError('You do not have permission to access these posts', 403)
-    );
+  if (user.organizationId.toString() !== organizationId && !['admin', 'owner'].includes(user.role)) {
+    return next(new AppError('You do not have permission to access these posts', 403));
   }
 
   const {
@@ -346,11 +308,7 @@ exports.getOrganizationHiringPosts = catchAsync(async (req, res, next) => {
 
   // Add search functionality
   if (search) {
-    query.$or = [
-      { content: { $regex: search, $options: 'i' } },
-      { author: { $regex: search, $options: 'i' } },
-      { emailAddresses: { $regex: search, $options: 'i' } },
-    ];
+    query.$or = [{ content: { $regex: search, $options: 'i' } }, { author: { $regex: search, $options: 'i' } }, { emailAddresses: { $regex: search, $options: 'i' } }];
   }
 
   // Set up pagination
@@ -361,11 +319,7 @@ exports.getOrganizationHiringPosts = catchAsync(async (req, res, next) => {
   sort[sortBy] = order === 'desc' ? -1 : 1;
 
   // Find posts with pagination and populate the savedBy field
-  const hiringPosts = await HiringPost.find(query)
-    .populate('savedBy', 'name profilePicture')
-    .sort(sort)
-    .skip(skip)
-    .limit(parseInt(limit));
+  const hiringPosts = await HiringPost.find(query).populate('savedBy', 'name profilePicture').sort(sort).skip(skip).limit(parseInt(limit));
 
   // Count total documents
   const totalPosts = await HiringPost.countDocuments(query);
@@ -383,25 +337,17 @@ exports.getHiringPost = catchAsync(async (req, res, next) => {
   const postId = req.params.id;
   const user = req.member;
 
-  const hiringPost = await HiringPost.findById(postId).populate(
-    'savedBy',
-    'name profilePicture email'
-  );
+  const hiringPost = await HiringPost.findById(postId).populate('savedBy', 'name profilePicture email');
 
   if (!hiringPost) {
     return next(new AppError('Hiring post not found', 404));
   }
 
   // Check if the post belongs to the user or their organization (if admin/owner)
-  const canAccess =
-    hiringPost.savedBy._id.toString() === user._id.toString() ||
-    (hiringPost.organizationId.toString() === user.organizationId.toString() &&
-      ['admin', 'owner'].includes(user.role));
+  const canAccess = hiringPost.savedBy._id.toString() === user._id.toString() || (hiringPost.organizationId.toString() === user.organizationId.toString() && ['admin', 'owner'].includes(user.role));
 
   if (!canAccess) {
-    return next(
-      new AppError('You do not have permission to view this post', 403)
-    );
+    return next(new AppError('You do not have permission to view this post', 403));
   }
 
   res.status(200).json({
@@ -415,9 +361,7 @@ exports.updateHiringPostStatus = [
     const postId = req.params.id;
     const { status } = req.body;
 
-    if (
-      !['new', 'contacted', 'responded', 'closed', 'rejected'].includes(status)
-    ) {
+    if (!['new', 'contacted', 'responded', 'closed', 'rejected'].includes(status)) {
       return next(new AppError('Invalid status value', 400));
     }
 
@@ -509,16 +453,10 @@ exports.updateCandidateRequirements = [
     }
 
     // Check if the post belongs to the user or their organization (if admin/owner)
-    const canUpdate =
-      hiringPost.savedBy.toString() === user._id.toString() ||
-      (hiringPost.organizationId.toString() ===
-        user.organizationId.toString() &&
-        ['admin', 'owner'].includes(user.role));
+    const canUpdate = hiringPost.savedBy.toString() === user._id.toString() || (hiringPost.organizationId.toString() === user.organizationId.toString() && ['admin', 'owner'].includes(user.role));
 
     if (!canUpdate) {
-      return next(
-        new AppError('You do not have permission to update this post', 403)
-      );
+      return next(new AppError('You do not have permission to update this post', 403));
     }
 
     // Update candidate requirements
@@ -566,16 +504,10 @@ exports.contactHiringPost = [
     }
 
     // Check if the post belongs to the user or their organization (if admin/owner)
-    const canContact =
-      hiringPost.savedBy.toString() === user._id.toString() ||
-      (hiringPost.organizationId.toString() ===
-        user.organizationId.toString() &&
-        ['admin', 'owner'].includes(user.role));
+    const canContact = hiringPost.savedBy.toString() === user._id.toString() || (hiringPost.organizationId.toString() === user.organizationId.toString() && ['admin', 'owner'].includes(user.role));
 
     if (!canContact) {
-      return next(
-        new AppError('You do not have permission to contact for this post', 403)
-      );
+      return next(new AppError('You do not have permission to contact for this post', 403));
     }
 
     // Check if there's at least one email address
@@ -584,14 +516,6 @@ exports.contactHiringPost = [
     }
 
     try {
-      // Send email
-      await mailController.sendHiringResponse(
-        hiringPost.emailAddresses[0],
-        user.email,
-        emailContent,
-        hiringPost.content
-      );
-
       // Update post status to contacted
       hiringPost.status = 'contacted';
       hiringPost.updatedAt = Date.now();
@@ -618,10 +542,7 @@ exports.bulkUpdateHiringPosts = [
       return next(new AppError('Post IDs are required', 400));
     }
 
-    if (
-      !status ||
-      !['new', 'contacted', 'responded', 'closed', 'rejected'].includes(status)
-    ) {
+    if (!status || !['new', 'contacted', 'responded', 'closed', 'rejected'].includes(status)) {
       return next(new AppError('Valid status is required', 400));
     }
 
@@ -629,27 +550,14 @@ exports.bulkUpdateHiringPosts = [
     const posts = await HiringPost.find({ _id: { $in: postIds } });
 
     // Check if all posts belong to user or organization (if admin/owner)
-    const hasPermission = posts.every(
-      (post) =>
-        post.savedBy.toString() === user._id.toString() ||
-        (post.organizationId.toString() === user.organizationId.toString() &&
-          ['admin', 'owner'].includes(user.role))
-    );
+    const hasPermission = posts.every(post => post.savedBy.toString() === user._id.toString() || (post.organizationId.toString() === user.organizationId.toString() && ['admin', 'owner'].includes(user.role)));
 
     if (!hasPermission) {
-      return next(
-        new AppError(
-          'You do not have permission to update some of these posts',
-          403
-        )
-      );
+      return next(new AppError('You do not have permission to update some of these posts', 403));
     }
 
     // Update all posts
-    await HiringPost.updateMany(
-      { _id: { $in: postIds } },
-      { $set: { status, updatedAt: Date.now() } }
-    );
+    await HiringPost.updateMany({ _id: { $in: postIds } }, { $set: { status, updatedAt: Date.now() } });
 
     res.status(200).json({
       status: 'success',
@@ -719,7 +627,7 @@ exports.exportHiringPosts = catchAsync(async (req, res, next) => {
   }
 
   // Format data for CSV
-  const csvData = hiringPosts.map((post) => ({
+  const csvData = hiringPosts.map(post => ({
     Author: post.author,
     'Author URL': post.authorUrl,
     Content: post.content.replace(/,/g, ' ').replace(/\n/g, ' '), // Remove commas and newlines
@@ -737,19 +645,14 @@ exports.exportHiringPosts = catchAsync(async (req, res, next) => {
   const headers = Object.keys(csvData[0]).join(',');
 
   // Create CSV rows
-  const rows = csvData.map((row) => Object.values(row).join(','));
+  const rows = csvData.map(row => Object.values(row).join(','));
 
   // Combine headers and rows
   const csv = [headers, ...rows].join('\n');
 
   // Set headers for file download
   res.setHeader('Content-Type', 'text/csv');
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="hiring-posts-${
-      new Date().toISOString().split('T')[0]
-    }.csv"`
-  );
+  res.setHeader('Content-Disposition', `attachment; filename="hiring-posts-${new Date().toISOString().split('T')[0]}.csv"`);
 
   res.status(200).send(csv);
 });
@@ -767,24 +670,16 @@ exports.detectJobRole = [
     }
 
     // Check if the post belongs to the user or their organization (if admin/owner)
-    const canUpdate =
-      hiringPost.savedBy.toString() === user._id.toString() ||
-      (hiringPost.organizationId.toString() ===
-        user.organizationId.toString() &&
-        ['admin', 'owner'].includes(user.role));
+    const canUpdate = hiringPost.savedBy.toString() === user._id.toString() || (hiringPost.organizationId.toString() === user.organizationId.toString() && ['admin', 'owner'].includes(user.role));
 
     if (!canUpdate) {
-      return next(
-        new AppError('You do not have permission to update this post', 403)
-      );
+      return next(new AppError('You do not have permission to update this post', 403));
     }
 
     try {
       // Call API controller to detect job role from content
       // This would use your existing apiController or similar
-      const detectedRole = await apiController.detectJobRole(
-        hiringPost.content
-      );
+      const detectedRole = await apiController.detectJobRole(hiringPost.content);
 
       if (detectedRole) {
         hiringPost.jobRole = detectedRole;
@@ -908,16 +803,11 @@ exports.getMembersWithHiringPosts = catchAsync(async (req, res, next) => {
   ]);
 
   // Get all members for the organization
-  const allMembers = await Member.find(
-    { organizationId: user.organizationId },
-    { _id: 1, name: 1, profilePicture: 1, email: 1 }
-  );
+  const allMembers = await Member.find({ organizationId: user.organizationId }, { _id: 1, name: 1, profilePicture: 1, email: 1 });
 
   // Combine member info with post counts
-  const memberStats = allMembers.map((member) => {
-    const memberCount = memberCounts.find(
-      (item) => item._id && item._id.toString() === member._id.toString()
-    );
+  const memberStats = allMembers.map(member => {
+    const memberCount = memberCounts.find(item => item._id && item._id.toString() === member._id.toString());
 
     return {
       memberId: member._id,

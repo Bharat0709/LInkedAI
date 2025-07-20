@@ -1,105 +1,161 @@
+const organizationService = require('../services/Organization/organizationService');
+const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const catchAsync = require('./../utils/catchAsync');
-const { bucket } = require('../utils/firebaseConfig');
-const Organization = require('../models/organization');
-const { sendFeedback, sendHelpRequest } = require('../services/email/admin');
 
-exports.sendHelpRequest = catchAsync(async (req, res, next) => {
-  const { helpTextContent } = req.body;
-
-  if (!helpTextContent) {
-    return next(new AppError('Please provide the help text content.', 400));
-  }
-
-  const organization = req.organization;
-  if (!organization || !organization.email) {
-    return next(new AppError('Organization details are missing.', 404));
-  }
-  sendHelpRequest(organization, helpTextContent);
-  res.status(200).json({
-    status: 'success',
-    message: 'Help request has been sent successfully.',
-  });
-});
-
-exports.Organizationfeedback = catchAsync(async (req, res, next) => {
-  const { feedbackContent, rating } = req.body;
-
-  if (!feedbackContent) {
-    return next(new AppError('Please provide the help text content.', 400));
-  }
-
-  const organization = req.organization;
-
-  if (!organization || !organization.email) {
-    return next(new AppError('Organization details are missing.', 404));
-  }
-  sendFeedback(organization, rating, feedbackContent);
+exports.getOrganizationById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const organization = await organizationService.getOrganizationById(id);
 
   res.status(200).json({
     status: 'success',
-    message: 'Feeback has been sent successfully.',
-  });
-});
-
-exports.updateProfile = catchAsync(async (req, res, next) => {
-  const { name } = req.body;
-  const organizationId = req.organization.id;
-
-  if (!name && !req.file) {
-    return next(
-      new AppError(
-        'Please provide either a name or a profile picture to update.',
-        400
-      )
-    );
-  }
-
-  const organization = await Organization.findById(organizationId);
-  if (!organization) {
-    return next(new AppError('Organization not found.', 404));
-  }
-
-  let profilePictureUrl;
-
-  if (req.file) {
-    const fileName = `profilePictures/${organizationId}_${Date.now()}_${
-      req.file.originalname
-    }`;
-    const file = bucket.file(fileName);
-
-    const blobStream = file.createWriteStream({
-      metadata: {
-        contentType: req.file.mimetype,
-      },
-    });
-
-    await new Promise((resolve, reject) => {
-      blobStream.on('error', (error) => {
-        reject(new AppError('Failed to upload profile picture.', 500));
-      });
-
-      blobStream.on('finish', async () => {
-        await file.makePublic();
-        profilePictureUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-        resolve();
-      });
-
-      blobStream.end(req.file.buffer);
-    });
-  }
-
-  if (name) organization.name = name;
-  if (profilePictureUrl) organization.profilePicture = profilePictureUrl;
-
-  await organization.save();
-
-  res.status(200).json({
-    status: 'success',
-    message: 'Profile updated successfully.',
     data: {
       organization,
     },
   });
 });
 
+exports.checkVerificationStatus = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const result = await organizationService.checkVerificationStatus(email);
+
+  res.status(200).json({
+    status: 'success',
+    isVerified: result,
+  });
+});
+
+exports.getProfile = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const profile = await organizationService.getOrganizationProfile(organizationId);
+
+  res.status(200).json({
+    status: 'success',
+    profile: profile,
+  });
+});
+
+exports.updateProfile = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const profileData = req.body;
+  const file = req.file;
+
+  const updatedOrganization = await organizationService.updateProfile(organizationId, profileData, file);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedOrganization,
+    },
+  });
+});
+
+exports.sendHelpRequest = catchAsync(async (req, res, next) => {
+  const { helpTextContent } = req.body;
+  const organization = req.organization;
+
+  const result = await organizationService.sendHelpRequest(organization, helpTextContent);
+
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+  });
+});
+
+exports.sendFeedback = catchAsync(async (req, res, next) => {
+  const { rating, feedbackContent } = req.body;
+  const organization = req.organization;
+
+  const result = await organizationService.sendFeedback(organization, rating, feedbackContent);
+
+  res.status(200).json({
+    status: 'success',
+    message: result.message,
+  });
+});
+
+exports.deleteOrganization = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { softDelete = true } = req.query;
+
+  await organizationService.deleteOrganization(id, true);
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+exports.updateCredits = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const { creditsUsed } = req.body;
+
+  if (typeof creditsUsed !== 'number' || creditsUsed < 0) {
+    return next(new AppError('Credits used must be a non-negative number.', 400));
+  }
+
+  const updatedOrganization = await organizationService.updateCredits(organizationId, creditsUsed);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedOrganization,
+    },
+  });
+});
+
+exports.checkTrialStatus = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const trialStatus = await organizationService.checkAndUpdateTrialStatus(organizationId);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      trialStatus,
+    },
+  });
+});
+
+exports.checkUsageLimits = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const { usageType } = req.params;
+
+  const usageCheck = await organizationService.checkUsageLimits(organizationId, usageType);
+
+  res.status(200).json({
+    status: 'success',
+    data: usageCheck,
+  });
+});
+
+exports.incrementUsage = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const { usageType } = req.params;
+  const { amount = 1 } = req.body;
+
+  // Check limits before incrementing
+  await organizationService.checkUsageLimits(organizationId, usageType);
+
+  const updatedOrganization = await organizationService.incrementUsage(organizationId, usageType, amount);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedOrganization,
+    },
+  });
+});
+
+exports.updateSubscription = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const subscriptionData = req.body;
+
+  const updatedOrganization = await organizationService.updateSubscription(organizationId, subscriptionData);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      organization: updatedOrganization,
+    },
+  });
+});

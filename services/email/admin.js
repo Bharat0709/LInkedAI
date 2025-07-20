@@ -1,20 +1,11 @@
 const dotenv = require('dotenv');
 dotenv.config();
-
 const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../../utils/mailUtils/compileTemplate');
-
 const admin1 = process.env.ADMIN_EMAIL1;
 
 // TO ADMIN - SURVEY FORM - MANUALLY BY ORGANIZATION
-exports.sendSurveyForm = async (
-  usability,
-  performance,
-  missingFeatures,
-  reason,
-  email,
-  overallSatisfaction
-) => {
+exports.sendSurveyForm = async (usability, performance, missingFeatures, reason, email, overallSatisfaction) => {
   const html = compileTemplate('admin/extn_survey', {
     usability,
     performance,
@@ -28,7 +19,7 @@ exports.sendSurveyForm = async (
 };
 
 // TO ADMIN - NEW USER CONNECTED - AUTOMATED
-exports.sendNewUserEmail = async (user) => {
+exports.sendNewUserEmail = async user => {
   const html = compileTemplate('admin/new_extn_user', {
     name: user.name,
     email: user.email,
@@ -44,30 +35,24 @@ exports.sendHelpRequest = async (user, helpMessage) => {
   const html = compileTemplate('admin/help_request', {
     name: user?.name,
     email: user?.email,
-    plan: user?.plan,
-    credits: user?.credits,
-    totalCreditsUsed: user?.totalCreditsUsed,
+    plan: user?.subscription?.plan.toUpperCase(),
+    credits: user?.totalCreditsUsed,
     helpMessage,
   });
 
-  return await sendFrostmailEmail(
-    admin1,
-    `Help Request from ${user?.name}`,
-    html
-  );
+  return await sendFrostmailEmail(admin1, `Help Request from ${user?.name}`, html);
 };
 
 // TO ADMIN - USER FEEDBACK - MANUALLY BY ORGANIZATION
-exports.sendFeedback = async (user, rating, feedbackText) => {
+exports.sendFeedback = async (organization, rating, feedbackText) => {
   const html = compileTemplate('admin/feedback', {
-    name: user?.name,
-    email: user?.email,
-    plan: user?.plan,
-    credits: user?.credits,
-    totalCreditsUsed: user?.totalCreditsUsed,
+    name: organization?.name,
+    email: organization?.email,
+    plan: organization?.subscription?.plan.toUpperCase(),
+    credits: organization?.totalCreditsUsed,
     rating,
     feedback: feedbackText,
   });
 
-  return await sendFrostmailEmail(admin1, `Feedback from ${user?.name}`, html);
+  return await sendFrostmailEmail(admin1, `Feedback from ${organization?.name}`, html);
 };

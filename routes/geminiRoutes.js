@@ -1,36 +1,17 @@
 const express = require('express');
 const geminiApiController = require('../controllers/AIController/geminiController');
 const authController = require('../controllers/authController');
-const Router = express.Router();
+const { verifyToken } = require('../middlewares/verifytoken');
+const { verifyExtension } = require('../middlewares/verifyExtensionRequest');
+const router = express.Router();
 
-Router.post(
-  '/generate/comment/gemini',
-  authController.isUserLoggedIn,
-  geminiApiController.generateCommentGemini
-);
+router.use(verifyToken);
+router.post('/generate/post-content/gemini', geminiApiController.generatePostContentGemini);
 
-Router.post(
-  '/generate/custom-comment/gemini',
-  authController.isUserLoggedIn,
-  geminiApiController.generateCustomCommentGemini
-);
+router.use(verifyExtension);
+router.post('/generate/comment/gemini', geminiApiController.generateCommentGemini);
+router.post('/generate/custom-comment/gemini', geminiApiController.generateCustomCommentGemini);
+router.post('/generate/use-template/gemini', geminiApiController.generateOrganizationPostContentUseTemplate);
+router.post('/generate/msg-template/gemini', geminiApiController.generateTemplateGemini);
 
-Router.post(
-  '/generate/post-content/gemini',
-  authController.isUserLoggedIn,
-  geminiApiController.generatePostContentGemini
-);
-
-Router.post(
-  '/generate/use-template/gemini',
-  authController.isUserLoggedIn,
-  geminiApiController.generateOrganizationPostContentUseTemplate
-);
-
-Router.post(
-  '/generate/msg-template/gemini',
-  authController.isUserLoggedIn,
-  geminiApiController.generateTemplateGemini
-);
-
-module.exports = Router;
+module.exports = router;

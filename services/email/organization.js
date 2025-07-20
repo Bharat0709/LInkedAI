@@ -4,31 +4,40 @@ const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../../utils/mailUtils/compileTemplate');
 
 // ORGANIZATION - SEND RESET PASSWORD URL
-exports.sendResetPasswordURL = async (email, subject, resetURL) => {
+const sendResetPasswordURL = async (email, subject, resetURL) => {
   const html = compileTemplate('authentication/password_reset', { resetURL });
   return await sendFrostmailEmail(email, subject, html);
 };
 
+// ORANIZATION - SEND EMAIL VERIFICATION MAIL
+const sendVerificationMail = async (email, subject, verificationURL) => {
+  const html = compileTemplate('authentication/email_verification', { verificationURL });
+  return await sendFrostmailEmail(email, subject, html);
+};
+
 // ORGANIZATION - PASSWORD CHANGE CONFIRMATION - AUTOMATED
-exports.sendPasswordChangedConfirmation = async (user) => {
+const sendPasswordChangedConfirmation = async user => {
   const html = compileTemplate('authentication/password_changed', {
     name: user.name,
     changedAt: new Date().toLocaleString(),
   });
 
-  return await sendFrostmailEmail(
-    user.email,
-    'Your Password Was Changed',
-    html
-  );
+  return await sendFrostmailEmail(user.email, 'Your Password Was Changed', html);
 };
 
 // ORGANIZATION - WELCOME EMAIL - NOT IN USE [SCALABILITY ISSUE]
-exports.sendWelcomeEmail = async (email, name) => {
+const sendWelcomeEmail = async (email, name) => {
   const html = compileTemplate('authentication/welcome', {
     name,
     year: new Date().getFullYear(),
   });
 
   return await sendFrostmailEmail(email, '👋 Welcome to EngageGPT!', html);
+};
+
+module.exports = {
+  sendResetPasswordURL,
+  sendVerificationMail,
+  sendPasswordChangedConfirmation,
+  sendWelcomeEmail,
 };

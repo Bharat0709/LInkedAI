@@ -1,306 +1,151 @@
-const Organization = require('../models/organization');
-const Member = require('../models/members');
-const ContentCalendar = require('../models/contentCalender');
-const OldUser = require('../models/OldUser');
 const dotenv = require('dotenv');
 dotenv.config();
-const { sendSurveyForm, sendNewUserEmail } = require('../services/email/admin');
-const {
-  sendNewMemberInviteEmail,
-  sendExtensionConnectedConfirmation,
-  sendMilestoneEmail,
-} = require('../services/email/member');
+const catchAsync = require('./../utils/catchAsync');
+const Organization = require('../models/organization');
+const Member = require('../models/members');
+const memberService = require('../services/Member/memberService');
+const ContentCalendar = require('../models/contentCalender');
+const { sendSurveyForm } = require('../services/email/admin');
 const rateLimitMiddleware = require('../middlewares/rateLimiter');
 const { createSendToken } = require('./../middlewares/tokenUtils');
-const { generateConnectionToken } = require('../utils/randomString');
-const AppError = require('./../utils/appError');
-const catchAsync = require('./../utils/catchAsync');
+const AppError = require('../utils/appError');
 
-exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
-  const user = req.member;
+// WEB REQUEST - ADD NEW MEMBER TO THE ORG
+exports.createMember = catchAsync(async (req, res, next) => {
+  const { name, email, timeZone } = req.body;
+  const organizationId = req.organization._id;
+
+  const result = await memberService.createMember(organizationId, { name, email, timeZone });
+
+  res.status(201).json({
+    message: 'Member created successfully',
+    data: result,
+  });
+});
+
+// EXTN REQUEST TO GET THE PROFILE OF THE MEMBER
+exports.getProfile = catchAsync(async (req, res, next) => {
+  const memberId = req.member._id;
+  const profile = await memberService.getMemberById(memberId);
 
   res.status(200).json({
     status: 'success',
-    user,
+    profile,
   });
 });
 
+// EXTN REQUEST TO CHECK IF THE MEMBER EXISTS
 exports.checkMemberExists = catchAsync(async (req, res, next) => {
   const { name, profileLink } = req.body;
-  const existingUser = await Member.findOne({ name, profileLink });
-  if (existingUser && existingUser.email) {
-    createSendToken(existingUser, 200, res, false, true);
-  } else {
-    return next(new AppError('Member not found', 400));
-  }
-});
 
-exports.updateDaysActive = catchAsync(async (req, res, next) => {
-  const { activeDays, currentStreak } = req.body;
-  const user = req.member;
-
-  user.lastActive = Date.now();
-  user.credits = 100;
-  user.currentStreak = currentStreak;
-  user.daysActive = activeDays;
-
-  await Member.findByIdAndUpdate(user._id, {
-    credits: user.credits,
-    lastActive: user.lastActive,
-    daysActive: user.daysActive,
-    currentStreak: user.currentStreak,
-  });
-
-  // 👉 Milestone email logic
-  const isMilestone = activeDays % 10 === 0;
-
-  if (isMilestone) {
-    sendMilestoneEmail({
-      name: user.name,
-      email: user.email,
-      daysActive: user.daysActive,
-    })
-      .then(() => {
-        console.log(`✅ Milestone email sent for ${activeDays} days`);
-      })
-      .catch((err) => {
-        console.error('❌ Failed to send milestone email:', err);
-      });
-  }
+  const member = await memberService.checkMemberExists(name, profileLink, req);
 
   res.status(200).json({
     success: true,
-    user,
+    isMemberFound: member,
   });
 });
 
+// EXTN REQUEST TO CONNECT THE EXTN USING EXTN TOKEN
+exports.addConnectionToken = catchAsync(async (req, res, next) => {
+  const { connectionToken, name, profileLink, profilePicture, email } = req.body;
+  console.log(connectionToken, name, profileLink, profilePicture, email);
+
+  const member = await memberService.connectMember({
+    connectionToken,
+    name,
+    profileLink,
+    profilePicture,
+    email,
+  });
+
+  const isMember = true;
+  const isOrganization = false;
+  createSendToken(member, 200, res, isOrganization, isMember);
+});
+
+// WEB REQUEST TO GET ALL THE MEMBER DETAILS
+exports.getAllMembersOfOrganization = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const members = await memberService.findAllByOrganizationId(organizationId);
+
+  if (!members || members.length === 0) {
+    return res.status(200).json({
+      status: 'success',
+      members: [],
+      message: 'No members found for this organization',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    members,
+  });
+});
+
+// EXTN REQUEST TO UPDATE DAYS ACTIVE
+exports.updateDaysActive = catchAsync(async (req, res, next) => {
+  const { activeDays } = req.body;
+  const memberId = req.member._id;
+  console.log(activeDays);
+
+  if (activeDays < 0) {
+    return next(new AppError('Please provide valid active days', 400));
+  }
+  const updatedMember = await memberService.updateDaysActive(memberId, activeDays);
+
+  res.status(200).json({
+    success: true,
+    member: updatedMember,
+  });
+});
+
+// EXTN REQUEST TO UPDATE PROFILE VISIBILITY
 exports.updateLeaderboardProfileVisibility = [
   rateLimitMiddleware,
   catchAsync(async (req, res, next) => {
     const { leaderBoardProfileVisibility } = req.body;
-    const user = req.member;
+    const memberId = req.member._id;
 
-    user.leaderBoardProfileVisibility = leaderBoardProfileVisibility;
+    if (typeof leaderBoardProfileVisibility !== 'boolean') {
+      return next(new AppError('Please provide valid visibility setting', 400));
+    }
 
-    await Member.findByIdAndUpdate(user._id, {
-      leaderBoardProfileVisibility,
-    });
+    const updatedMember = await memberService.updateLeaderboardVisibility(memberId, leaderBoardProfileVisibility);
 
     res.status(200).json({
       success: true,
-      user,
+      member: updatedMember,
     });
   }),
 ];
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const user = req.member;
+// EXTEN REQUEST TO FETCH THE LEADERBOARD
+exports.getLeaderboard = catchAsync(async (req, res, next) => {
+  const memberId = req.member._id;
 
-  const topUsers = await Member.find(
-    {},
-    {
-      name: 1,
-      profileLink: 1,
-      daysActive: 1,
-      leaderBoardProfileVisibility: 1,
-    }
-  )
-    .sort({ daysActive: -1 })
-    .limit(20);
-
-  const allUsers = await Member.find({}, { _id: 0, daysActive: 1 }).sort({
-    daysActive: -1,
-  });
-
-  const userRank =
-    allUsers.findIndex((u) => u.daysActive === user.daysActive) + 1;
+  const leaderboardData = await memberService.getLeaderboard(memberId);
 
   res.status(200).json({
     status: 'success',
-    user: user,
-    rank: userRank,
-    users: topUsers,
+    user: leaderboardData.member,
+    rank: leaderboardData.rank,
+    users: leaderboardData.leaderboard,
   });
 });
 
-exports.createMember = catchAsync(async (req, res, next) => {
-  const { name, email, timeZone } = req.body;
-  const organizationId = req.organization?._id;
-
-  if (!organizationId || !req.organization) {
-    return next(new AppError('Unauthorized to perform this action', 401));
-  }
-
-  if (!name || !email) {
-    return next(new AppError('Name, email are required', 400));
-  }
-
-  try {
-    const existingOrganization = await Organization.findById(organizationId);
-
-    if (!existingOrganization) {
-      return next(new AppError('Organization does not exist', 400));
-    }
-
-    const existingMember = await Member.findOne({ email });
-
-    if (existingMember) {
-      return next(new AppError('Member already exists with this email', 400));
-    }
-
-    let connectionToken = generateConnectionToken(organizationId);
-
-    const newMember = new Member({
-      name,
-      email,
-      timeZone: timeZone,
-      organizationId: existingOrganization._id.toString(),
-      connectionToken,
-    });
-
-    if (existingOrganization.email === email) {
-      newMember.role = 'owner';
-    }
-
-    newMember.connectionToken = generateConnectionToken(
-      organizationId,
-      newMember._id
-    );
-
-    sendNewMemberInviteEmail(
-      existingOrganization.name,
-      name,
-      email,
-      newMember.connectionToken
-    );
-
-    const oldMember = await OldUser.findOne({ email });
-
-    if (oldMember) {
-      newMember.name = oldMember.name;
-      newMember.email = oldMember.email;
-      newMember.leaderBoardProfileVisibility =
-        oldMember.leaderBoardProfileVisibility;
-      newMember.daysActive = oldMember.daysActive;
-      newMember.currentStreak = oldMember.currentStreak;
-      newMember.totalCreditsUsed = oldMember.totalCreditsUsed;
-      newMember.credits = oldMember.credits;
-    }
-
-    const data = await newMember.save();
-
-    res.status(201).json({
-      message: 'Member created successfully',
-      data: data,
-    });
-  } catch (error) {
-    console.log('Error creating member:', error);
-    next(new AppError('Error creating member', 500));
-  }
-});
-
-exports.getAllMembersOfOrganization = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-
-  if (!organizationId) {
-    return next(new AppError('Organization ID is required', 400));
-  }
-
-  try {
-    const members = await Member.find({ organizationId });
-
-    if (!members || members.length === 0) {
-      return res.status(200).json({
-        status: 'success',
-        data: [],
-        message: 'No members found for this organization',
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: members,
-    });
-  } catch (error) {
-    next(new AppError('Error retrieving members', 500));
-  }
-});
-
-exports.updateMemberDetails = catchAsync(async (req, res, next) => {
+// EXTN REQUEST TO UPDATE THE MEMBER PROFILE STATS
+exports.updateMemberProfileStats = catchAsync(async (req, res, next) => {
   const userId = req.member.id;
   const organizationId = req.member.organizationId;
-  const {
-    firstName,
-    lastName,
-    connectionsCount,
-    profileViews,
-    followersCount,
-    followingCount,
-    searchAppearances,
-    completedAspects,
-    stepsToCompleteProfile,
-    missingAspects,
-  } = req.body;
+  const memberDetails = req.body;
 
-  if (!firstName || !lastName) {
-    return next(new AppError('First name and last name are required', 400));
-  }
+  const updatedMember = await memberService.updateMemberProfileStats(userId, organizationId, memberDetails);
 
-  try {
-    const existingOrganization = await Organization.findById(organizationId);
-    if (!existingOrganization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    const existingMember = await Member.findById(userId.toString());
-    if (
-      !existingMember ||
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
-    }
-
-    const fullName = `${firstName} ${lastName}`;
-
-    const updatedUser = await Member.findByIdAndUpdate(
-      userId,
-      {
-        lastSyncedAt: new Date().toLocaleString('en-GB', {
-          timeZone: existingMember?.timeZone || 'Asia/Kolkata',
-        }),
-        name: fullName,
-        connectionsCount,
-        profileViews,
-        followersCount,
-        followingCount,
-        searchAppearances,
-        completedProfileAspects: completedAspects,
-        missingProfileAspects: missingAspects,
-        stepsToCompleteProfile,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-
-    if (!updatedUser) {
-      return next(new AppError('User not found', 404));
-    }
-
-    // Send the response
-    res.status(200).json({
-      status: 'success',
-      data: updatedUser,
-    });
-  } catch (error) {
-    next(new AppError('Error updating user details', 500));
-  }
+  res.status(200).json({
+    status: 'success',
+    data: updatedMember,
+  });
 });
 
 exports.updateMemberSettings = catchAsync(async (req, res, next) => {
@@ -317,16 +162,8 @@ exports.updateMemberSettings = catchAsync(async (req, res, next) => {
 
     // Verify member exists and belongs to organization
     const existingMember = await Member.findById(memberId);
-    if (
-      !existingMember ||
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     // Prepare update object with only the fields that need to be updated
@@ -345,20 +182,16 @@ exports.updateMemberSettings = catchAsync(async (req, res, next) => {
 
       // Special handling for nested arrays if they exist in the request
       if (postSavingPreferences.keywords) {
-        updateFields.postSavingPreferences.keywords =
-          postSavingPreferences.keywords;
+        updateFields.postSavingPreferences.keywords = postSavingPreferences.keywords;
       }
       if (postSavingPreferences.excludeKeywords) {
-        updateFields.postSavingPreferences.excludeKeywords =
-          postSavingPreferences.excludeKeywords;
+        updateFields.postSavingPreferences.excludeKeywords = postSavingPreferences.excludeKeywords;
       }
       if (postSavingPreferences.customCategories) {
-        updateFields.postSavingPreferences.customCategories =
-          postSavingPreferences.customCategories;
+        updateFields.postSavingPreferences.customCategories = postSavingPreferences.customCategories;
       }
       if (postSavingPreferences.postTypes) {
-        updateFields.postSavingPreferences.postTypes =
-          postSavingPreferences.postTypes;
+        updateFields.postSavingPreferences.postTypes = postSavingPreferences.postTypes;
       }
     }
 
@@ -367,14 +200,10 @@ exports.updateMemberSettings = catchAsync(async (req, res, next) => {
       return next(new AppError('No valid fields to update', 400));
     }
 
-    const updatedMember = await Member.findByIdAndUpdate(
-      memberId,
-      updateFields,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updatedMember = await Member.findByIdAndUpdate(memberId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedMember) {
       return next(new AppError('Member not found', 404));
@@ -404,12 +233,7 @@ exports.getMemberDetailsByIds = catchAsync(async (req, res, next) => {
     });
 
     if (!member) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     res.status(200).json({
@@ -434,16 +258,8 @@ exports.updateFeedFilterSettings = catchAsync(async (req, res, next) => {
 
     // Verify member exists and belongs to organization
     const existingMember = await Member.findById(memberId);
-    if (
-      !existingMember ||
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     // Validate that feedFilterSettings is provided
@@ -492,12 +308,7 @@ exports.getMemberDetailsById = catchAsync(async (req, res, next) => {
     });
 
     if (!member) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     res.status(200).json({
@@ -509,53 +320,13 @@ exports.getMemberDetailsById = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.addConnectionToken = catchAsync(async (req, res, next) => {
-  const { connectionToken, name, profileLink, profilePicture } = req.body;
-
-  const organizationId = connectionToken.split('-')[0];
-
-  const organization = await Organization.findById(organizationId);
-  if (!organization) {
-    return next(new AppError('Organization not found', 404));
-  }
-  const memberId = connectionToken.split('-')[1];
-  const member = await Member.findOne({ _id: memberId, organizationId });
-  if (!member) {
-    return next(new AppError('Member not found', 404));
-  }
-
-  if (connectionToken !== member.connectionToken) {
-    return next(new AppError('Invalid connection token', 400));
-  }
-
-  if (member.isConnected === 'connected') {
-    return next(new AppError('Member already connected', 400));
-  }
-
-  member.isConnected = 'connected';
-  member.name = name;
-  member.profileLink = profileLink;
-  member.profilePicture = profilePicture;
-  const isMember = true;
-  const isOrganization = false;
-  sendNewUserEmail(member);
-  sendExtensionConnectedConfirmation(member);
-  await member.save();
-  createSendToken(member, 200, res, isOrganization, isMember);
-});
-
 exports.disconnectLinkedIn = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.organization.id;
   try {
     const member = await Member.findOne({ _id: memberId, organizationId });
     if (!member) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     if (member.isLinkedinConnected === false) {
@@ -582,34 +353,15 @@ exports.disconnectLinkedIn = catchAsync(async (req, res, next) => {
 exports.submitSurvey = catchAsync(async (req, res, next) => {
   const { formData } = req.body;
 
-  const {
-    usability,
-    performance,
-    missingFeatures,
-    reason,
-    email,
-    overallSatisfaction,
-  } = formData;
+  const { usability, performance, missingFeatures, reason, email, overallSatisfaction } = formData;
 
   // Validate the required fields
   if (!usability || !performance || !overallSatisfaction || !reason) {
-    return next(
-      new AppError(
-        'Usability, performance, overall satisfaction, and reason are required fields.',
-        400
-      )
-    );
+    return next(new AppError('Usability, performance, overall satisfaction, and reason are required fields.', 400));
   }
 
   try {
-    sendSurveyForm(
-      usability,
-      performance,
-      missingFeatures,
-      reason,
-      email,
-      overallSatisfaction
-    );
+    sendSurveyForm(usability, performance, missingFeatures, reason, email, overallSatisfaction);
     res.status(200).json({
       status: 'success',
       message: 'Feedback submitted successfully. Thank you!',
@@ -624,19 +376,12 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
   const organizationId = req.organization.id;
   const { calendarData } = req.body;
   if (!Array.isArray(calendarData) || calendarData.length === 0) {
-    return next(
-      new AppError('Calendar data must be an array and cannot be empty.', 400)
-    );
+    return next(new AppError('Calendar data must be an array and cannot be empty.', 400));
   }
 
   const member = await Member.findOne({ _id: memberId, organizationId });
   if (!member) {
-    return next(
-      new AppError(
-        'Member not found or does not belong to the organization.',
-        404
-      )
-    );
+    return next(new AppError('Member not found or does not belong to the organization.', 404));
   }
 
   const calendarEntries = [];
@@ -645,12 +390,7 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
     const { title, date, time } = data;
 
     if (!title || !date || !time) {
-      return next(
-        new AppError(
-          'Title, Date, and Time are required fields for each calendar entry.',
-          400
-        )
-      );
+      return next(new AppError('Title, Date, and Time are required fields for each calendar entry.', 400));
     }
 
     // Create a new content calendar entry
@@ -707,23 +447,13 @@ exports.updateContentCalendar = catchAsync(async (req, res, next) => {
   const { topic, date, time, status } = updatedData;
 
   if (!topic || !date || !time || !status) {
-    return next(
-      new AppError(
-        'Missing required fields: topic, date, time, and status are required.',
-        400
-      )
-    );
+    return next(new AppError('Missing required fields: topic, date, time, and status are required.', 400));
   }
 
   // Verify Member and Organization
   const member = await Member.findOne({ _id: memberId, organizationId });
   if (!member) {
-    return next(
-      new AppError(
-        'Member not found or does not belong to the organization.',
-        404
-      )
-    );
+    return next(new AppError('Member not found or does not belong to the organization.', 404));
   }
 
   const calendarEntry = await ContentCalendar.findOne({
@@ -761,12 +491,7 @@ exports.deleteContentCalendar = catchAsync(async (req, res, next) => {
   // Verify Member and Organization
   const member = await Member.findOne({ _id: memberId, organizationId });
   if (!member) {
-    return next(
-      new AppError(
-        'Member not found or does not belong to the organization.',
-        404
-      )
-    );
+    return next(new AppError('Member not found or does not belong to the organization.', 404));
   }
 
   const deletedEntry = await ContentCalendar.findOneAndDelete({
@@ -802,12 +527,8 @@ exports.deleteMemberAccount = catchAsync(async (req, res, next) => {
       return next(new AppError('Member not found', 404));
     }
 
-    if (
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError('Member does not belong to the organization', 403)
-      );
+    if (existingMember.organizationId.toString() !== organizationId.toString()) {
+      return next(new AppError('Member does not belong to the organization', 403));
     }
 
     // Delete the member
@@ -843,16 +564,8 @@ exports.updateMemberSummary = catchAsync(async (req, res, next) => {
 
     // Verify member exists and belongs to organization
     const existingMember = await Member.findById(memberId);
-    if (
-      !existingMember ||
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     // Validate that professionalProfile is provided
@@ -873,8 +586,7 @@ exports.updateMemberSummary = catchAsync(async (req, res, next) => {
 
     // Special handling for nested objects and arrays
     if (professionalProfile.functionalArea) {
-      updateFields.summary.professionalProfile.functionalArea =
-        professionalProfile.functionalArea;
+      updateFields.summary.professionalProfile.functionalArea = professionalProfile.functionalArea;
     }
 
     if (professionalProfile.location) {
@@ -885,14 +597,10 @@ exports.updateMemberSummary = catchAsync(async (req, res, next) => {
     }
 
     // Update the member's summary
-    const updatedMember = await Member.findByIdAndUpdate(
-      memberId,
-      updateFields,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updatedMember = await Member.findByIdAndUpdate(memberId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedMember) {
       return next(new AppError('Member not found', 404));
@@ -930,8 +638,7 @@ exports.updateLeadGenerationGoals = catchAsync(async (req, res, next) => {
       ...(existingMember.leadGenerationGoals?.toObject?.() || {}),
       ...leadGenerationGoals,
       targetAudience: {
-        ...(existingMember.leadGenerationGoals?.targetAudience?.toObject?.() ||
-          {}),
+        ...(existingMember.leadGenerationGoals?.targetAudience?.toObject?.() || {}),
         ...(leadGenerationGoals.targetAudience || {}),
       },
     };
@@ -957,12 +664,7 @@ exports.updateLeadGenerationGoals = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error updating lead generation goals:', error);
-    next(
-      new AppError(
-        `Error updating lead generation goals: ${error.message}`,
-        500
-      )
-    );
+    next(new AppError(`Error updating lead generation goals: ${error.message}`, 500));
   }
 });
 
@@ -981,16 +683,8 @@ exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
 
     // Verify member exists and belongs to organization
     const existingMember = await Member.findById(memberId);
-    if (
-      !existingMember ||
-      existingMember.organizationId.toString() !== organizationId.toString()
-    ) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     // Validate that summary is provided
@@ -1021,8 +715,7 @@ exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
 
       // Handle arrays
       if (summary.professionalProfile.functionalArea) {
-        updateFields.summary.professionalProfile.functionalArea =
-          summary.professionalProfile.functionalArea;
+        updateFields.summary.professionalProfile.functionalArea = summary.professionalProfile.functionalArea;
       }
     }
 
@@ -1041,20 +734,15 @@ exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
 
       // Handle arrays
       if (summary.leadGenerationGoals.serviceOfferings) {
-        updateFields.summary.leadGenerationGoals.serviceOfferings =
-          summary.leadGenerationGoals.serviceOfferings;
+        updateFields.summary.leadGenerationGoals.serviceOfferings = summary.leadGenerationGoals.serviceOfferings;
       }
     }
 
     // Update the member's complete summary
-    const updatedMember = await Member.findByIdAndUpdate(
-      memberId,
-      updateFields,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updatedMember = await Member.findByIdAndUpdate(memberId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!updatedMember) {
       return next(new AppError('Member not found', 404));
@@ -1091,12 +779,7 @@ exports.getMemberSummary = catchAsync(async (req, res, next) => {
     }).select('summary name email currentRole');
 
     if (!member) {
-      return next(
-        new AppError(
-          'Member not found or does not belong to the organization',
-          404
-        )
-      );
+      return next(new AppError('Member not found or does not belong to the organization', 404));
     }
 
     // Send success response

@@ -1,55 +1,38 @@
 const express = require('express');
-const organizationAuthController = require('../controllers/orgAuthController');
-const authController = require('../controllers/authController');
 const organizationController = require('../controllers/organizationController');
-const hiringPostsController = require('../controllers/hiringPostsController');
-const upload = require('../middlewares/multer');
+const { verifyToken } = require('../middlewares/verifytoken');
+const multer = require('multer');
+const router = express.Router();
 
-const Router = express.Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
 
-Router.post('/auth/signup', organizationAuthController.signupOrganization);
-Router.post('/auth/login', organizationAuthController.loginOrganization);
-Router.post('/auth/forgot-password', organizationAuthController.forgotPassword);
-Router.post(
-  '/auth/reset-password/:token',
-  organizationAuthController.resetPassword
-);
-Router.post(
-  '/mail/help',
-  authController.isUserLoggedIn,
-  organizationController.sendHelpRequest
-);
+router.post('/check-verification', organizationController.checkVerificationStatus);
+// Protect all routes after this middleware
+router.use(verifyToken);
+// Organization profile routes
+router.get('/profile', organizationController.getProfile);
+router.patch('/profile', upload.single('profilePicture'), organizationController.updateProfile);
+router.get('/trial-status', organizationController.checkTrialStatus);
 
-Router.post(
-  '/mail/feedback',
-  authController.isUserLoggedIn,
-  organizationController.Organizationfeedback
-);
+// Organization management routes
+router.get('/:id', organizationController.getOrganizationById);
+router.delete('/:id', organizationController.deleteOrganization);
 
-Router.get(
-  '/auth',
-  authController.isUserLoggedIn,
-  organizationAuthController.verifyOrganizationDetails
-);
+// Credits and subscription routes
+router.patch('/credits', organizationController.updateCredits);
+router.patch('/subscription', organizationController.updateSubscription);
 
-Router.get(
-  '/:organizationId/hiring-posts',
-  authController.isUserLoggedIn,
-  hiringPostsController.getOrganizationHiringPosts
-);
+// Trial and usage management routes
+router.get('/usage-limits/:usageType', organizationController.checkUsageLimits);
+router.patch('/usage/:usageType', organizationController.incrementUsage);
 
-Router.get('/auth/google', organizationAuthController.googleAuth);
+// Support routes
+router.post('/help', organizationController.sendHelpRequest);
+router.post('/feedback', organizationController.sendFeedback);
 
-Router.get(
-  '/auth/google/callback',
-  organizationAuthController.googleAuthCallback
-);
-
-Router.put(
-  '/profile/update',
-  authController.isUserLoggedIn,
-  upload.single('profilePicture'),
-  organizationController.updateProfile
-);
-
-module.exports = Router;
+module.exports = router;
