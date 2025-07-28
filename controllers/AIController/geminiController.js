@@ -92,6 +92,7 @@ async function getCustomComment(postContent, customTone, wordCount) {
       Requirements:
       - The tone of the comment should strictly be in ${customTone} tone
       - The comment should be relevant to the whole post content
+      - STRICTLY IN A SINGLE PARA AND DONT'T INCLUDE LINES LIKE HERE'S IS YOUR COMMENT ETC, JUST GIVE THE COMMENT AS A RESULT IN A SINGLE PARA
       - Give response as if a real user have written the comment
       - You can use emojis as well if its a congratulatory comment
       - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
@@ -127,7 +128,7 @@ async function getComment(postContent, selectedOption) {
       - Give response as if a real user have written the comment
       - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
       - You can use emojis as well if its a congratulatory comment
-      - Give result in a single paragraph and not greater than 30 words  
+      - Give result in a single paragraph and not greater than 30 words, STRICTLY IN A SINGLE PARA AND DONT'T INCLUDE LINES LIKE HERE'S IS YOUR COMMENT ETC, JUST GIVE THE COMMENT AS A RESULT IN A SINGLE PARA
       - Do not include double quotes in response
       - Do not include hashtags in response 
       - Give a short and engaging comment 
