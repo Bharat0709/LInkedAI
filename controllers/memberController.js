@@ -28,18 +28,35 @@ exports.verifyMemberDetails = catchAsync(async (req, res, next) => {
 exports.checkMemberExists = catchAsync(async (req, res, next) => {
   const { name, profileLink } = req.body;
   const existingUser = await Member.findOne({ name, profileLink });
-  
+
   if (existingUser && existingUser.email) {
     const today = new Date().toDateString();
     const lastActive = new Date(existingUser.lastActive).toDateString();
-    
+
     if (lastActive !== today) {
       await Member.findByIdAndUpdate(existingUser._id, {
         $inc: { daysActive: 1 },
-        $set: { credits: 100, lastActive: new Date() }
+        $set: { credits: 100, lastActive: new Date() },
       });
     }
-    
+
+    const newDaysActive = updatedUser.daysActive;
+    if (newDaysActive % 10 === 0 && newDaysActive > 0) {
+      console.log(
+        `🎯 Milestone reached for ${updatedUser.name}: ${newDaysActive} days`
+      );
+
+      // Send milestone email without blocking the response
+      sendMilestoneEmail({
+        name: updatedUser.name,
+        email: updatedUser.email,
+        daysActive: newDaysActive,
+      }).catch((error) => {
+        console.error('❌ Milestone email failed:', error.message);
+        // Don't throw error - just log it
+      });
+    }
+
     createSendToken(existingUser, 200, res, false, true);
   } else {
     return next(new AppError('Member not found', 400));

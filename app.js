@@ -32,6 +32,7 @@ const organizationRouter = require('./routes/organizationRoutes');
 
 // CONTROLLERS
 const scheduler = require('./controllers/linkedInController');
+const { generateAndSendStats } = require('./middlewares/reportMiddleware');
 const postScheduledPosts = scheduler.schedulePosts;
 
 const app = express();
@@ -143,6 +144,17 @@ cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
   postScheduledPosts();
 });
+
+cron.schedule(
+  '0 18 * * *',
+  () => {
+    console.log('📊 Running daily stats report...');
+    generateAndSendStats();
+  },
+  {
+    timezone: 'Asia/Kolkata',
+  }
+);
 
 app.use(cors(corsOptions));
 app.use(helmet());
