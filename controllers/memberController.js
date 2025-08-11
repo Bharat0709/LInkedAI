@@ -39,7 +39,7 @@ exports.checkMemberExists = catchAsync(async (req, res, next) => {
         $set: { credits: 100, lastActive: new Date() },
       });
     }
-
+    const updatedUser = await Member.findOne({ name, profileLink });
     const newDaysActive = updatedUser.daysActive;
     if (newDaysActive % 10 === 0 && newDaysActive > 0) {
       console.log(
@@ -53,7 +53,6 @@ exports.checkMemberExists = catchAsync(async (req, res, next) => {
         daysActive: newDaysActive,
       }).catch((error) => {
         console.error('❌ Milestone email failed:', error.message);
-        // Don't throw error - just log it
       });
     }
 
