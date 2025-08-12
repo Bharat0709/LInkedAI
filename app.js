@@ -146,7 +146,7 @@ cron.schedule('* * * * *', () => {
 });
 
 cron.schedule(
-  '0 18 * * *',
+  '30 10 * * *',
   () => {
     console.log('📊 Running daily stats report...');
     generateAndSendStats();
