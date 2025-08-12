@@ -38,22 +38,22 @@ exports.checkMemberExists = catchAsync(async (req, res, next) => {
         $inc: { daysActive: 1 },
         $set: { credits: 100, lastActive: new Date() },
       });
-    }
-    const updatedUser = await Member.findOne({ name, profileLink });
-    const newDaysActive = updatedUser.daysActive;
-    if (newDaysActive % 10 === 0 && newDaysActive > 0) {
-      console.log(
-        `🎯 Milestone reached for ${updatedUser.name}: ${newDaysActive} days`
-      );
+      const updatedUser = await Member.findOne({ name, profileLink });
+      const newDaysActive = updatedUser.daysActive;
+      if (newDaysActive % 10 === 0 && newDaysActive > 0) {
+        console.log(
+          `🎯 Milestone reached for ${updatedUser.name}: ${newDaysActive} days`
+        );
 
-      // Send milestone email without blocking the response
-      sendMilestoneEmail({
-        name: updatedUser.name,
-        email: updatedUser.email,
-        daysActive: newDaysActive,
-      }).catch((error) => {
-        console.error('❌ Milestone email failed:', error.message);
-      });
+        // Send milestone email without blocking the response
+        sendMilestoneEmail({
+          name: updatedUser.name,
+          email: updatedUser.email,
+          daysActive: newDaysActive,
+        }).catch((error) => {
+          console.error('❌ Milestone email failed:', error.message);
+        });
+      }
     }
 
     createSendToken(existingUser, 200, res, false, true);
