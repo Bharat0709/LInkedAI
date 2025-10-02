@@ -38,7 +38,7 @@ const adminRouter = require('./routes/adminRoutes');
 
 const { initCreditExpiryCronJobs } = require('./cron/creditExpiryCron');
 // CONTROLLERS
-const scheduler = require('./controllers/linkedInController');
+const scheduler = require('./controllers/LinkedIn/linkedInController');
 const { generateAndSendStats } = require('./middlewares/reportMiddleware');
 
 const app = express();
