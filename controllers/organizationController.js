@@ -35,6 +35,15 @@ exports.getProfile = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getCredits = catchAsync(async (req, res, next) => {
+  const organizationId = req.organization._id;
+  const creditsLeft = await organizationService.getOrganizationCredits(organizationId);
+  res.status(200).json({
+    status: 'success',
+    ...creditsLeft,
+  });
+});
+
 exports.updateProfile = catchAsync(async (req, res, next) => {
   const organizationId = req.organization._id;
   const profileData = req.body;
@@ -103,7 +112,7 @@ exports.updateCredits = catchAsync(async (req, res, next) => {
     },
   });
 });
-
+0
 exports.checkTrialStatus = catchAsync(async (req, res, next) => {
   const organizationId = req.organization._id;
   const trialStatus = await organizationService.checkAndUpdateTrialStatus(organizationId);

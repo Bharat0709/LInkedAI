@@ -1,5 +1,5 @@
 const express = require('express');
-const authController = require('./../controllers/authController');
+const authController = require('../controllers/Auth/authController');
 const router = express.Router();
 
 // SIGNUP
@@ -15,6 +15,6 @@ router.post('/password-reset', authController.resetPassword);
 
 // GOOGLE AUTH
 router.get('/google', authController.googleAuth);
-// router.get('/google/callback', authController.googleAuthCallback);
+router.get('/google/callback', authController.googleAuthCallback);
 
 module.exports = router;

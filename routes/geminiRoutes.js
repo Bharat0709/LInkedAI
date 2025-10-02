@@ -1,12 +1,12 @@
 const express = require('express');
 const geminiApiController = require('../controllers/AIController/geminiController');
-const authController = require('../controllers/authController');
 const { verifyToken } = require('../middlewares/verifytoken');
 const { verifyExtension } = require('../middlewares/verifyExtensionRequest');
 const router = express.Router();
 
 router.use(verifyToken);
 router.post('/generate/post-content/gemini', geminiApiController.generatePostContentGemini);
+router.post('/generate/email-template/gemini', geminiApiController.generateEmailTemplateGemini);
 
 router.use(verifyExtension);
 router.post('/generate/comment/gemini', geminiApiController.generateCommentGemini);

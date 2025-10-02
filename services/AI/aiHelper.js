@@ -1,6 +1,7 @@
 const OpenAI = require('openai');
 const aiRepository = require('../../repositories/aiRepository');
 const AppError = require('../../utils/appError');
+const organizationService = require('../Organization/organizationService');
 
 const PROVIDERS = {
   chatgpt: {
@@ -91,30 +92,99 @@ const makeAPICall = async (provider, messages, maxTokens = 120, temperature = 0.
 };
 
 // Process credits with enhanced error handling
-const processCredits = async (userType, userId, creditAmount) => {
+const processCredits = async (userType, userId, creditAmount, feature = 'general', metadata = {}) => {
   try {
-    let hasEnoughCredits;
-    let updatedUser;
-
     if (userType === 'member') {
-      hasEnoughCredits = await aiRepository.checkMemberCredits(userId, creditAmount);
-      if (!hasEnoughCredits) {
-        throw new AppError('Insufficient credits', 403);
+      // Find member and organization
+      const member = await aiRepository.findMemberById(userId);
+      if (!member) throw new AppError('Member not found', 404);
+
+      const organization = await aiRepository.findOrganizationById(member.organizationId);
+      if (!organization) throw new AppError('Organization not found', 404);
+
+      // Check if org has enough credits
+      if (organization.credits.balance < creditAmount) {
+        throw new AppError('Organization does not have enough credits', 403);
       }
-      updatedUser = await aiRepository.updateMemberCredits(userId, creditAmount);
+
+      if (member.creditLimitperDay !== -1 && member.creditsUsedToday + creditAmount > member.creditLimitperDay) {
+        throw new AppError('Member has exceeded their daily credit limit', 403);
+      }
+
+      // Reset member daily credits if date changed
+      const today = new Date().toDateString();
+      const lastActiveDay = member.lastActive ? member.lastActive.toDateString() : null;
+      if (today !== lastActiveDay) {
+        member.creditsUsedToday = 0;
+      }
+
+      // Deduct from org credits
+      const newOrgBalance = organization.credits.balance - creditAmount;
+      const orgTransaction = {
+        type: 'usage',
+        amount: creditAmount,
+        balance: newOrgBalance,
+        description: `Credits used by member ${member._id} for ${feature}`,
+        metadata,
+        createdAt: new Date(),
+      };
+
+      await aiRepository.updateOrganizationCredits(organization._id, {
+        balance: newOrgBalance,
+        totalUsed: organization.credits.totalUsed + creditAmount,
+        transaction: orgTransaction,
+      });
+
+      // Deduct from member usage
+      member.creditsUsedToday += creditAmount;
+      member.lastActive = new Date();
+      await aiRepository.updateMemberCredits(member._id, {
+        creditsUsedToday: member.creditsUsedToday,
+        lastActive: member.lastActive,
+      });
+
       return {
-        remainingCredits: updatedUser.creditsLeft,
-        user: updatedUser,
+        organization: {
+          id: organization._id,
+          remainingCredits: newOrgBalance,
+        },
+        member: {
+          id: member._id,
+          creditsUsedToday: member.creditsUsedToday,
+          creditLimitperDay: member.creditLimitperDay,
+          lastActive: member.lastActive,
+        },
       };
     } else if (userType === 'organization') {
-      hasEnoughCredits = await aiRepository.checkOrganizationCredits(userId, creditAmount);
-      if (!hasEnoughCredits) {
+      // Direct org deduction
+      const organization = await aiRepository.findOrganizationById(userId);
+      if (!organization) throw new AppError('Organization not found', 404);
+
+      if (organization.credits.balance < creditAmount) {
         throw new AppError('Insufficient credits', 403);
       }
-      updatedUser = await aiRepository.updateOrganizationCredits(userId, creditAmount);
+
+      const newOrgBalance = organization.credits.balance - creditAmount;
+      const orgTransaction = {
+        type: 'usage',
+        amount: creditAmount,
+        balance: newOrgBalance,
+        description: `Credits used directly by organization`,
+        metadata,
+        createdAt: new Date(),
+      };
+
+      await aiRepository.updateOrganizationCredits(organization._id, {
+        balance: newOrgBalance,
+        totalUsed: organization.credits.totalUsed + creditAmount,
+        transaction: orgTransaction,
+      });
+
       return {
-        remainingCredits: updatedUser.credits,
-        user: updatedUser,
+        organization: {
+          id: organization._id,
+          remainingCredits: newOrgBalance,
+        },
       };
     } else {
       throw new AppError('Invalid user type', 400);
@@ -127,8 +197,51 @@ const processCredits = async (userType, userId, creditAmount) => {
   }
 };
 
+const checkSubscription = async orgId => {
+  const organization = await organizationService.getOrganizationById(orgId);
+
+  if (!organization) {
+    throw new AppError('Organization not found', 401);
+  }
+
+  // 1. Check if organization is verified
+  if (!organization.isVerified) {
+    throw new AppError('Organization email is not verified.', 403);
+  }
+
+  const { subscription } = organization;
+  console.log(subscription);
+
+  if (!subscription || !subscription.plan || !subscription.status) {
+    throw new AppError('Organization subscription details are missing.', 403);
+  }
+
+  const { plan, status, trialEndDate, renewalDate } = subscription;
+
+  if (plan === 'trial') {
+    const now = Date.now();
+
+    if (!trialEndDate || now > new Date(trialEndDate).getTime()) {
+      organization.subscription.status = 'expired';
+      throw new AppError('Your trial has expired. Please upgrade to perform this action.', 403);
+    }
+  }
+
+  if (['pro', 'enterprise'].includes(plan)) {
+    if (status !== 'active') {
+      throw new AppError(`Your subscription is ${status}. Please renew to continue.`, 403);
+    }
+
+    if (renewalDate && Date.now() > new Date(renewalDate).getTime()) {
+      organization.subscription.status = 'expired';
+      throw new AppError('Your subscription has expired. Please renew.', 403);
+    }
+  }
+};
+
 module.exports = {
   processCredits,
+  checkSubscription,
   makeAPICall,
   CREDIT_COSTS,
   PROVIDERS,

@@ -26,14 +26,25 @@ const geminiRouter = require('./routes/geminiRoutes');
 const openaiRouter = require('./routes/openAIRoutes');
 const authRouter = require('./routes/authRoutes');
 const postRouter = require('./routes/postsRoutes');
+const linkedinRouter = require('./routes/linkedinRoutes');
+const calendarRouter = require('./routes/calendarRoutes');
 const memberRouter = require('./routes/membersRoutes');
-const hiringPostsRouter = require('./routes/hiringPosts');
+const savedPostsRouter = require('./routes/savedPostRoutes');
 const organizationRouter = require('./routes/organizationRoutes');
+const emailTemplateRouter = require('./routes/emailTemplateRoutes');
+const automationRouter = require('./routes/automations');
+const paymentRouter = require('./routes/paymentsRoutes');
+const adminRouter = require('./routes/adminRoutes');
 
+const { initCreditExpiryCronJobs } = require('./cron/creditExpiryCron');
 // CONTROLLERS
+<<<<<<< HEAD
 const scheduler = require('./controllers/linkedInController');
 const { generateAndSendStats } = require('./middlewares/reportMiddleware');
 const postScheduledPosts = scheduler.schedulePosts;
+=======
+const scheduler = require('./controllers/LinkedIn/linkedInController');
+>>>>>>> a511ed3 (Alpha Test -1)
 
 const app = express();
 
@@ -107,7 +118,7 @@ const authLimiter = createRateLimiter(15 * 60 * 1000, 10, 'Too many authenticati
 
 cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
-  postScheduledPosts();
+  scheduler.processScheduledPosts();
 });
 
 cron.schedule(
@@ -134,15 +145,6 @@ app.use(
 
 app.use('/api/', limiter);
 app.use('/api/v1/auth', authLimiter);
-
-app.use(
-  express.json({
-    limit: '30mb',
-    verify: (req, res, buf) => {
-      req.rawBody = buf;
-    },
-  })
-);
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(bodyParser.json({ limit: '10mb' }));
@@ -166,22 +168,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serving static files
-app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
-});
-app.get('/manifest.json', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
-});
-
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/organization', organizationRouter);
-app.use('/api/v1/ai', geminiRouter);
-app.use('/api/v1/openai', openaiRouter);
+app.use('/api/v1/linkedin', linkedinRouter);
+app.use('/api/v1/calendar', calendarRouter);
 app.use('/api/v1/member', memberRouter);
+app.use('/api/v1/ai', geminiRouter);
+app.use('/api/v1/email-templates', emailTemplateRouter);
+app.use('/api/v1/openai', openaiRouter);
 app.use('/api/v1/posts', postRouter);
-app.use('/api/v1/hiring-posts', hiringPostsRouter);
+app.use('/api/v1/saved-posts', savedPostsRouter);
+app.use('/api/v1/automation', automationRouter);
+app.use('/api/v1/payments', paymentRouter);
+app.use('/api/v1/admin', adminRouter);
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -216,14 +216,12 @@ app.use((err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  // Don't leak error details in production
   if (NODE_ENV === 'production') {
     res.status(err.statusCode).json({
       status: err.status,
       message: err.isOperational ? err.message : 'Something went wrong!',
     });
   } else {
-    console.error('ERROR 💥', err);
     res.status(err.statusCode).json({
       status: err.status,
       error: err,
@@ -236,7 +234,6 @@ app.use((err, req, res, next) => {
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
-  // Use combined format for production logging
   app.use(
     morgan('combined', {
       skip: function (req, res) {

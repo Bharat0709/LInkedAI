@@ -1,10 +1,9 @@
 const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
-const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../email/member');
-const { logMemberActivity, parseConnectionToken, resetDailyCredits } = require('./memberHelper');
+const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
+const { logMemberActivity, parseConnectionToken, resetDailyCredits, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
-// const OldUser = require('../../models/oldUser');
 
 const checkMemberExists = async (name, profileLink) => {
   try {
@@ -39,13 +38,6 @@ const createMember = async (organizationId, memberData) => {
     throw new AppError('Member already exists with this email', 400);
   }
 
-  // Check member limit based on organization's plan
-  const currentMemberCount = await memberRepository.countByOrganizationId(organizationId);
-  console.log('CURRENT MEMBER COUNT', currentMemberCount, organization.planUsage.maxMembers);
-  if (currentMemberCount >= organization.planUsage.maxMembers) {
-    throw new AppError('Member limit reached for your current plan', 403);
-  }
-
   const connectionToken = generateConnectionToken(organizationId);
 
   const newMemberData = {
@@ -53,10 +45,7 @@ const createMember = async (organizationId, memberData) => {
     email,
     timeZone: timeZone || 'Asia/Calcutta',
     organizationId: organizationId.toString(),
-    plan: organization.subscription.plan,
-    planStatus: organization.subscription.status,
-    creditsLeft: organization.planUsage.dailyUsage.aiCreditsUsedToday.maxextensionCreditsperDay,
-    creditLimitperDay: organization.planUsage.dailyUsage.aiCreditsUsedToday.maxextensionCreditsperDay,
+    creditsLeft: organization.credits.balance,
     connectionToken,
     role: organization.email === email ? 'self' : 'member',
   };
@@ -65,10 +54,6 @@ const createMember = async (organizationId, memberData) => {
 
   member.connectionToken = generateConnectionToken(organizationId, member._id);
   await memberRepository.updateById(member._id, { connectionToken: member.connectionToken });
-  await organizationRepository.updateById(organizationId, {
-    $inc: { 'planUsage.currentMemberCount': 1 },
-  });
-
   await logMemberActivity(member._id, 'member_created', {
     organizationId,
     createdAt: new Date(),
@@ -184,6 +169,49 @@ const getMemberById = async memberId => {
   return member;
 };
 
+const getMemberWithOrganizationDetails = async memberId => {
+  // Fetch member
+  const member = await memberRepository.findById(memberId);
+  if (!member) {
+    throw new AppError('Member not found', 404);
+  }
+
+  // Fetch organization details separately
+  const organization = await organizationRepository.findById(member.organizationId);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  // Return combined response
+  const memberData = {
+    ...member.toObject(),
+    organization: {
+      id: organization._id,
+      name: organization.name,
+      email: organization.email,
+      creditsLeft: organization.credits.balance,
+    },
+  };
+  console.log(memberData);
+  return memberData;
+};
+
+const getMemberByIdAndOrg = async (memberId, organizationId) => {
+  // Verify organization exists
+  const organization = await organizationRepository.findById(organizationId);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  // Find member and verify they belong to organization
+  const member = await memberRepository.findByIdAndOrg(memberId, organizationId);
+  if (!member) {
+    throw new AppError('Member not found or does not belong to the organization', 404);
+  }
+
+  return member;
+};
+
 const updateMemberProfile = async (memberId, profileData) => {
   const member = await memberRepository.findById(memberId);
   if (!member) {
@@ -228,7 +256,7 @@ const consumeCredits = async (memberId, creditsToConsume) => {
   return await memberRepository.findById(memberId);
 };
 
-const deleteMember = async (memberId, softDelete = true) => {
+const deleteMember = async (memberId, softDelete = false) => {
   const member = await memberRepository.findById(memberId);
   if (!member) {
     throw new AppError('Member not found', 404);
@@ -270,22 +298,7 @@ const updateDaysActive = async (memberId, activeDays) => {
     };
 
     await memberRepository.updateById(memberId, updateData);
-    return await memberRepository.findById(memberId);
   }
-
-  // Get organization and check subscription status
-  const organization = await organizationRepository.findById(member.organizationId);
-  if (!organization) {
-    throw new AppError('Organization not found', 404);
-  }
-
-  // Check if organization subscription is active
-  if (!organization.subscription.plan || organization.subscription.status === 'expired' || organization.subscription.status === 'inactive') {
-    throw new AppError('Organization subscription is not active', 403);
-  }
-
-  // Reset daily credits based on organization's plan
-  const newCreditsLeft = await resetDailyCredits(memberId);
 
   // Increment days active by 1
   const newDaysActive = activeDays + 1;
@@ -294,7 +307,6 @@ const updateDaysActive = async (memberId, activeDays) => {
   const updateData = {
     lastActive: new Date(),
     daysActive: newDaysActive,
-    creditsLeft: newCreditsLeft,
   };
 
   await memberRepository.updateById(memberId, updateData);
@@ -318,7 +330,6 @@ const updateDaysActive = async (memberId, activeDays) => {
     activeDays: newDaysActive,
     previousDaysActive: activeDays,
     isMilestone,
-    newCreditLimit,
   });
 
   return await memberRepository.findById(memberId);
@@ -405,6 +416,341 @@ const updateMemberProfileStats = async (memberId, organizationId, memberDetails)
   return updatedMember;
 };
 
+const updateMemberSettings = async (memberId, organizationId, settingsData) => {
+  const { timeZone, postSavingPreferences } = settingsData;
+
+  // Verify organization exists
+  const existingOrganization = await organizationRepository.findById(organizationId);
+  if (!existingOrganization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  // Verify member exists and belongs to organization
+  const existingMember = await memberRepository.findById(memberId);
+  if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+    throw new AppError('Member not found or does not belong to the organization', 404);
+  }
+
+  // Prepare update object
+  const updateFields = {};
+
+  if (timeZone) updateFields.timeZone = timeZone;
+
+  if (postSavingPreferences) {
+    updateFields.postSavingPreferences = {
+      ...existingMember.postSavingPreferences,
+      ...postSavingPreferences,
+    };
+
+    if (postSavingPreferences.keywords) {
+      updateFields.postSavingPreferences.keywords = postSavingPreferences.keywords;
+    }
+    if (postSavingPreferences.excludeKeywords) {
+      updateFields.postSavingPreferences.excludeKeywords = postSavingPreferences.excludeKeywords;
+    }
+    if (postSavingPreferences.customCategories) {
+      updateFields.postSavingPreferences.customCategories = postSavingPreferences.customCategories;
+    }
+    if (postSavingPreferences.postTypes) {
+      updateFields.postSavingPreferences.postTypes = postSavingPreferences.postTypes;
+    }
+  }
+
+  if (Object.keys(updateFields).length === 0) {
+    throw new AppError('No valid fields to update', 400);
+  }
+
+  return await memberRepository.updateSettings(memberId, updateFields);
+};
+
+// Update Member Summary Service
+const updateMemberSummary = async (memberId, organizationId, summaryData) => {
+  const { professionalProfile } = summaryData;
+
+  // Verify organization exists
+  const existingOrganization = await organizationRepository.findById(organizationId);
+  if (!existingOrganization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  // Verify member exists and belongs to organization
+  const existingMember = await memberRepository.findById(memberId);
+  if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+    throw new AppError('Member not found or does not belong to the organization', 404);
+  }
+
+  if (!professionalProfile) {
+    throw new AppError('Professional profile data is required', 400);
+  }
+
+  // Prepare update object
+  const updateFields = {
+    summary: {
+      ...existingMember.summary,
+      professionalProfile: {
+        ...existingMember.summary?.professionalProfile,
+        ...professionalProfile,
+      },
+    },
+  };
+
+  if (professionalProfile.functionalArea) {
+    updateFields.summary.professionalProfile.functionalArea = professionalProfile.functionalArea;
+  }
+
+  if (professionalProfile.location) {
+    updateFields.summary.professionalProfile.location = {
+      ...existingMember.summary?.professionalProfile?.location,
+      ...professionalProfile.location,
+    };
+  }
+
+  return await memberRepository.updateSummary(memberId, updateFields);
+};
+
+// Update Lead Generation Goals Service
+const updateLeadGenerationGoals = async (memberId, organizationId, leadGenData) => {
+  const { leadGenerationGoals } = leadGenData;
+
+  const existingOrganization = await organizationRepository.findById(organizationId);
+  if (!existingOrganization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  const existingMember = await memberRepository.findById(memberId);
+
+  const updatedLeadGenerationGoals = {
+    ...(existingMember.leadGenerationGoals?.toObject?.() || {}),
+    ...leadGenerationGoals,
+    targetAudience: {
+      ...(existingMember.leadGenerationGoals?.targetAudience?.toObject?.() || {}),
+      ...(leadGenerationGoals.targetAudience || {}),
+    },
+  };
+
+  return await memberRepository.updateLeadGenerationGoals(memberId, {
+    leadGenerationGoals: updatedLeadGenerationGoals,
+  });
+};
+
+// Update Complete Summary Service - Enhanced to handle all form data
+const updateCompleteSummary = async (memberId, organizationId, memberData) => {
+  try {
+    // Verify organization exists
+    const existingOrganization = await organizationRepository.findById(organizationId);
+    if (!existingOrganization) {
+      throw new AppError('Organization not found', 404);
+    }
+
+    // Verify member exists and belongs to organization
+    const existingMember = await memberRepository.findById(memberId);
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      throw new AppError('Member not found or does not belong to the organization', 404);
+    }
+
+    if (!memberData) {
+      throw new AppError('Form data is required', 400);
+    }
+
+    const formData = memberData.formData;
+
+    console.log('=== UPDATING COMPLETE SUMMARY ===');
+    console.log('Member ID:', memberId);
+    console.log('Organization ID:', organizationId);
+    console.log('Form Data:', JSON.stringify(formData, null, 2));
+
+    // Prepare comprehensive update object
+    const updateFields = {};
+
+    // Handle Step 1: Lead Saving Settings -> postSavingPreferences
+    if (formData.postSavingPreferences) {
+      const leadSavingData = formData.postSavingPreferences;
+
+      updateFields.postSavingPreferences = {
+        ...(existingMember.postSavingPreferences?.toObject?.() || existingMember.postSavingPreferences || {}),
+        enabled: leadSavingData.enabled !== undefined ? leadSavingData.enabled : true,
+        enableCustomKeywords: leadSavingData.enableCustomKeywords !== undefined ? leadSavingData.enableCustomKeywords : true,
+        keywords: leadSavingData.keywords || [],
+        excludeKeywords: leadSavingData.excludeKeywords || [],
+        saveAllPosts: leadSavingData.saveAllPosts !== undefined ? leadSavingData.saveAllPosts : false,
+        maxPostsPerDay: Math.min(Math.max(leadSavingData.maxPostsPerDay || 100, 1), 1000),
+        minCharCount: leadSavingData.minCharCount || 50,
+        postTypes: leadSavingData.postTypes || ['all'],
+        autoTagPosts: leadSavingData.autoTagPosts !== undefined ? leadSavingData.autoTagPosts : false,
+        customCategories: leadSavingData.customCategories || [],
+        autoDetectEmailAddresses: leadSavingData.autoDetectEmailAddresses !== undefined ? leadSavingData.autoDetectEmailAddresses : true,
+        autoDetectFormLinks: leadSavingData.autoDetectFormLinks !== undefined ? leadSavingData.autoDetectFormLinks : true,
+        saveFrequency: leadSavingData.saveFrequency || 'realtime',
+      };
+
+      console.log('Updated postSavingPreferences:', updateFields.postSavingPreferences);
+    }
+    // Handle Step 2: Professional Profile -> summary.professionalProfile
+    if (formData['summary.professionalProfile']) {
+      const profileData = formData['summary.professionalProfile'];
+
+      // Initialize summary if it doesn't exist
+      if (!updateFields.summary) {
+        updateFields.summary = {
+          ...(existingMember.summary?.toObject?.() || existingMember.summary || {}),
+        };
+      }
+
+      updateFields.summary.professionalProfile = {
+        ...(existingMember.summary?.professionalProfile?.toObject?.() || existingMember.summary?.professionalProfile || {}),
+        currentRole: profileData.currentRole ? profileData.currentRole.substring(0, 100) : '',
+        profileDescription: profileData.profileDescription ? profileData.profileDescription.substring(0, 500) : '',
+        experienceLevel: profileData.experienceLevel || 'entry',
+        industry: profileData.industry ? profileData.industry.substring(0, 100) : '',
+        functionalArea: Array.isArray(profileData.functionalArea) ? profileData.functionalArea.slice(0, 10) : [],
+        companySize: profileData.companySize || 'small',
+        location: {
+          ...(existingMember.summary?.professionalProfile?.location?.toObject?.() || existingMember.summary?.professionalProfile?.location || {}),
+          city: profileData.location?.city ? profileData.location.city.substring(0, 100) : '',
+          country: profileData.location?.country ? profileData.location.country.substring(0, 100) : 'India',
+          workMode: profileData.location?.workMode || 'hybrid',
+        },
+      };
+
+      console.log('Updated professionalProfile:', updateFields.summary.professionalProfile);
+    }
+
+    // Handle Step 3: Lead Generation Goals -> leadGenerationGoals (root level)
+    if (formData.leadGenerationGoals) {
+      const goalsData = formData.leadGenerationGoals;
+
+      updateFields.leadGenerationGoals = {
+        ...(existingMember.leadGenerationGoals?.toObject?.() || existingMember.leadGenerationGoals || {}),
+        primaryObjective: goalsData.primaryObjective || 'networking',
+        businessType: goalsData.businessType || 'b2b',
+        serviceOfferings: Array.isArray(goalsData.serviceOfferings) ? goalsData.serviceOfferings.slice(0, 15) : [],
+        targetAudience: {
+          ...(existingMember.leadGenerationGoals?.targetAudience?.toObject?.() || existingMember.leadGenerationGoals?.targetAudience || {}),
+          roles: Array.isArray(goalsData.targetAudience?.roles) ? goalsData.targetAudience.roles.slice(0, 20) : [],
+          industries: Array.isArray(goalsData.targetAudience?.industries) ? goalsData.targetAudience.industries.slice(0, 20) : [],
+          companySizes: Array.isArray(goalsData.targetAudience?.companySizes) ? goalsData.targetAudience.companySizes : [],
+          seniority: Array.isArray(goalsData.targetAudience?.seniority) ? goalsData.targetAudience.seniority : [],
+        },
+      };
+
+      console.log('Updated leadGenerationGoals:', updateFields.leadGenerationGoals);
+    }
+
+    // Handle Step 5: Automation Settings -> leadGenerationGoals.automation
+    if (formData.leadGenerationGoals?.automation) {
+      const automationData = formData.leadGenerationGoals.automation;
+
+      // Ensure leadGenerationGoals exists
+      if (!updateFields.leadGenerationGoals) {
+        updateFields.leadGenerationGoals = {
+          ...(existingMember.leadGenerationGoals?.toObject?.() || existingMember.leadGenerationGoals || {}),
+        };
+      }
+
+      // Validate time format
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      const timeOfDay = timeRegex.test(automationData.timeOfDay) ? automationData.timeOfDay : '09:00';
+
+      updateFields.leadGenerationGoals.automation = {
+        ...(existingMember.leadGenerationGoals?.automation?.toObject?.() || existingMember.leadGenerationGoals?.automation || {}),
+        isEnabled: automationData.isEnabled !== undefined ? automationData.isEnabled : false,
+        automationType: automationData.automationType || 'none',
+        executionMode: automationData.executionMode || 'manual',
+        schedule: {
+          ...(existingMember.leadGenerationGoals?.automation?.schedule?.toObject?.() || existingMember.leadGenerationGoals?.automation?.schedule || {}),
+          frequency: automationData.frequency || 'weekly',
+          timeOfDay: timeOfDay,
+          daysOfWeek: Array.isArray(automationData.daysOfWeek) ? automationData.daysOfWeek : ['monday', 'wednesday', 'friday'],
+          timezone: automationData.timezone || 'UTC',
+          customCronExpression: automationData.customCronExpression || null,
+        },
+      };
+
+      console.log('Updated automation settings:', updateFields.leadGenerationGoals.automation);
+    }
+
+    // Handle Step 4: Custom Requirements (if you want to store this)
+    if (formData.customRequirements) {
+      updateFields.customRequirements = formData.customRequirements.customRequirements;
+      console.log('Updated customRequirements:', updateFields.customRequirements);
+    }
+
+    console.log('=== FINAL UPDATE FIELDS ===');
+    console.log(JSON.stringify(updateFields, null, 2));
+
+    // Validate the update fields against schema constraints
+    const validationResult = validateUpdateFields(updateFields);
+    if (!validationResult.isValid) {
+      console.error('Validation errors:', validationResult.errors);
+      throw new AppError(`Validation failed: ${validationResult.errors.join(', ')}`, 400);
+    }
+
+    console.log('✅ Validation passed');
+
+    // Perform the update
+    const updatedMember = await memberRepository.updateById(memberId, updateFields);
+
+    console.log('✅ Member updated successfully');
+    console.log('Updated member fields:', Object.keys(updateFields));
+
+    return {
+      success: true,
+      member: updatedMember,
+      updatedFields: Object.keys(updateFields),
+      message: 'Member summary and settings updated successfully',
+    };
+  } catch (error) {
+    console.error('❌ Error in updateCompleteSummary:', error);
+    throw error;
+  }
+};
+
+// Get Member Summary Service
+const getMemberSummary = async (memberId, organizationId) => {
+  // Verify organization exists
+  const existingOrganization = await organizationRepository.findById(organizationId);
+  if (!existingOrganization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  const member = await memberRepository.findMemberSummary(memberId, organizationId);
+
+  if (!member) {
+    throw new AppError('Member not found or does not belong to the organization', 404);
+  }
+
+  return {
+    id: member._id,
+    name: member.name,
+    email: member.email,
+    summary: member.summary || {
+      professionalProfile: {},
+      leadGenerationGoals: {},
+    },
+  };
+};
+
+// Update Feed Filter Settings Service
+const updateFeedFilterSettings = async (memberId, organizationId, feedFilterData) => {
+  const { feedFilterSettings } = feedFilterData;
+
+  const existingOrganization = await organizationRepository.findById(organizationId);
+  if (!existingOrganization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  const existingMember = await memberRepository.findById(memberId);
+  if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+    throw new AppError('Member not found or does not belong to the organization', 404);
+  }
+
+  if (!feedFilterSettings) {
+    throw new AppError('Feed filter settings are required', 400);
+  }
+
+  return await memberRepository.updateFeedFilterSettings(memberId, { feedFilterSettings });
+};
+
 module.exports = {
   checkMemberExists,
   createMember,
@@ -415,9 +761,17 @@ module.exports = {
   updateLeaderboardVisibility,
   updateMemberProfileStats,
   getLeaderboard,
+  getMemberByIdAndOrg,
   getMemberById,
   connectMember,
   updateMemberProfile,
   consumeCredits,
   deleteMember,
+  updateMemberSettings,
+  updateMemberSummary,
+  updateLeadGenerationGoals,
+  updateCompleteSummary,
+  getMemberSummary,
+  getMemberWithOrganizationDetails,
+  updateFeedFilterSettings,
 };

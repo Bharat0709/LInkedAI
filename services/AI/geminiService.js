@@ -1,7 +1,9 @@
 // services/geminiService.js
 const dotenv = require('dotenv');
 dotenv.config();
+const aiHelper = require('./aiHelper');
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+const { logActivity } = require('../Organization/organizationHelper');
 const genAI = new GoogleGenerativeAI(process.env.API_KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL });
 
@@ -24,7 +26,7 @@ const safetySettings = [
   },
 ];
 
-const generateComment = async (postContent, selectedOption) => {
+const generateComment = async (userId, postContent, selectedOption) => {
   const parts = [
     {
       text: `As a linkedIn user in India on behalf of me help me write a ${selectedOption} tone.  comment for a linkedIn Post with the following post content:\n\n${postContent} 
@@ -56,10 +58,18 @@ const generateComment = async (postContent, selectedOption) => {
     safetySettings,
   });
 
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT, // or whatever cost you define
+    service: 'comment',
+    provider: 'gemini',
+    postContentLength: postContent.length,
+    tone: selectedOption,
+  });
+
   return result.response.text();
 };
 
-const generateCustomComment = async (postContent, customTone, wordCount) => {
+const generateCustomComment = async (userId, postContent, customTone, wordCount) => {
   const parts = [
     {
       text: `As a linkedIn user in India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
@@ -77,6 +87,15 @@ const generateCustomComment = async (postContent, customTone, wordCount) => {
     { text: '\n' },
   ];
 
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.CUSTOM_COMMENT,
+    service: 'custom_comment',
+    provider: 'gemini',
+    postContentLength: postContent.length,
+    tone: customTone,
+    wordCount: wordCount,
+  });
+
   const generationConfig = {
     temperature: 0.45,
     topK: 32,
@@ -93,7 +112,7 @@ const generateCustomComment = async (postContent, customTone, wordCount) => {
   return result.response.text();
 };
 
-const generatePostContent = async (postType, selectedTone) => {
+const generatePostContent = async (userId, postType, selectedTone) => {
   const parts = [
     {
       text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in for me with the following specifications:
@@ -124,6 +143,14 @@ const generatePostContent = async (postType, selectedTone) => {
     maxOutputTokens: 1200,
   };
 
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.POST_CONTENT,
+    service: 'post_content',
+    provider: 'gemini',
+    postType: postType,
+    tone: selectedTone,
+  });
+
   const result = await model.generateContent({
     contents: [{ role: 'user', parts }],
     generationConfig,
@@ -133,7 +160,7 @@ const generatePostContent = async (postType, selectedTone) => {
   return result.response.text();
 };
 
-const generateOrganizationPostContentWithPersona = async (postType, selectedTone, language, persona) => {
+const generateOrganizationPostContentWithPersona = async (organizationId, postType, selectedTone, language, persona) => {
   const parts = [
     {
       text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in ${language} for me with the following specifications:
@@ -166,6 +193,15 @@ const generateOrganizationPostContentWithPersona = async (postType, selectedTone
     maxOutputTokens: 1200,
   };
 
+  await logActivity(organizationId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.POST_CONTENT,
+    service: 'organization_post_persona',
+    provider: 'gemini',
+    postType: postType,
+    tone: selectedTone,
+    language: language,
+    hasPersona: !!persona && persona.trim().length > 0,
+  });
   const result = await model.generateContent({
     contents: [{ role: 'user', parts }],
     generationConfig,
@@ -175,7 +211,7 @@ const generateOrganizationPostContentWithPersona = async (postType, selectedTone
   return result.response.text();
 };
 
-const generateOrganizationPostContentWithTemplate = async (postType, selectedTone, language, template) => {
+const generateOrganizationPostContentWithTemplate = async (organizationId, postType, selectedTone, language, template) => {
   const parts = [
     {
       text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in ${language} for me with the following specifications:
@@ -210,6 +246,16 @@ const generateOrganizationPostContentWithTemplate = async (postType, selectedTon
     maxOutputTokens: 1200,
   };
 
+  await logActivity(organizationId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.POST_CONTENT,
+    service: 'organization_post_template',
+    provider: 'gemini',
+    postType: postType,
+    tone: selectedTone,
+    language: language,
+    hasTemplate: !!template && template.trim().length > 0,
+  });
+
   const result = await model.generateContent({
     contents: [{ role: 'user', parts }],
     generationConfig,
@@ -219,7 +265,7 @@ const generateOrganizationPostContentWithTemplate = async (postType, selectedTon
   return result.response.text();
 };
 
-const generateTemplate = async (templateRequirements, selectedTone) => {
+const generateTemplate = async (userId, templateRequirements, selectedTone) => {
   const parts = [
     {
       text: `Generate a ${selectedTone} message template for linkedin with the following purpose:
@@ -243,6 +289,64 @@ const generateTemplate = async (templateRequirements, selectedTone) => {
     maxOutputTokens: 800,
   };
 
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE,
+    service: 'message_template',
+    provider: 'gemini',
+    tone: selectedTone,
+    requirementsLength: templateRequirements.length,
+  });
+
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts }],
+    generationConfig,
+    safetySettings,
+  });
+
+  return result.response.text();
+};
+
+const generateEmailTemplate = async (userId, format, templateType, prompt) => {
+  console.log('In service:', userId, format, templateType, prompt);
+  const parts = [
+    {
+      text: `Generate a ${format} email template with the following specifications:
+
+Email Format: ${format} (formal/informal/persuasive/personal)
+Template Type: ${templateType} (html/text)
+${prompt ? `Additional Requirements: ${prompt}` : ''}
+
+Requirements:
+- Create a professional email template suitable for ${format} communication
+- Template should be concise and effective (maximum 2000 characters)
+- Include relevant placeholders like {{firstName}}, {{lastName}}, {{companyName}}, {{position}}, etc.
+- ${templateType === 'html' ? 'Use proper HTML structure with inline CSS styling for email compatibility' : 'Use clean, well-formatted plain text'}
+- Ensure the tone matches the ${format} style requested
+- Include appropriate greeting, body content, and professional closing
+- Make it versatile for various business communication needs
+- If HTML format, ensure mobile-responsive design with proper email client compatibility
+
+${templateType === 'html' ? 'Return valid HTML email template with inline CSS.' : 'Return clean plain text email template.'}
+Do not include explanations or additional text - only the template content.`,
+    },
+    { text: '\n' },
+  ];
+
+  const generationConfig = {
+    temperature: 0.45,
+    topK: 32,
+    topP: 0.65,
+    maxOutputTokens: 800,
+  };
+
+  await logActivity(userId, 'free_credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE,
+    service: 'email_template_generated',
+    provider: 'gemini',
+    tone: format,
+    requirements: prompt,
+  });
+
   const result = await model.generateContent({
     contents: [{ role: 'user', parts }],
     generationConfig,
@@ -259,4 +363,5 @@ module.exports = {
   generateOrganizationPostContentWithPersona,
   generateOrganizationPostContentWithTemplate,
   generateTemplate,
+  generateEmailTemplate,
 };

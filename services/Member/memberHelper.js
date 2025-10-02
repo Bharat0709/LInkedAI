@@ -166,6 +166,165 @@ const resetDailyCredits = async memberId => {
   return creditsLeft;
 };
 
+const validateUpdateFields = updateFields => {
+  const errors = [];
+
+  try {
+    // Validate postSavingPreferences
+    if (updateFields.postSavingPreferences) {
+      const prefs = updateFields.postSavingPreferences;
+
+      if (prefs.keywords && prefs.keywords.length > 50) {
+        errors.push('Keywords cannot exceed 50 items');
+      }
+
+      if (prefs.excludeKeywords && prefs.excludeKeywords.length > 50) {
+        errors.push('Exclude keywords cannot exceed 50 items');
+      }
+
+      if (prefs.maxPostsPerDay && (prefs.maxPostsPerDay < 1 || prefs.maxPostsPerDay > 1000)) {
+        errors.push('Max posts per day must be between 1 and 1000');
+      }
+
+      const validPostTypes = ['text', 'image', 'video', 'document', 'link', 'poll', 'all'];
+      if (prefs.postTypes && !prefs.postTypes.every(type => validPostTypes.includes(type))) {
+        errors.push('Invalid post type detected');
+      }
+
+      const validFrequencies = ['realtime', 'hourly', 'daily'];
+      if (prefs.saveFrequency && !validFrequencies.includes(prefs.saveFrequency)) {
+        errors.push('Invalid save frequency');
+      }
+    }
+
+    // Validate professional profile
+    if (updateFields.summary?.professionalProfile) {
+      const profile = updateFields.summary.professionalProfile;
+
+      if (profile.currentRole && profile.currentRole.length > 100) {
+        errors.push('Current role cannot exceed 100 characters');
+      }
+
+      if (profile.profileDescription && profile.profileDescription.length > 500) {
+        errors.push('Profile description cannot exceed 500 characters');
+      }
+
+      if (profile.industry && profile.industry.length > 100) {
+        errors.push('Industry cannot exceed 100 characters');
+      }
+
+      if (profile.functionalArea && profile.functionalArea.length > 10) {
+        errors.push('Functional areas cannot exceed 10 items');
+      }
+
+      const validExperienceLevels = ['entry', 'junior', 'mid', 'senior', 'executive', 'student', 'fresher'];
+      if (profile.experienceLevel && !validExperienceLevels.includes(profile.experienceLevel)) {
+        errors.push('Invalid experience level');
+      }
+
+      const validCompanySizes = ['startup', 'small', 'medium', 'large', 'enterprise', 'freelancer'];
+      if (profile.companySize && !validCompanySizes.includes(profile.companySize)) {
+        errors.push('Invalid company size');
+      }
+
+      if (profile.location) {
+        if (profile.location.city && profile.location.city.length > 100) {
+          errors.push('City cannot exceed 100 characters');
+        }
+
+        if (profile.location.country && profile.location.country.length > 100) {
+          errors.push('Country cannot exceed 100 characters');
+        }
+
+        const validWorkModes = ['remote', 'onsite', 'hybrid', 'flexible'];
+        if (profile.location.workMode && !validWorkModes.includes(profile.location.workMode)) {
+          errors.push('Invalid work mode');
+        }
+      }
+    }
+
+    // Validate lead generation goals
+    if (updateFields.leadGenerationGoals) {
+      const goals = updateFields.leadGenerationGoals;
+
+      const validObjectives = ['job_search', 'client_acquisition', 'partnership_building', 'networking', 'brand_building', 'knowledge_sharing', 'recruitment', 'sales_prospecting', 'investment_seeking', 'mentorship'];
+      if (goals.primaryObjective && !validObjectives.includes(goals.primaryObjective)) {
+        errors.push('Invalid primary objective');
+      }
+
+      const validBusinessTypes = ['b2b', 'b2c', 'b2b2c', 'freelancer', 'job_seeker', 'entrepreneur'];
+      if (goals.businessType && !validBusinessTypes.includes(goals.businessType)) {
+        errors.push('Invalid business type');
+      }
+
+      if (goals.serviceOfferings && goals.serviceOfferings.length > 15) {
+        errors.push('Service offerings cannot exceed 15 items');
+      }
+
+      if (goals.targetAudience) {
+        if (goals.targetAudience.roles && goals.targetAudience.roles.length > 20) {
+          errors.push('Target roles cannot exceed 20 items');
+        }
+
+        if (goals.targetAudience.industries && goals.targetAudience.industries.length > 20) {
+          errors.push('Target industries cannot exceed 20 items');
+        }
+
+        const validCompanySizes = ['startup', 'small', 'medium', 'large', 'enterprise'];
+        if (goals.targetAudience.companySizes && !goals.targetAudience.companySizes.every(size => validCompanySizes.includes(size))) {
+          errors.push('Invalid company size in target audience');
+        }
+
+        const validSeniority = ['entry', 'junior', 'mid', 'senior', 'executive', 'founder'];
+        if (goals.targetAudience.seniority && !goals.targetAudience.seniority.every(level => validSeniority.includes(level))) {
+          errors.push('Invalid seniority level in target audience');
+        }
+      }
+
+      // Validate automation settings
+      if (goals.automation) {
+        const automation = goals.automation;
+
+        const validAutomationTypes = ['semi', 'full', 'none'];
+        if (automation.automationType && !validAutomationTypes.includes(automation.automationType)) {
+          errors.push('Invalid automation type');
+        }
+
+        const validExecutionModes = ['realtime', 'scheduled', 'manual', 'hybrid'];
+        if (automation.executionMode && !validExecutionModes.includes(automation.executionMode)) {
+          errors.push('Invalid execution mode');
+        }
+
+        if (automation.schedule) {
+          const schedule = automation.schedule;
+
+          const validFrequencies = ['daily', 'weekly', 'bi-weekly', 'monthly', 'custom'];
+          if (schedule.frequency && !validFrequencies.includes(schedule.frequency)) {
+            errors.push('Invalid automation frequency');
+          }
+
+          const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+          if (schedule.timeOfDay && !timeRegex.test(schedule.timeOfDay)) {
+            errors.push('Invalid time format. Use HH:MM (24-hour format)');
+          }
+
+          const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+          if (schedule.daysOfWeek && !schedule.daysOfWeek.every(day => validDays.includes(day))) {
+            errors.push('Invalid day of week');
+          }
+        }
+      }
+    }
+  } catch (validationError) {
+    errors.push(`Validation error: ${validationError.message}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+};
+
 module.exports = {
   logMemberActivity,
   calculateMemberRank,
@@ -176,4 +335,5 @@ module.exports = {
   getMemberStats,
   resetDailyCredits,
   parseConnectionToken,
+  validateUpdateFields,
 };

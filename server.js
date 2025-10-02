@@ -3,7 +3,7 @@ dotenv.config();
 
 const app = require('./app');
 const { redisClient } = require('./config/redis');
-require('./db');
+require('./config/db');
 
 const PORT = Number(process.env.PORT) || 8000;
 const TimeZone = (process.env.TZ = 'UTC');

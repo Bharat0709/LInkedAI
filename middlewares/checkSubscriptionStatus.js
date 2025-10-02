@@ -40,9 +40,8 @@ exports.checkSubscriptionStatus = catchAsync(async (req, res, next) => {
     const now = Date.now();
 
     if (!trialEndDate || now > new Date(trialEndDate).getTime()) {
-      // Trial expired
-      org.subscription.status = 'expired';
-      return next(new AppError('Your trial has expired. Please upgrade to continue.', 403));
+      organization.subscription.status = 'expired';
+      return next(new AppError('Your trial has expired. Please upgrade to perform this action.', 403));
     }
 
     return next();
@@ -55,7 +54,7 @@ exports.checkSubscriptionStatus = catchAsync(async (req, res, next) => {
     }
 
     if (renewalDate && Date.now() > new Date(renewalDate).getTime()) {
-      org.subscription.status = 'expired';
+      organization.subscription.status = 'expired';
       return next(new AppError('Your subscription has expired. Please renew.', 403));
     }
 

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { newDBConnection } = require('../db');
+const { newDBConnection } = require('../config/db');
 
 const ContentCalendarSchema = new mongoose.Schema({
   topic: {
@@ -44,7 +44,4 @@ const ContentCalendarSchema = new mongoose.Schema({
   ],
 });
 
-module.exports = newDBConnection.model(
-  'ContentCalendar',
-  ContentCalendarSchema
-);
+module.exports = newDBConnection.model('ContentCalendar', ContentCalendarSchema);

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { newDBConnection } = require('../db');
+const { newDBConnection } = require('../config/db');
 const validator = require('validator');
 
 const MemberSchema = new mongoose.Schema({
@@ -44,23 +44,13 @@ const MemberSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  creditsLeft: {
+  creditsUsedToday: {
     type: Number,
-    default: 50,
+    default: 0,
   },
   creditLimitperDay: {
     type: Number,
-    default: 50,
-  },
-  plan: {
-    type: String,
-    enum: ['trial', 'pro', 'enterprise'],
-    default: 'trial',
-  },
-  planStatus: {
-    type: String,
-    enum: ['active', 'inactive', 'canceled', 'trial', 'expired'],
-    default: 'trial',
+    default: 100,
   },
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -160,8 +150,8 @@ const MemberSchema = new mongoose.Schema({
   },
   aiModels: {
     type: [String],
-    enum: ['gemini', 'chatgpt', 'mistral', 'groq'],
-    default: ['gemini', 'chatgpt'],
+    enum: ['gemini', 'chatgpt', 'mistral', 'groq', 'perplexity'],
+    default: ['gemini', 'chatgpt', 'groq', 'perplexity'],
   },
   hasCustomAIComments: {
     type: Boolean,
@@ -174,7 +164,7 @@ const MemberSchema = new mongoose.Schema({
     },
     enableCustomKeywords: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     keywords: {
       type: [String],
@@ -371,6 +361,59 @@ const MemberSchema = new mongoose.Schema({
       enum: ['b2b', 'b2c', 'b2b2c', 'freelancer', 'job_seeker', 'entrepreneur'],
       default: 'b2b',
     },
+    automation: {
+      isEnabled: {
+        type: Boolean,
+        default: false,
+        description: 'Master switch to enable/disable all automation features',
+      },
+      automationType: {
+        type: String,
+        enum: ['semi', 'full', 'none'],
+        default: 'none',
+        description: 'Type of automation workflow to implement',
+      },
+      executionMode: {
+        type: String,
+        enum: ['realtime', 'scheduled', 'manual', 'hybrid'],
+        default: 'manual',
+        description: 'How automation tasks should be executed',
+      },
+      schedule: {
+        frequency: {
+          type: String,
+          enum: ['daily', 'weekly', 'bi-weekly', 'monthly', 'custom'],
+          default: 'weekly',
+          description: 'How often scheduled automation runs',
+        },
+        timeOfDay: {
+          type: String,
+          match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+          default: '09:00',
+          description: 'Time of day to run automation (24-hour format)',
+        },
+        daysOfWeek: {
+          type: [String],
+          enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+          default: ['monday', 'wednesday', 'friday'],
+          description: 'Days of week for scheduled execution',
+        },
+        timezone: {
+          type: String,
+          default: 'UTC',
+          description: 'Timezone for scheduled execution',
+        },
+        customCronExpression: {
+          type: String,
+          default: null,
+          description: 'Custom cron expression for complex scheduling',
+        },
+      },
+    },
+  },
+  customRequirements: {
+    type: String,
+    default: '',
   },
 });
 

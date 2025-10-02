@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { newDBConnection } = require('../db');
+const { newDBConnection } = require('../config/db');
 
 const PostSchema = new mongoose.Schema({
   memberId: {

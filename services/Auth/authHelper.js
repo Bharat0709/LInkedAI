@@ -37,7 +37,7 @@ const generatePasswordResetToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
-const createInitialOrganizationData = (email, timeZone, verificationTokenHash, trialStartDate, trialEndDate, monthStartDate, monthEndDate) => {
+const createInitialOrganizationData = (email, timeZone, verificationTokenHash) => {
   return {
     email,
     name: 'EngageGPT User',
@@ -45,62 +45,45 @@ const createInitialOrganizationData = (email, timeZone, verificationTokenHash, t
     isVerified: false,
     isActive: false,
     emailVerificationToken: verificationTokenHash,
-    emailVerificationExpires: Date.now() + 10 * 60 * 1000,
+    emailVerificationExpires: Date.now() + 10 * 60 * 1000, // 10 minutes
     timeZone: timeZone,
-    subscription: {
-      plan: 'trial',
-      status: 'trial',
-      trialStartDate: trialStartDate,
-      trialEndDate: trialEndDate,
-      renewalDate: null,
-      canceledAt: null,
-      purchasedOn: null,
-      isFirstPurchase: true,
-    },
 
-    planUsage: {
-      maxMembers: 1,
-      currentMemberCount: 0,
-      monthlyUsage: {
-        monthStartDate: monthStartDate,
-        monthEndDate: monthEndDate,
-        postsSaved: 0,
-        maxPostsSavedPerMonth: 50,
-        postsScheduled: 0,
-        maxPostsScheduledPerMonth: 10,
-        contentCalendarDaysAdded: 0,
-        maxContentCalendarDays: 30,
-        emailsSent: 0,
-        maxEmailsPerMonth: 0,
-      },
-      dailyUsage: {
-        date: new Date().toISOString().substring(0, 10),
-        aiCreditsUsedToday: {
-          viralPostGenerator: 0,
-          maxPostGeneratorCreditsperDay: 100,
+    // Initial credits
+    credits: {
+      balance: 200,
+      totalUsed: 0,
+      transactions: [
+        {
+          type: 'bonus',
+          amount: 200,
+          balance: 200,
+          description: 'Initial signup credits',
         },
-      },
+      ],
     },
 
+    // Default plan features
     planFeatures: {
       aiModels: ['gemini', 'chatgpt'],
       hasPrioritySupport: false,
       canBuyCredits: true,
     },
 
+    // Security defaults
     security: {
       twoFactorEnabled: false,
       lastLoginAt: null,
       failedLoginAttempts: 0,
     },
 
+    // Activity log
     activityLog: [
       {
         action: 'account_created',
         timestamp: new Date(),
         metadata: {
           method: 'email_verification',
-          trialStarted: true,
+          creditsAssigned: 200,
         },
       },
     ],
@@ -117,60 +100,42 @@ const createGoogleOrganizationData = profile => {
     isVerified: true,
     isActive: true,
 
-    subscription: {
-      plan: 'trial',
-      status: 'trial',
-      trialStartDate: new Date(),
-      trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days trial
-      renewalDate: null,
-      canceledAt: null,
-      purchasedOn: null,
-      isFirstPurchase: true,
-    },
-
-    planUsage: {
-      maxMembers: 1,
-      currentMemberCount: 0,
-      monthlyUsage: {
-        monthStartDate: new Date(),
-        monthEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        postsSaved: 0,
-        maxPostsSavedPerMonth: 50,
-        postsScheduled: 0,
-        maxPostsScheduledPerMonth: 10,
-        contentCalendarDaysAdded: 0,
-        maxContentCalendarDays: 30,
-        emailsSent: 0,
-        maxEmailsPerMonth: 0,
-      },
-      dailyUsage: {
-        date: new Date().toISOString().substring(0, 10),
-        aiCreditsUsedToday: {
-          viralPostGenerator: 0,
-          maxPostGeneratorCreditsperDay: 100,
+    // Initial credits
+    credits: {
+      balance: 200,
+      totalUsed: 0,
+      transactions: [
+        {
+          type: 'bonus',
+          amount: 200,
+          balance: 200,
+          description: 'Initial signup credits (Google OAuth)',
         },
-      },
+      ],
     },
 
+    // Default plan features
     planFeatures: {
       aiModels: ['gemini', 'chatgpt'],
       hasPrioritySupport: false,
       canBuyCredits: true,
     },
 
+    // Security
     security: {
       twoFactorEnabled: false,
       lastLoginAt: new Date(),
       failedLoginAttempts: 0,
     },
 
+    // Activity log
     activityLog: [
       {
         action: 'account_created',
         timestamp: new Date(),
         metadata: {
           method: 'google_oauth',
-          trialStarted: true,
+          creditsAssigned: 200,
         },
       },
     ],

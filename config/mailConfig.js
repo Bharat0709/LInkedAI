@@ -43,16 +43,12 @@ const sendFrostmailEmail = async (
   }
 
   try {
-    const response = await axios.post(
-      `${process.env.EMAIL_URL_THIRD_PARTY}`,
-      form,
-      {
-        headers: {
-          ...form.getHeaders(),
-          Authorization: `Bearer ${process.env.FROSTMAIL_AUTH_TOKEN}`,
-        },
-      }
-    );
+    const response = await axios.post(`${process.env.EMAIL_URL_THIRD_PARTY}`, form, {
+      headers: {
+        ...form.getHeaders(),
+        Authorization: `Bearer ${process.env.FROSTMAIL_AUTH_TOKEN}`,
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('❌ Frostmail Error:', error.response?.data || error.message);

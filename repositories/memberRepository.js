@@ -16,12 +16,10 @@ const findByIdAndOrg = async (memberId, organizationId) => {
   return await Member.findOne({ _id: memberId, organizationId });
 };
 
-// FIND MEMBER BY EMAIL ID
 const findByEmail = async email => {
   return await Member.findOne({ email });
 };
 
-// FIND BY NAME AND PROFILE LINK
 const findByNameAndProfileLink = async (name, profileLink) => {
   return await Member.findOne({ name, profileLink });
 };
@@ -50,13 +48,11 @@ const findAllSortedByDaysActive = async () => {
   });
 };
 
-// CREATE A NEW MEMBER
 const create = async memberData => {
   const member = new Member(memberData);
   return await member.save();
 };
 
-// UPDATE MEMBER BY ID
 const updateById = async (id, updateData) => {
   return await Member.findByIdAndUpdate(id, updateData, {
     new: true,
@@ -79,6 +75,42 @@ const updateProfile = async (id, profileData) => {
   return await member.save();
 };
 
+const updateSettings = async (id, settingsData) => {
+  return await Member.findByIdAndUpdate(id, settingsData, {
+    new: true,
+    runValidators: true,
+  });
+};
+
+const updateSummary = async (id, summaryData) => {
+  return await Member.findByIdAndUpdate(id, summaryData, {
+    new: true,
+    runValidators: true,
+  });
+};
+
+const updateLeadGenerationGoals = async (id, leadGenData) => {
+  return await Member.findByIdAndUpdate(id, leadGenData, {
+    new: true,
+    runValidators: true,
+    select: 'leadGenerationGoals',
+  });
+};
+
+const updateFeedFilterSettings = async (id, feedFilterData) => {
+  return await Member.findByIdAndUpdate(id, feedFilterData, {
+    new: true,
+    runValidators: true,
+  });
+};
+
+const findMemberSummary = async (memberId, organizationId) => {
+  return await Member.findOne({
+    _id: memberId,
+    organizationId,
+  }).select('summary name email currentRole');
+};
+
 const updateDaysActiveAndStreak = async (id, activeDays, currentStreak) => {
   return await Member.findByIdAndUpdate(
     id,
@@ -99,7 +131,6 @@ const deleteMember = async id => {
   return await Member.findByIdAndDelete(id);
 };
 
-// COUNT MEMBERS IN ORG
 const countByOrganizationId = async organizationId => {
   return await Member.countDocuments({ organizationId, active: true });
 };
@@ -131,6 +162,11 @@ module.exports = {
   updateById,
   updateMemberProfileStats,
   updateProfile,
+  updateSettings,
+  updateSummary,
+  updateLeadGenerationGoals,
+  updateFeedFilterSettings,
+  findMemberSummary,
   updateDaysActiveAndStreak,
   softDelete,
   deleteMember,

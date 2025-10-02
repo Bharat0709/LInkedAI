@@ -1,8 +1,9 @@
 # Ignore node_modules directory
 node_modules/
-
+node_modules
 # Ignore environment configuration files
 .env
 .env.staging
 .env.production
 .codegpt
+.prettierrc

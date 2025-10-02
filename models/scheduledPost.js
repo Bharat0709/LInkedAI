@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const moment = require('moment-timezone');
-const { newDBConnection } = require('../db');
+const { newDBConnection } = require('../config/db');
 
 const ScheduledPostSchema = new mongoose.Schema(
   {
@@ -73,8 +72,5 @@ const ScheduledPostSchema = new mongoose.Schema(
   }
 );
 
-const ScheduledPost = newDBConnection.model(
-  'ScheduledPost',
-  ScheduledPostSchema
-);
+const ScheduledPost = newDBConnection.model('ScheduledPost', ScheduledPostSchema);
 module.exports = ScheduledPost;

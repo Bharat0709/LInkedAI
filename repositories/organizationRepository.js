@@ -1,13 +1,12 @@
 const Organization = require('../models/organization');
 
-
 // FIND ORG BY ID
 const findById = async id => {
-  return await Organization.findById(id);
+  return await Organization.findById(id).select('-activityLog');
 };
 
 const findByEmail = async email => {
-  return await Organization.findOne({ email });
+  return await Organization.findOne({ email }).select('-activityLog');
 };
 
 const findByEmailWithPassword = async email => {
@@ -50,6 +49,16 @@ const create = async organizationData => {
   return await organization.save();
 };
 
+const getOrganizationCredits = async organizationId => {
+  const organization = await findById(organizationId);
+  if (!organization) {
+    throw new Error('Organization not found');
+  }
+  return {
+    credits: organization.credits.balance || 0,
+    totalCreditsUsed: organization.credits.totalUsed || 0,
+  };
+};
 
 // UPDATE ORG BY ID
 const updateById = async (id, updateData) => {
@@ -161,28 +170,6 @@ const clearVerificationTokens = async id => {
   );
 };
 
-const updateOrganizationDailyUsage = async (organizationId, updateQuery) => {
-  try {
-    const result = await Organization.findByIdAndUpdate(
-      organizationId,
-      {
-        $inc: updateQuery,
-        $set: {
-          [`planUsage.dailyUsage.${new Date().toISOString().split('T')[0]}.date`]: new Date().toISOString().split('T')[0],
-        },
-      },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
-
-    return result;
-  } catch (error) {
-    console.error('Error updating daily usage:', error);
-    throw new AppError('Failed to update usage tracking', 500);
-  }
-};
 
 module.exports = {
   findById,
@@ -207,4 +194,5 @@ module.exports = {
   updateSubscriptionStatus,
   clearResetTokens,
   clearVerificationTokens,
+  getOrganizationCredits,
 };

@@ -11,43 +11,33 @@ const findOrganizationById = async organizationId => {
   return await organizationRepo.findById(organizationId);
 };
 
-const updateMemberCredits = async (memberId, creditsUsed) => {
-  const member = await memberRepo.findById(memberId);
-  if (!member) {
-    throw new Error('Member not found');
-  }
-
-  const newCredits = member.creditsLeft - creditsUsed;
-  if (newCredits < 0) {
-    throw new Error('Insufficient credits');
-  }
-
-  const updateData = {
-    creditsLeft: newCredits,
-    totalCreditsUsed: (member.totalCreditsUsed || 0) + creditsUsed,
+const updateMemberCredits = async (memberId, { creditsUsedToday, lastActive, totalCreditsUsed }) => {
+  const update = {
+    creditsUsedToday,
+    lastActive: lastActive || new Date(),
   };
 
-  return await memberRepo.updateById(memberId, updateData);
+  if (totalCreditsUsed !== undefined) {
+    update.totalCreditsUsed = totalCreditsUsed;
+  }
+
+  const updatedMember = await memberRepo.updateById(memberId, update);
+  return updatedMember;
 };
-
-const updateOrganizationCredits = async (organizationId, creditsUsed) => {
-  const organization = await organizationRepo.findById(organizationId);
-  if (!organization) {
-    throw new Error('Organization not found');
-  }
-
-  const newCredits = organization.credits - creditsUsed;
-  if (newCredits < 0) {
-    throw new Error('Insufficient credits');
-  }
-
-  const updateData = {
-    credits: newCredits,
-    totalCreditsUsed: (organization.totalCreditsUsed || 0) + creditsUsed,
-    lastActive: new Date(),
+const updateOrganizationCredits = async (orgId, { balance, totalUsed, transaction }) => {
+  const update = {
+    'credits.balance': balance,
+    'credits.totalUsed': totalUsed,
   };
 
-  return await organizationRepo.updateById(organizationId, updateData);
+  if (transaction) {
+    update.$push = { 'credits.transactions': transaction };
+  }
+
+  update.lastActive = new Date();
+
+  const updatedOrg = await organizationRepo.updateById(orgId, update);
+  return updatedOrg;
 };
 
 const checkMemberCredits = async (memberId, requiredCredits) => {
@@ -63,7 +53,7 @@ const checkOrganizationCredits = async (organizationId, requiredCredits) => {
   if (!organization) {
     throw new Error('Organization not found');
   }
-  return (organization.credits || 0) >= requiredCredits;
+  return organization.planUsage.dailyUsage.aiCreditsUsedToday.viralPostGenerator >= requiredCredits;
 };
 
 const getMemberCredits = async memberId => {
@@ -74,17 +64,6 @@ const getMemberCredits = async memberId => {
   return {
     creditsLeft: member.creditsLeft || 0,
     totalCreditsUsed: member.totalCreditsUsed || 0,
-  };
-};
-
-const getOrganizationCredits = async organizationId => {
-  const organization = await organizationRepo.findById(organizationId);
-  if (!organization) {
-    throw new Error('Organization not found');
-  }
-  return {
-    credits: organization.credits || 0,
-    totalCreditsUsed: organization.totalCreditsUsed || 0,
   };
 };
 
@@ -115,7 +94,6 @@ module.exports = {
 
   // Credit getters
   getMemberCredits,
-  getOrganizationCredits,
 
   // Aggregated data fetch
   getMembersByOrganizationWithCredits,

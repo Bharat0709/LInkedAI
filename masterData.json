@@ -27,6 +27,13 @@
       "status": "active",
       "priority": 2
     },
+    "perplexity": {
+      "id": "perplexity",
+      "name": "Perplexity",
+      "enabled": true,
+      "status": "active",
+      "priority": 3
+    },
     "gemini": {
       "id": "gemini",
       "name": "Gemini",
@@ -46,7 +53,7 @@
       "name": "Groq",
       "enabled": true,
       "status": "active",
-      "priority": 3
+      "priority": 6
     },
     "deepseek": {
       "id": "deepseek",

@@ -1,8 +1,9 @@
 const catchAsync = require('../../utils/catchAsync');
 const openaiService = require('../../services/AI/openaiService');
 const AppError = require('../../utils/appError');
+const { checkSubscription } = require('../../services/AI/aiHelper');
 
-const getUserTypeAndId = req => {
+const getUserTypeAndId = async req => {
   if (req.member) {
     return { userType: 'member', userId: req.member._id };
   }
@@ -15,7 +16,7 @@ const getUserTypeAndId = req => {
 // Generate Comment Controller
 exports.generateComment = catchAsync(async (req, res, next) => {
   const { postContent, selectedOption, provider = 'chatgpt' } = req.body;
-  const { userType, userId } = getUserTypeAndId(req);
+  const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generateComment(userType, userId, postContent, selectedOption, provider);
 
@@ -28,7 +29,7 @@ exports.generateComment = catchAsync(async (req, res, next) => {
 // Generate Custom Comment Controller
 exports.generateCustomComment = catchAsync(async (req, res, next) => {
   const { postContent, customTone, wordCount, provider = 'chatgpt' } = req.body;
-  const { userType, userId } = getUserTypeAndId(req);
+  const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generateCustomComment(userType, userId, postContent, customTone, wordCount, provider);
 
@@ -41,7 +42,7 @@ exports.generateCustomComment = catchAsync(async (req, res, next) => {
 // Generate Post Content Controller
 exports.generatePostContent = catchAsync(async (req, res, next) => {
   const { postType, selectedTone, provider = 'chatgpt' } = req.body;
-  const { userType, userId } = getUserTypeAndId(req);
+  const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generatePostContent(userType, userId, postType, selectedTone, provider);
 
@@ -54,7 +55,7 @@ exports.generatePostContent = catchAsync(async (req, res, next) => {
 // Generate Message Template Controller
 exports.generateMessageTemplate = catchAsync(async (req, res, next) => {
   const { templateRequirements, selectedTone, provider = 'chatgpt' } = req.body;
-  const { userType, userId } = getUserTypeAndId(req);
+  const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generateMessageTemplate(userType, userId, templateRequirements, selectedTone, provider);
 
@@ -67,7 +68,7 @@ exports.generateMessageTemplate = catchAsync(async (req, res, next) => {
 // Generate Message Reply Controller
 exports.generateMessageReply = catchAsync(async (req, res, next) => {
   const { formattedMessages, userName, provider = 'chatgpt' } = req.body;
-  const { userType, userId } = getUserTypeAndId(req);
+  const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generateMessageReply(userType, userId, formattedMessages, userName, provider);
 

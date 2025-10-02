@@ -22,14 +22,10 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION);
-
-  console.log('UPDATED USER', updatedUser);
+  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION, 'comment generation');
 
   // Generate comment
-  const generatedComment = await geminiService.generateComment(postContent, selectedOption);
-
-  console.log('COMMENT', generatedComment);
+  const generatedComment = await geminiService.generateComment(user._id, postContent, selectedOption);
 
   res.status(200).json({
     status: 'success',
@@ -51,10 +47,10 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION);
+  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION, 'custom comment generation');
 
   // Generate custom comment
-  const generatedComment = await geminiService.generateCustomComment(postContent, customTone, wordCount);
+  const generatedComment = await geminiService.generateCustomComment(user._id, postContent, customTone, wordCount);
 
   res.status(200).json({
     status: 'success',
@@ -136,23 +132,23 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
     return next(new AppError('Post type and selected tone are required', 400));
   }
 
-  const user = req.member;
-  if (!user) {
-    return next(new AppError('User not found', 404));
+  const organization = req.organization;
+  if (!organization) {
+    return next(new AppError('Organization not found', 404));
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.POST_GENERATION);
+  const updatedUser = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION, 'post generation');
 
   // Generate post content
-  const generatedPostContent = await geminiService.generatePostContent(postType, selectedTone);
+  const generatedPostContent = await geminiService.generatePostContent(organization._id, postType, selectedTone);
+
+  console.log(generatedPostContent);
 
   res.status(200).json({
     status: 'success',
-    data: {
-      generatedPostContent,
-      remainingCredits: updatedUser.creditsLeft,
-    },
+    generatedPostContent,
+    remainingCredits: updatedUser.creditsLeft,
   });
 });
 
@@ -169,10 +165,10 @@ exports.generateOrganizationPostContentUsePersona = catchAsync(async (req, res, 
   }
 
   // Verify and deduct credits
-  const updatedOrganization = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION);
+  const updatedOrganization = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION, 'post generation');
 
   // Generate post content with persona
-  const generatedPostContent = await geminiService.generateOrganizationPostContentWithPersona(postType, selectedTone, language, persona);
+  const generatedPostContent = await geminiService.generateOrganizationPostContentWithPersona(organization._id, postType, selectedTone, language, persona);
 
   res.status(200).json({
     status: 'success',
@@ -199,7 +195,7 @@ exports.generateOrganizationPostContentUseTemplate = catchAsync(async (req, res,
   const updatedOrganization = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION);
 
   // Generate post content with template
-  const generatedPostContent = await geminiService.generateOrganizationPostContentWithTemplate(postType, selectedTone, language, template);
+  const generatedPostContent = await geminiService.generateOrganizationPostContentWithTemplate(organization._id, postType, selectedTone, language, template);
 
   res.status(200).json({
     status: 'success',
@@ -223,16 +219,41 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.TEMPLATE_GENERATION);
+  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.TEMPLATE_GENERATION, 'template generation');
 
   // Generate template
-  const generatedTemplateContent = await geminiService.generateTemplate(templateRequirements, selectedTone);
+  const generatedTemplateContent = await geminiService.generateTemplate(user._id, templateRequirements, selectedTone);
 
   res.status(200).json({
     status: 'success',
     data: {
       generatedTemplateContent,
       remainingCredits: updatedUser.creditsLeft,
+    },
+  });
+});
+
+exports.generateEmailTemplateGemini = catchAsync(async (req, res, next) => {
+  const { format, templateType, prompt } = req.body;
+  console.log(req.body);
+
+  if (!format || !templateType) {
+    return next(new AppError('Email format and template type are required', 400));
+  }
+
+  const user = req.organization;
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Generate email template
+  const generatedEmailTemplate = await geminiService.generateEmailTemplate(user._id, format, templateType, prompt);
+
+  console.log(generatedEmailTemplate);
+  res.status(200).json({
+    status: 'success',
+    data: {
+      generatedEmailTemplate,
     },
   });
 });

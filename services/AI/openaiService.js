@@ -1,4 +1,5 @@
 const AppError = require('../../utils/appError');
+const { logActivity } = require('../Organization/organizationHelper');
 const aiHelper = require('./aiHelper');
 
 // Generate Comment Service
@@ -29,6 +30,14 @@ const generateComment = async (userType, userId, postContent, selectedOption, pr
   ];
 
   const generatedComment = await aiHelper.makeAPICall(provider, messages, 150);
+
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT,
+    service: 'comment',
+    provider: aiHelper.PROVIDERS[provider].name,
+    postContentLength: postContent.length,
+    tone: selectedOption,
+  });
 
   return {
     generatedComment: generatedComment.trim(),
@@ -68,6 +77,15 @@ const generateCustomComment = async (userType, userId, postContent, customTone, 
   ];
 
   const generatedComment = await aiHelper.makeAPICall(provider, messages, 200);
+
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.CUSTOM_COMMENT,
+    service: 'custom_comment',
+    provider: aiHelper.PROVIDERS[provider].name,
+    postContentLength: postContent.length,
+    tone: customTone,
+    wordCount: wordCount,
+  });
 
   return {
     generatedComment: generatedComment.trim(),
@@ -110,6 +128,14 @@ const generatePostContent = async (userType, userId, postType, selectedTone, pro
 
   const generatedPostContent = await aiHelper.makeAPICall(provider, messages, 1500);
 
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.POST_CONTENT,
+    service: 'post_content',
+    provider: aiHelper.PROVIDERS[provider].name,
+    postType: postType,
+    tone: selectedTone,
+  });
+
   return {
     generatedPostContent: generatedPostContent.trim(),
     remainingCredits: creditResult.remainingCredits,
@@ -142,6 +168,13 @@ const generateMessageTemplate = async (userType, userId, templateRequirements, s
   ];
 
   const generatedTemplateContent = await aiHelper.makeAPICall(provider, messages, 300);
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE,
+    service: 'message_template',
+    provider: aiHelper.PROVIDERS[provider].name,
+    tone: selectedTone,
+    requirementsLength: templateRequirements.length,
+  });
 
   return {
     generatedTemplateContent: generatedTemplateContent.trim(),
@@ -175,6 +208,13 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
   ];
 
   const generatedReply = await aiHelper.makeAPICall(provider, messages, 100);
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_REPLY,
+    service: 'message_reply',
+    provider: aiHelper.PROVIDERS[provider].name,
+    userName: userName,
+    messagesLength: formattedMessages.length,
+  });
 
   return {
     generatedReply: generatedReply.trim(),

@@ -1,8 +1,8 @@
-const mailService = require('../email/admin');
+const mailService = require('../../admin/email/admin');
 const AppError = require('../../utils/appError');
-const fileUploadService = require('../fileUploadService');
+const fileUploadService = require('../../utils/fileUploadService');
 const organizationRepository = require('../../repositories/organizationRepository');
-const { logActivity, getTrialStatus, checkAndUpdateTrialStatus } = require('./organizationHelper');
+const { logActivity, checkAndUpdateTrialStatus } = require('./organizationHelper');
 
 const getOrganizationById = async id => {
   const organization = await organizationRepository.findById(id);
@@ -151,23 +151,37 @@ const getOrganizationProfile = async id => {
     throw new AppError('Organization not found.', 404);
   }
 
-  // Check trial status
-  const trialStatus = getTrialStatus(organization);
-
   return {
     id: organization._id,
     profilePicture: organization.profilePicture,
     name: organization.name,
+    timeZone: organization.timeZone,
+    lastActive: organization.lastActive,
     email: organization.email,
-    subscription: organization.subscription,
-    planUsage: organization.planUsage,
+    credits: organization.credits,
+    referralInfo: organization.referral,
     planFeatures: organization.planFeatures,
+    createdAt: organization.createdAt,
+    isVerified: organization.isVerified,
     oauthProvider: organization.oauthProvider,
     isActive: organization.isActive,
     lastActive: organization.lastActive,
-    trialStatus,
     billingDetails: organization.billingDetails,
-    totalCreditsUsed: organization.totalCreditsUsed,
+  };
+};
+
+const getOrganizationCredits = async id => {
+  const organization = await organizationRepository.findById(id);
+  if (!organization) {
+    throw new AppError('Organization not found.', 404);
+  }
+
+  const { credits, totalCreditsUsed } = await organizationRepository.getOrganizationCredits(organization._id);
+
+  return {
+    success: true,
+    credits: credits,
+    totalCreditsUsed: totalCreditsUsed,
   };
 };
 
@@ -326,6 +340,7 @@ module.exports = {
   // Read / Retrieve
   getOrganizationById,
   getOrganizationProfile,
+  getOrganizationCredits,
 
   // Create / Update
   createOrganization,

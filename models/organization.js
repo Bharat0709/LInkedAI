@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { newDBConnection } = require('../db');
+const { newDBConnection } = require('../config/db');
 const crypto = require('crypto');
 
 const organizationSchema = new mongoose.Schema(
@@ -17,10 +17,6 @@ const organizationSchema = new mongoose.Schema(
     lastActive: {
       type: Date,
       default: Date.now,
-    },
-    totalCreditsUsed: {
-      type: Number,
-      default: 0,
     },
     password: {
       type: String,
@@ -56,6 +52,67 @@ const organizationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    credits: {
+      balance: {
+        type: Number,
+        default: 200,
+      },
+      totalUsed: {
+        type: Number,
+        default: 0,
+      },
+      expiresAt: {
+        type: Date,
+        default: function () {
+          return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        },
+      },
+      transactions: [
+        {
+          type: { type: String, enum: ['purchase', 'usage', 'adjustment', 'refund', 'bonus', 'expiry'] },
+          amount: { type: Number, required: true },
+          balance: { type: Number }, // Balance after transaction
+          description: { type: String },
+          metadata: {
+            featureUsed: String,
+            campaignId: String,
+            // Any additional context
+          },
+          expiresAt: { type: Date },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+    },
+    payments: [
+      {
+        paymentId: { type: String },
+        amount: { type: Number },
+        currency: { type: String, default: 'INR' },
+        status: {
+          type: String,
+          enum: ['pending', 'succeeded', 'failed', 'refunded'],
+          default: 'pending',
+        },
+        paymentMethod: { type: String },
+        creditsAdded: { type: Number },
+        invoiceId: { type: String },
+        processedAt: { type: Date },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
+    referral: {
+      referralCode: {
+        type: String,
+        unique: true,
+        sparse: true,
+      },
+      referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Organization',
+      },
+      referralCreditsEarned: { type: Number, default: 0 },
+      referralCount: { type: Number, default: 0 },
+    },
     billingDetails: {
       addressLine1: { type: String },
       addressLine2: { type: String },
@@ -75,119 +132,11 @@ const organizationSchema = new mongoose.Schema(
         },
       },
     ],
-    subscription: {
-      plan: {
-        type: String,
-        enum: ['trial', 'pro', 'enterprise'],
-        default: 'trial',
-      },
-      status: {
-        type: String,
-        enum: ['active', 'inactive', 'canceled', 'trial', 'expired'],
-        default: 'trial',
-      },
-      renewalDate: {
-        type: Date,
-        default: null,
-      },
-      trialStartDate: {
-        type: Date,
-        default: Date.now,
-      },
-      trialEndDate: {
-        type: Date,
-        default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-      canceledAt: {
-        type: Date,
-        default: null,
-      },
-      purchasedOn: {
-        type: Date,
-        default: null,
-      },
-      isFirstPurchase: {
-        type: Boolean,
-        default: false,
-      },
-    },
-    planUsage: {
-      maxMembers: {
-        type: Number,
-        default: 1,
-      },
-      currentMemberCount: {
-        type: Number,
-        default: 0,
-      },
-      monthlyUsage: {
-        monthStartDate: {
-          type: Date,
-          default: Date.now,
-        },
-        monthEndDate: {
-          type: Date,
-          default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-        postsSaved: {
-          type: Number,
-          default: 0,
-        },
-        maxPostsSavedPerMonth: {
-          type: Number,
-          default: 50,
-        },
-        postsScheduled: {
-          type: Number,
-          default: 0,
-        },
-        maxPostsScheduledPerMonth: {
-          type: Number,
-          default: 10,
-        },
-        contentCalendarDaysAdded: {
-          type: Number,
-          default: 0,
-        },
-        maxContentCalendarDays: {
-          type: Number,
-          default: 30,
-        },
-        emailsSent: {
-          type: Number,
-          default: 0,
-        },
-        maxEmailsPerMonth: {
-          type: Number,
-          default: 0,
-        },
-      },
-      dailyUsage: {
-        date: {
-          type: String,
-          default: () => new Date().toISOString().substring(0, 10),
-        },
-        aiCreditsUsedToday: {
-          viralPostGenerator: {
-            type: Number,
-            default: 0,
-          },
-          maxPostGeneratorCreditsperDay: {
-            type: Number,
-            default: 100,
-          },
-          maxextensionCreditsperDay: {
-            type: Number,
-            default: 50,
-          },
-        },
-      },
-    },
     planFeatures: {
       aiModels: {
         type: [String],
-        enum: ['gemini', 'chatgpt', 'mistral', 'groq'],
-        default: ['gemini', 'chatgpt'],
+        enum: ['gemini', 'chatgpt', 'mistral', 'groq', 'perplexity'],
+        default: ['gemini', 'chatgpt', 'groq', 'perplexity'],
       },
       hasPrioritySupport: {
         type: Boolean,
@@ -243,6 +192,31 @@ const organizationSchema = new mongoose.Schema(
 organizationSchema.index({ email: 1 });
 organizationSchema.index({ emailVerificationToken: 1 });
 organizationSchema.index({ passwordResetToken: 1 });
+organizationSchema.index({ 'credits.expiresAt': 1 });
+
+organizationSchema.methods.areCreditsExpired = function () {
+  return this.credits.expiresAt && this.credits.expiresAt < new Date();
+};
+
+organizationSchema.methods.expireCredits = async function () {
+  if (this.areCreditsExpired() && this.credits.balance > 0) {
+    const expiredAmount = this.credits.balance;
+
+    this.credits.transactions.push({
+      type: 'expiry',
+      amount: -expiredAmount,
+      balance: 0,
+      description: `Credits expired on ${this.credits.expiresAt.toDateString()}`,
+      createdAt: new Date(),
+    });
+
+    this.credits.balance = 0;
+    await this.save();
+
+    return expiredAmount;
+  }
+  return 0;
+};
 
 organizationSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
