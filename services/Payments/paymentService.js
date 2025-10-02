@@ -3,7 +3,7 @@ const AppError = require('../../utils/appError');
 const organizationService = require('../Organization/organizationService');
 const paymentRepository = require('../../repositories/paymentRepository');
 const orgRepo = require('../../repositories/organizationRepository');
-const DODO_API_URL = process.env.DODO_API_UPL;
+const DODO_API_URL = process.env.DODO_API_URL;
 const DODO_PRODUCTS_URL = process.env.DODO_PRODUCTS_URL;
 const DODO_API_KEY = process.env.DODO_PAYMENT_TOKEN;
 
