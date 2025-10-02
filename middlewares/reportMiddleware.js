@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-writer');
 const Member = require('../models/members');
-const { sendDailyStatsReport } = require('../services/email/admin');
+const { sendDailyStatsReport } = require('../admin/email/admin');
 
 exports.generateAndSendStats = async () => {
   try {
@@ -66,8 +66,7 @@ const getSimpleStats = async () => {
     ]);
 
     // Calculate retention rate
-    const retentionRate =
-      totalUsers > 0 ? ((activeUsers24h / totalUsers) * 100).toFixed(1) : 0;
+    const retentionRate = totalUsers > 0 ? ((activeUsers24h / totalUsers) * 100).toFixed(1) : 0;
 
     return {
       // Basic stats
@@ -103,9 +102,7 @@ const createUsersCSV = async () => {
 
   // Get all users
   const users = await Member.find({})
-    .select(
-      'name email plan credits totalCreditsUsed daysActive currentStreak accountCreatedAt lastActive profileLink timeZone role active leaderBoardProfileVisibility'
-    )
+    .select('name email plan credits totalCreditsUsed daysActive currentStreak accountCreatedAt lastActive profileLink timeZone role active leaderBoardProfileVisibility')
     .sort({ totalCreditsUsed: -1 });
 
   // Create CSV writer
@@ -130,7 +127,7 @@ const createUsersCSV = async () => {
   });
 
   // Format data
-  const csvData = users.map((user) => ({
+  const csvData = users.map(user => ({
     name: user.name || 'N/A',
     email: user.email || 'N/A',
     daysActive: user.daysActive || 0,
@@ -143,12 +140,8 @@ const createUsersCSV = async () => {
     currentStreak: user.currentStreak || 0,
     plan: user.plan || 'Free',
     leaderBoardVisible: user.leaderBoardProfileVisibility ? 'Yes' : 'No',
-    accountCreated: user.accountCreatedAt
-      ? user.accountCreatedAt.toISOString().split('T')[0]
-      : 'N/A',
-    lastActive: user.lastActive
-      ? user.lastActive.toISOString().split('T')[0]
-      : 'N/A',
+    accountCreated: user.accountCreatedAt ? user.accountCreatedAt.toISOString().split('T')[0] : 'N/A',
+    lastActive: user.lastActive ? user.lastActive.toISOString().split('T')[0] : 'N/A',
   }));
 
   await csvWriter.writeRecords(csvData);
