@@ -2,7 +2,10 @@ const dotenv = require('dotenv');
 dotenv.config();
 const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../../utils/mailUtils/compileTemplate');
+const fs = require('fs');
+
 const admin1 = process.env.ADMIN_EMAIL1;
+const admin2 = process.env.ADMIN_EMAIL2;
 
 // TO ADMIN - SURVEY FORM - MANUALLY BY ORGANIZATION
 exports.sendSurveyForm = async (usability, performance, missingFeatures, reason, email, overallSatisfaction) => {
@@ -27,7 +30,8 @@ exports.sendNewUserEmail = async user => {
     accountCreatedAt: new Date(user.accountCreatedAt).toLocaleString(),
   });
 
-  return await sendFrostmailEmail(admin1, 'New User Added', html);
+  await sendFrostmailEmail(admin1, 'New User Added', html);
+  return await sendFrostmailEmail(admin2, 'New User Added', html);
 };
 
 // TO ADMIN - USER NEEDS HELP - MANUALLY BY ORGANIZATION
@@ -55,4 +59,40 @@ exports.sendFeedback = async (organization, rating, feedbackText) => {
   });
 
   return await sendFrostmailEmail(admin1, `Feedback from ${organization?.name}`, html);
+};
+
+// Updated sendDailyStatsReport function in your email service file
+
+// TO ADMIN - DAILY STATS REPORT - AUTOMATED CRON JOB
+exports.sendDailyStatsReport = async (stats, csvPath = null) => {
+  const html = compileTemplate('admin/daily_report', stats);
+
+  // Prepare attachments if CSV path is provided
+  let attachments = [];
+  if (csvPath && fs.existsSync(csvPath)) {
+    attachments = [
+      {
+        path: csvPath,
+        filename: `daily-users-report-${stats.reportDate.replace(
+          /\s/g,
+          '-'
+        )}.csv`,
+        contentType: 'text/csv',
+      },
+    ];
+  }
+
+  // Send to both admins with attachments
+  await sendFrostmailEmail(
+    admin1,
+    `Daily Platform Stats - ${stats.reportDate}`,
+    html,
+    attachments
+  );
+  return await sendFrostmailEmail(
+    admin2,
+    `Daily Platform Stats - ${stats.reportDate}`,
+    html,
+    attachments
+  );
 };
