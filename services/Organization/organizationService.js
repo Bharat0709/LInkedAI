@@ -163,6 +163,7 @@ const getOrganizationProfile = async id => {
     planFeatures: organization.planFeatures,
     createdAt: organization.createdAt,
     isVerified: organization.isVerified,
+    payments: organization.payments,
     oauthProvider: organization.oauthProvider,
     isActive: organization.isActive,
     lastActive: organization.lastActive,
