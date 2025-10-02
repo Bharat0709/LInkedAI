@@ -38,13 +38,8 @@ const adminRouter = require('./routes/adminRoutes');
 
 const { initCreditExpiryCronJobs } = require('./cron/creditExpiryCron');
 // CONTROLLERS
-<<<<<<< HEAD
 const scheduler = require('./controllers/linkedInController');
 const { generateAndSendStats } = require('./middlewares/reportMiddleware');
-const postScheduledPosts = scheduler.schedulePosts;
-=======
-const scheduler = require('./controllers/LinkedIn/linkedInController');
->>>>>>> a511ed3 (Alpha Test -1)
 
 const app = express();
 
@@ -120,6 +115,8 @@ cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
   scheduler.processScheduledPosts();
 });
+
+initCreditExpiryCronJobs();
 
 cron.schedule(
   '30 10 * * *',
