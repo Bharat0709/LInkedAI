@@ -9,7 +9,7 @@ const generateComment = async (userType, userId, postContent, selectedOption, pr
   }
 
   // Process credits first
-  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.COMMENT, 'comment');
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.COMMENT, 'Comment Generation using ' + provider);
 
   const messages = [
     {
@@ -57,7 +57,7 @@ const generateCustomComment = async (userType, userId, postContent, customTone, 
   }
 
   // Process credits first
-  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.CUSTOM_COMMENT, 'custom_comment');
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.CUSTOM_COMMENT, 'Custom Comment using ' + provider);
 
   const messages = [
     {
@@ -101,7 +101,7 @@ const generatePostContent = async (userType, userId, postType, selectedTone, pro
   }
 
   // Process credits first
-  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.POST_CONTENT, 'post_content');
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.POST_CONTENT, 'Post Content using ' + provider);
 
   const messages = [
     {

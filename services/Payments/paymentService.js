@@ -106,19 +106,19 @@ const handleWebhook = async payload => {
       // Map product_id to credits
       let creditsToAdd = 0;
       switch (metadata.product_id) {
-        case 'pdt_2TptGkLO4V3SmnTp98SKZ':
+        case 'pdt_lh0cyXDtEZO2VaGXt4iNf':
           creditsToAdd = 100;
           break;
-        case 'pdt_hTKuR1xt7W1rTFtRqFN02':
+        case 'pdt_gC5xMeGsjNJa375rmj5Xg':
           creditsToAdd = 200;
           break;
-        case 'pdt_BhMQNUSPXTMejoQtY6tpS':
+        case 'pdt_0SQcewJfWNoZx6SXHddHP':
           creditsToAdd = 500;
           break;
         case 'prod_800':
           creditsToAdd = 800;
           break;
-        case 'prod_1000':
+        case 'pdt_E4rOXhcfnI5ho4PHv4V38':
           creditsToAdd = 1000;
           break;
         default:

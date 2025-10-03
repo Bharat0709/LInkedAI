@@ -124,7 +124,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
         type: 'usage',
         amount: creditAmount,
         balance: newOrgBalance,
-        description: `Credits used by member ${member._id} for ${feature}`,
+        description: `Credits used by member ${member.name} for ${feature}`,
         metadata,
         createdAt: new Date(),
       };
@@ -169,7 +169,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
         type: 'usage',
         amount: creditAmount,
         balance: newOrgBalance,
-        description: `Credits used directly by organization`,
+        description: `Credits used by ${organization.name} for ${feature}`,
         metadata,
         createdAt: new Date(),
       };

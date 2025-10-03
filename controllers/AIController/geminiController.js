@@ -22,7 +22,7 @@ exports.generateCommentGemini = catchAsync(async (req, res, next) => {
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION, 'comment generation');
+  const updatedUser = await aiHelper.processCredits('member', user._id, CREDITS_CONFIG.COMMENT_GENERATION, 'Comment Generation using Gemini');
 
   // Generate comment
   const generatedComment = await geminiService.generateComment(user._id, postContent, selectedOption);
@@ -59,71 +59,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   });
 });
 
-async function getCustomComment(postContent, customTone, wordCount) {
-  const parts = [
-    {
-      text: `As a linkedIn user in India on behalf of me help me write a ${customTone} comment for a linkedIn Post with the following post content:\n\n${postContent} in ${wordCount} words
-      Requirements:
-      - The tone of the comment should strictly be in ${customTone} tone
-      - The comment should be relevant to the whole post content
-      - STRICTLY IN A SINGLE PARA AND DONT'T INCLUDE LINES LIKE HERE'S IS YOUR COMMENT ETC, JUST GIVE THE COMMENT AS A RESULT IN A SINGLE PARA
-      - Give response as if a real user have written the comment
-      - You can use emojis as well if its a congratulatory comment
-      - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
-      - Do not include double quotes in response
-      - Do not include hashtags response 
-      - Give enagaging comment & complete the comment within the word limit 
-      - The comment should not seem to be written by AI`,
-    },
-    { text: '\n' },
-  ];
-  const generationConfig = {
-    temperature: 0.45,
-    topK: 32,
-    topP: 0.65,
-    maxOutputTokens: 120,
-  };
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts }],
-    generationConfig,
-    safetySettings,
-  });
-
-  return result.response.text();
-}
-
-async function getComment(postContent, selectedOption) {
-  const parts = [
-    {
-      text: `As a linkedIn user in India on behalf of me help me write a ${selectedOption} tone.  comment for a linkedIn Post with the following post content:\n\n${postContent} 
-      Requirements:
-      - The comment should be strictly in ${selectedOption} tone only.
-      - The comment should be relevant to the whole post content
-      - Give response as if a real user have written the comment
-      - Do not repeat the words wriiten in the post. Give a comment as if a linkedIn user is replying for the given post.
-      - You can use emojis as well if its a congratulatory comment
-      - Give result in a single paragraph and not greater than 30 words, STRICTLY IN A SINGLE PARA AND DONT'T INCLUDE LINES LIKE HERE'S IS YOUR COMMENT ETC, JUST GIVE THE COMMENT AS A RESULT IN A SINGLE PARA
-      - Do not include double quotes in response
-      - Do not include hashtags in response 
-      - Give a short and engaging comment 
-      - Comment should not seem to be written by AI`,
-    },
-    { text: '\n' },
-  ];
-  const generationConfig = {
-    temperature: 0.45,
-    topK: 32,
-    topP: 0.65,
-    maxOutputTokens: 120,
-  };
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts }],
-    generationConfig,
-    safetySettings,
-  });
-
-  return result.response.text();
-}
 
 exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   const { postType, selectedTone } = req.body;
@@ -138,7 +73,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   }
 
   // Verify and deduct credits
-  const updatedUser = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION, 'post generation');
+  const updatedUser = await aiHelper.processCredits('organization', organization._id, CREDITS_CONFIG.POST_GENERATION, 'Post Generation using Gemini');
 
   // Generate post content
   const generatedPostContent = await geminiService.generatePostContent(organization._id, postType, selectedTone);
