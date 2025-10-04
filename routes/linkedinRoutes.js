@@ -13,7 +13,7 @@ router.patch('/:memberId/disconnect', linkedInController.disconnectLinkedIn);
 
 router.post('/:memberId/schedule', linkedInController.parseFormData, linkedInController.createScheduledPost);
 router.post('/:memberId/share', linkedInController.parseFormData, linkedInController.shareLinkedInPost);
-router.put('/:postId/history/', linkedInController.parseFormData, linkedInController.updateScheduledPost);
-router.delete('/:postId/history/', linkedInController.deleteScheduledPost);
+router.put('/:postId/history', linkedInController.parseFormData, linkedInController.updateScheduledPost);
+router.delete('/:postId/history', linkedInController.deleteScheduledPost);
 
 module.exports = router;

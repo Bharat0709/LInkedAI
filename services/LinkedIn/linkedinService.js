@@ -147,7 +147,7 @@ const getScheduledPosts = async (memberId, organizationId, filters = {}) => {
 
 const updateScheduledPost = async (postId, organizationId, updateData, files) => {
   const { content, postDate, postTime, visibility, timeZone, status, existingMediaUrls } = updateData;
-  console.log(postDate, postTime, visibility, timeZone, status, existingMediaUrls);
+  console.log(postDate, postTime, visibility, timeZone, content, status, existingMediaUrls);
 
   // Find existing post
   const scheduledPost = await linkedInRepository.findScheduledPostByIdAndOrg(postId, organizationId);
@@ -188,20 +188,10 @@ const updateScheduledPost = async (postId, organizationId, updateData, files) =>
     effectivePostTime: utcDateTime,
   };
 
+  console.log('PAYLOAD', updatePayload);
   const updatedPost = await linkedInRepository.updateScheduledPost(postId, updatePayload);
-
+  console.log(updatedPost);
   // Log member activity
-  await logMemberActivity(scheduledPost.memberId, 'linkedin_post_updated', {
-    organizationId,
-    postId: postId,
-    previousStatus,
-    newStatus: updatePayload.status,
-    contentChanged: content !== scheduledPost.content,
-    scheduleChanged: postDate !== scheduledPost.postDate || postTime !== scheduledPost.postTime,
-    visibilityChanged: visibility !== scheduledPost.visibility,
-    mediaChanged: updatedMedia.length !== scheduledPost.media.length,
-    updatedAt: new Date(),
-  });
 
   return updatedPost;
 };

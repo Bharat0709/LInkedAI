@@ -108,7 +108,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
       }
 
       if (member.creditLimitperDay !== -1 && member.creditsUsedToday + creditAmount > member.creditLimitperDay) {
-        throw new AppError('Member has exceeded their daily credit limit', 403);
+        throw new AppError('Daily credit limit reached! Visit profile settings to reset limit', 403);
       }
 
       // Reset member daily credits if date changed
