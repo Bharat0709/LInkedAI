@@ -7,7 +7,7 @@ const admin2 = process.env.ADMIN_EMAIL2;
 
 // TO ADMIN - SURVEY FORM - MANUALLY BY ORGANIZATION
 exports.sendSurveyForm = async (usability, performance, missingFeatures, reason, email, overallSatisfaction) => {
-  const html = compileTemplate('admin/extn_survey', {
+  const html = compileTemplate('adminMails/extn_survey', {
     usability,
     performance,
     missingFeatures,
@@ -34,24 +34,22 @@ exports.sendNewUserEmail = async user => {
 
 // TO ADMIN - USER NEEDS HELP - MANUALLY BY ORGANIZATION
 exports.sendHelpRequest = async (user, helpMessage) => {
-  const html = compileTemplate('admin/help_request', {
-    name: user?.name,
-    email: user?.email,
-    plan: user?.subscription?.plan.toUpperCase(),
-    credits: user?.totalCreditsUsed,
+  console.log('Admin Email:', user.name);
+  const html = compileTemplate('adminMails/help_request', {
+    name: user?.name || 'N/A',
+    email: user?.email || 'N/A',
     helpMessage,
   });
+  console.log('Help Request Email HTML:', html);
 
   return await sendFrostmailEmail(admin1, `Help Request from ${user?.name}`, html);
 };
 
 // TO ADMIN - USER FEEDBACK - MANUALLY BY ORGANIZATION
 exports.sendFeedback = async (organization, rating, feedbackText) => {
-  const html = compileTemplate('admin/feedback', {
+  const html = compileTemplate('adminMails/feedback', {
     name: organization?.name,
     email: organization?.email,
-    plan: organization?.subscription?.plan.toUpperCase(),
-    credits: organization?.totalCreditsUsed,
     rating,
     feedback: feedbackText,
   });
@@ -63,7 +61,7 @@ exports.sendFeedback = async (organization, rating, feedbackText) => {
 
 // TO ADMIN - DAILY STATS REPORT - AUTOMATED CRON JOB
 exports.sendDailyStatsReport = async (stats, csvPath = null) => {
-  const html = compileTemplate('admin/daily_report', stats);
+  const html = compileTemplate('adminMails/daily_report', stats);
 
   // Prepare attachments if CSV path is provided
   let attachments = [];
@@ -71,26 +69,13 @@ exports.sendDailyStatsReport = async (stats, csvPath = null) => {
     attachments = [
       {
         path: csvPath,
-        filename: `daily-users-report-${stats.reportDate.replace(
-          /\s/g,
-          '-'
-        )}.csv`,
+        filename: `daily-users-report-${stats.reportDate.replace(/\s/g, '-')}.csv`,
         contentType: 'text/csv',
       },
     ];
   }
 
   // Send to both admins with attachments
-  await sendFrostmailEmail(
-    admin1,
-    `Daily Platform Stats - ${stats.reportDate}`,
-    html,
-    attachments
-  );
-  return await sendFrostmailEmail(
-    admin2,
-    `Daily Platform Stats - ${stats.reportDate}`,
-    html,
-    attachments
-  );
+  await sendFrostmailEmail(admin1, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
+  return await sendFrostmailEmail(admin2, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
 };

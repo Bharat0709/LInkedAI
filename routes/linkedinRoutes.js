@@ -1,7 +1,6 @@
 const express = require('express');
 const linkedInController = require('../controllers/LinkedIn/linkedInController');
 const linkedInAuthController = require('../controllers/Auth/linkedinAuthController');
-const { checkPostScheduleLimit } = require('../middlewares/usageTracking');
 const { verifyToken } = require('../middlewares/verifytoken');
 const router = express.Router();
 

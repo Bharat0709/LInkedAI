@@ -2,7 +2,7 @@ const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
 const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
-const { logMemberActivity, parseConnectionToken, resetDailyCredits, validateUpdateFields } = require('./memberHelper');
+const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
 
 const checkMemberExists = async (name, profileLink) => {

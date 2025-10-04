@@ -34,12 +34,6 @@ router.get('/:memberId/scheduled', automationController.getScheduledAutomations)
 // Get recurring automations - Done
 router.get('/:memberId/recurring', automationController.getRecurringAutomations);
 
-// Get overdue automations
-// router.get('/overdue', automationController.getOverdueAutomations);
-
-// Get due automations (for background processing)
-// router.get('/due', automationController.getDueAutomations);
-
 // Bulk approve automations
 router.patch('/bulk-approve', automationController.bulkApproveAutomations);
 

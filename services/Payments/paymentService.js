@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const AppError = require('../../utils/appError');
+const { encryptToken, decryptToken } = require('../../utils/linkedInAuth');
 const organizationService = require('../Organization/organizationService');
 const paymentRepository = require('../../repositories/paymentRepository');
 const orgRepo = require('../../repositories/organizationRepository');
@@ -17,18 +18,57 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
     const organization = await organizationService.getOrganizationById(organizationId);
     if (!organization) throw new AppError('Organization not found', 404);
 
+    // Build request body with customer info
+    const requestBody = {
+      product_cart: [{ product_id, quantity: 1 }],
+      customer: {
+        email: organization.email,
+        name: organization.name,
+        phone_number: null,
+      },
+      return_url: process.env.DODO_REDIRECT_URL,
+      metadata: {
+        organizationId: organization._id.toString(),
+        product_id,
+      },
+    };
+
+    // Decrypt and add billing address if available
+    if (organization.billingDetails) {
+      try {
+        const decryptedBilling = getDecryptedBillingDetails(organization);
+
+        if (decryptedBilling) {
+          // Only add billing_address if we have at least the country (required field)
+          if (decryptedBilling.country) {
+            requestBody.confirm = true; // Auto-confirm the payment
+            requestBody.billing_address = {
+              street: decryptedBilling.addressLine1 || '',
+              city: decryptedBilling.city || '',
+              state: decryptedBilling.state || '',
+              country: decryptedBilling.country,
+              zipcode: decryptedBilling.postalCode || '',
+            };
+
+            // Add phone number to customer if available
+            if (decryptedBilling.phoneNumber) {
+              requestBody.customer.phone_number = decryptedBilling.phoneNumber;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error decrypting billing details:', error);
+        // Continue without billing info if decryption fails
+      }
+    }
+
     const response = await fetch(DODO_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${DODO_API_KEY}`,
       },
-      body: JSON.stringify({
-        product_cart: [{ product_id, quantity: 1 }],
-        customer: { email: organization.email, name: organization.name, phone_number: null },
-        return_url: process.env.DODO_REDIRECT_URL,
-        metadata: { organizationId: organization._id.toString(), product_id },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -42,6 +82,71 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
   } catch (error) {
     console.error('Error creating Dodo checkout session:', error);
     throw new AppError(error.message || 'Internal Server Error', 500);
+  }
+};
+
+// Helper function to decrypt billing details when needed
+const getDecryptedBillingDetails = org => {
+  if (!org.billingDetails) return null;
+
+  try {
+    return {
+      addressLine1: org.billingDetails.addressLine1 ? decryptToken(org.billingDetails.addressLine1) : null,
+      addressLine2: org.billingDetails.addressLine2 ? decryptToken(org.billingDetails.addressLine2) : null,
+      city: org.billingDetails.city ? decryptToken(org.billingDetails.city) : null,
+      state: org.billingDetails.state ? decryptToken(org.billingDetails.state) : null,
+      country: org.billingDetails.country ? decryptToken(org.billingDetails.country) : null,
+      postalCode: org.billingDetails.postalCode ? decryptToken(org.billingDetails.postalCode) : null,
+      phoneNumber: org.billingDetails.phoneNumber ? decryptToken(org.billingDetails.phoneNumber) : null,
+    };
+  } catch (error) {
+    console.error('Error decrypting billing details:', error);
+    return null;
+  }
+};
+
+// Helper function to get credits from product ID
+const getCreditsForProduct = async productId => {
+  try {
+    const productsData = await fetchAllProducts();
+    const products = productsData.items || [];
+
+    if (products.length === 0) {
+      console.warn('No products found from Dodo');
+      return 0;
+    }
+
+    // Find the product by ID
+    const product = products.find(p => p.product_id === productId);
+    console.log('Product found for ID:', productId, product);
+
+    if (!product) {
+      console.warn(`Product not found for ID: ${productId}`);
+      return 0;
+    }
+
+    // Get credits from metadata
+    const credits = product.metadata?.creditsApplicable;
+    console.log('Credits found in product metadata:', credits);
+
+    if (!credits) {
+      console.warn(`No creditsApplicable found in metadata for product: ${productId}`);
+      return 0;
+    }
+
+    // Parse credits (it's a string in the metadata)
+    const creditsToAdd = parseInt(credits, 10);
+    console.log('Parsed credits to add:', creditsToAdd);
+
+    if (isNaN(creditsToAdd)) {
+      console.warn(`Invalid credits value in metadata: ${credits}`);
+      return 0;
+    }
+
+    return creditsToAdd;
+  } catch (error) {
+    console.error('Error getting credits for product:', error);
+    return 0;
   }
 };
 
@@ -101,32 +206,24 @@ const handleWebhook = async payload => {
     // 2. Update organization credits if payment succeeded
     if (status === 'succeeded') {
       const org = await orgRepo.findById(metadata.organizationId);
-      if (!org) return;
+      if (!org) {
+        console.warn(`Organization not found: ${metadata.organizationId}`);
+        return;
+      }
 
-      // Map product_id to credits
-      let creditsToAdd = 0;
-      switch (metadata.product_id) {
-        case 'pdt_lh0cyXDtEZO2VaGXt4iNf':
-          creditsToAdd = 100;
-          break;
-        case 'pdt_gC5xMeGsjNJa375rmj5Xg':
-          creditsToAdd = 200;
-          break;
-        case 'pdt_0SQcewJfWNoZx6SXHddHP':
-          creditsToAdd = 500;
-          break;
-        case 'prod_800':
-          creditsToAdd = 800;
-          break;
-        case 'pdt_E4rOXhcfnI5ho4PHv4V38':
-          creditsToAdd = 1000;
-          break;
-        default:
-          creditsToAdd = 0;
+      // Dynamically fetch credits based on product_id
+      const creditsToAdd = await getCreditsForProduct(metadata.product_id);
+      console.log(`Credits to add for product ${metadata.product_id}:`, creditsToAdd);
+
+      if (creditsToAdd === 0) {
+        console.warn(`No credits to add for product: ${metadata.product_id}`);
+        // Still save the payment record but don't add credits
+        return;
       }
 
       // Calculate expiry date (30 days from now)
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      console.log(`Credits will expire at: ${expiresAt}`);
 
       // Update credit balance and expiry
       org.credits.balance += creditsToAdd;
@@ -156,6 +253,35 @@ const handleWebhook = async payload => {
         paymentMethod: payment_method,
         invoiceId: null,
       });
+
+      // 3. Save or update encrypted billing details
+      if (billing) {
+        try {
+          const encryptedBillingDetails = {
+            addressLine1: billing.street ? encryptToken(billing.street) : org.billingDetails?.addressLine1,
+            city: billing.city ? encryptToken(billing.city) : org.billingDetails?.city,
+            state: billing.state ? encryptToken(billing.state) : org.billingDetails?.state,
+            country: billing.country ? encryptToken(billing.country) : org.billingDetails?.country,
+            postalCode: billing.zipcode ? encryptToken(billing.zipcode) : org.billingDetails?.postalCode,
+          };
+
+          // Add phone number from customer object if available
+          if (customer?.phone_number) {
+            encryptedBillingDetails.phoneNumber = encryptToken(customer.phone_number);
+          } else if (org.billingDetails?.phoneNumber) {
+            // Preserve existing phone if no new one provided
+            encryptedBillingDetails.phoneNumber = org.billingDetails.phoneNumber;
+          }
+
+          // Update organization billing details
+          org.billingDetails = encryptedBillingDetails;
+
+          console.log('Billing details encrypted and saved successfully');
+        } catch (encryptionError) {
+          console.error('Error encrypting billing details:', encryptionError);
+          // Continue processing even if billing encryption fails
+        }
+      }
 
       await org.save();
 
@@ -199,7 +325,7 @@ const fetchAllProducts = async () => {
     console.error('Error fetching Dodo products:', error);
     throw new AppError(error.message || 'Failed to fetch products', 500);
   }
-};  
+};
 
 module.exports = {
   createCheckoutSession,

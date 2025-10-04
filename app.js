@@ -110,6 +110,7 @@ const createRateLimiter = (windowMs, max, message) =>
 
 const limiter = createRateLimiter(15 * 60 * 1000, 200, 'Too many requests from this IP, please try again later.');
 const authLimiter = createRateLimiter(15 * 60 * 1000, 10, 'Too many authentication attempts, please try again later.');
+const aiLimiter = createRateLimiter(15 * 60 * 1000, 20, 'Too many ai generation attempts, please try again later.');
 
 cron.schedule('* * * * *', () => {
   console.log('⏳ Running scheduled post check...');
@@ -142,6 +143,8 @@ app.use(
 
 app.use('/api/', limiter);
 app.use('/api/v1/auth', authLimiter);
+app.use('/api/v1/ai', aiLimiter);
+app.use('/api/v1/openai', aiLimiter);
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(bodyParser.json({ limit: '10mb' }));

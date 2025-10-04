@@ -59,7 +59,6 @@ exports.generateCustomCommentGemini = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   const { postType, selectedTone } = req.body;
 

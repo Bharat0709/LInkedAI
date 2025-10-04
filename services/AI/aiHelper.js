@@ -137,8 +137,10 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
 
       // Deduct from member usage
       member.creditsUsedToday += creditAmount;
+      member.totalCreditsUsed += creditAmount;
       member.lastActive = new Date();
       await aiRepository.updateMemberCredits(member._id, {
+        totalCreditsUsed: member.totalCreditsUsed,
         creditsUsedToday: member.creditsUsedToday,
         lastActive: member.lastActive,
       });

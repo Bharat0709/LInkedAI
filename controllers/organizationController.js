@@ -1,6 +1,5 @@
 const organizationService = require('../services/Organization/organizationService');
 const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
 
 exports.getOrganizationById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
@@ -35,14 +34,6 @@ exports.getProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getCredits = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const creditsLeft = await organizationService.getOrganizationCredits(organizationId);
-  res.status(200).json({
-    status: 'success',
-    ...creditsLeft,
-  });
-});
 
 exports.updateProfile = catchAsync(async (req, res, next) => {
   const organizationId = req.organization._id;
@@ -61,10 +52,10 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
 
 exports.sendHelpRequest = catchAsync(async (req, res, next) => {
   const { helpTextContent } = req.body;
+  console.log(helpTextContent);
   const organization = req.organization;
-
   const result = await organizationService.sendHelpRequest(organization, helpTextContent);
-
+console.log(result)
   res.status(200).json({
     status: 'success',
     message: result.message,
@@ -95,76 +86,3 @@ exports.deleteOrganization = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateCredits = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const { creditsUsed } = req.body;
-
-  if (typeof creditsUsed !== 'number' || creditsUsed < 0) {
-    return next(new AppError('Credits used must be a non-negative number.', 400));
-  }
-
-  const updatedOrganization = await organizationService.updateCredits(organizationId, creditsUsed);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      organization: updatedOrganization,
-    },
-  });
-});
-0
-exports.checkTrialStatus = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const trialStatus = await organizationService.checkAndUpdateTrialStatus(organizationId);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      trialStatus,
-    },
-  });
-});
-
-exports.checkUsageLimits = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const { usageType } = req.params;
-
-  const usageCheck = await organizationService.checkUsageLimits(organizationId, usageType);
-
-  res.status(200).json({
-    status: 'success',
-    data: usageCheck,
-  });
-});
-
-exports.incrementUsage = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const { usageType } = req.params;
-  const { amount = 1 } = req.body;
-
-  // Check limits before incrementing
-  await organizationService.checkUsageLimits(organizationId, usageType);
-
-  const updatedOrganization = await organizationService.incrementUsage(organizationId, usageType, amount);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      organization: updatedOrganization,
-    },
-  });
-});
-
-exports.updateSubscription = catchAsync(async (req, res, next) => {
-  const organizationId = req.organization._id;
-  const subscriptionData = req.body;
-
-  const updatedOrganization = await organizationService.updateSubscription(organizationId, subscriptionData);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      organization: updatedOrganization,
-    },
-  });
-});

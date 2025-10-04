@@ -1,7 +1,6 @@
 const catchAsync = require('../../utils/catchAsync');
 const openaiService = require('../../services/AI/openaiService');
 const AppError = require('../../utils/appError');
-const { checkSubscription } = require('../../services/AI/aiHelper');
 
 const getUserTypeAndId = async req => {
   if (req.member) {
