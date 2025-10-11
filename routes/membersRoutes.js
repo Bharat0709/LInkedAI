@@ -18,14 +18,13 @@ router.post('/lb-profile-visibility', verifyExtension, memberController.updateLe
 router.get('/leader-board', verifyExtension, memberController.getLeaderboard);
 router.put('/profile-stats/:id', verifyExtension, memberController.updateMemberProfileStats);
 
+
 router.post('/add-member', memberController.createMember);
 router.get('/profile/:memberId', memberController.getMemberDetailsById);
 router.get('/associated-members', memberController.getAllMembersOfOrganization);
-
 router.get('/:organizationId/:memberId', memberController.getMemberDetailsByIds);
 router.get('/summary/:memberId', memberController.getMemberSummary);
-
-// Member Routes
+router.post('/reset-credits/:memberId'  , memberController.updateCreditsUsedToday)
 router.put('/lead-generation-settings/:memberId', memberController.updateLeadGenerationGoals);
 router.put('/summary/:memberId', memberController.updateCompleteSummary);
 router.put('/settings/:memberId', memberController.updateMemberSettings);

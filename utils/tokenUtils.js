@@ -14,3 +14,5 @@ export const decodeToken = encodedToken => {
     return null;
   }
 };
+
+export const encodeToken = (token) => btoa(token);

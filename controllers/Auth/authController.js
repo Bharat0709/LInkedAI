@@ -7,6 +7,7 @@ const AppError = require('../../utils/appError');
 const Member = require('../../models/members');
 const Organization = require('../../models/organization');
 const passport = require('passport');
+const { encodeToken } = require('../../utils/tokenUtils');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 passport.use(
@@ -131,10 +132,26 @@ exports.googleAuthCallback = (req, res, next) => {
 
     try {
       console.log('Google authentication successful:', organization);
-      const token = signToken(organization.id, true);
-      res.redirect(`${process.env.CLIENT_URL}/dashboard?token=${token}`);
+
+      // Sign JWT token
+      const token = signToken(organization._id, true); // _id is safer
+      const encodedToken = encodeToken(token);
+
+      // Set cookie
+      const cookieOptions = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+      };
+      res.cookie('engage-gpt', encodedToken, cookieOptions);
+
+      // Redirect to the frontend Google redirect page
+      res.redirect(`${process.env.CLIENT_URL}/auth/google/callback?token=${token}`);
     } catch (error) {
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=token_failed`);
+      console.error('Token generation failed:', error);
+      res.redirect(`${process.env.CLIENT_URL}/login?error=token_failed`);
     }
   })(req, res, next);
 };

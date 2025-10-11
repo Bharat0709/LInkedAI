@@ -104,7 +104,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
 
       // Check if org has enough credits
       if (organization.credits.balance < creditAmount) {
-        throw new AppError('Organization does not have enough credits', 403);
+        throw new AppError('Insufficient credits to perform this action.', 403);
       }
 
       if (member.creditLimitperDay !== -1 && member.creditsUsedToday + creditAmount > member.creditLimitperDay) {
@@ -124,7 +124,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
         type: 'usage',
         amount: creditAmount,
         balance: newOrgBalance,
-        description: `Credits used by member ${member.name} for ${feature}`,
+        description: `Credits used by ${member.name} for ${feature}`,
         metadata,
         createdAt: new Date(),
       };

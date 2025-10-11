@@ -1,19 +1,19 @@
 const dotenv = require('dotenv');
 dotenv.config();
-const sendFrostmailEmail = require('../../config/mailConfig');
+const sendAutoSendEmail = require('../../config/autoSendConfig');
 const compileTemplate = require('../mailUtils/compileTemplate');
 
 // ORGANIZATION - SEND RESET PASSWORD URL
 const sendResetPasswordURL = async (email, subject, resetURL) => {
   const html = compileTemplate('authentication/password_reset', { resetURL });
-  return await sendFrostmailEmail(email, subject, html);
+  return await sendAutoSendEmail(email, subject, html);
 };
 
 // ORANIZATION - SEND EMAIL VERIFICATION MAIL
 const sendVerificationMail = async (email, subject, verificationURL) => {
   console.log('Verification URL:', verificationURL, email);
   const html = compileTemplate('authentication/email_verification', { verificationURL });
-  return await sendFrostmailEmail(email, subject, html);
+  return await sendAutoSendEmail(email, subject, html);
 };
 
 // ORGANIZATION - PASSWORD CHANGE CONFIRMATION - AUTOMATED
@@ -23,7 +23,7 @@ const sendPasswordChangedConfirmation = async user => {
     changedAt: new Date().toLocaleString(),
   });
 
-  return await sendFrostmailEmail(user.email, 'Your Password Was Changed', html);
+  return await sendAutoSendEmail(user.email, 'Your Password Was Changed', html);
 };
 
 // ORGANIZATION - WELCOME EMAIL - NOT IN USE [SCALABILITY ISSUE]
@@ -33,7 +33,7 @@ const sendWelcomeEmail = async (email, name) => {
     year: new Date().getFullYear(),
   });
 
-  return await sendFrostmailEmail(email, '👋 Welcome to EngageGPT!', html);
+  return await sendAutoSendEmail(email, '👋 Welcome to EngageGPT!', html);
 };
 
 module.exports = {

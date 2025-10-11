@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-const sendFrostmailEmail = require('../../config/mailConfig');
+const sendAutoSendEmail = require('../../config/autoSendConfig');
 const compileTemplate = require('../mailUtils/compileTemplate');
 
 // MEMBER - SEND NEW MEMBER INVITE EMAIL
@@ -12,7 +12,7 @@ exports.sendNewMemberInviteEmail = async (OrganizationName, MemberName, MemberEm
     ConnectionToken,
   });
 
-  return await sendFrostmailEmail(MemberEmail, '🚀 Connect to EngageGPT - Member Invitation', html);
+  return await sendAutoSendEmail(MemberEmail, '🚀 Connect to EngageGPT - Member Invitation', html);
 };
 
 // MEMBER - SEND POST SCHEDULED STATUS EMAIL - CRON JOB
@@ -26,7 +26,7 @@ exports.sendPostStatusEmail = async (email, post, status, errorMessage = '') => 
     subject: isSuccess ? 'LinkedIn Post Success' : 'LinkedIn Post Failure',
   });
 
-  return await sendFrostmailEmail(email, isSuccess ? '✅ Your LinkedIn Post Was Successfully Published!' : '⚠️ LinkedIn Post Failed to Publish', html);
+  return await sendAutoSendEmail(email, isSuccess ? '✅ Your LinkedIn Post Was Successfully Published!' : '⚠️ LinkedIn Post Failed to Publish', html);
 };
 
 // MEMBER - CONNECTION CONFIRMATION MAIL
@@ -36,7 +36,7 @@ exports.sendExtensionConnectedConfirmation = async user => {
     year: new Date().getFullYear(),
   });
 
-  return await sendFrostmailEmail(user.email, '✅ EngageGPT Extension Connected Successfully', html);
+  return await sendAutoSendEmail(user.email, '✅ EngageGPT Extension Connected Successfully', html);
 };
 
 // MEMBER - ONBOARDING COMPLETION - NOT IN USE
@@ -46,7 +46,7 @@ exports.sendOnboardingCompleteEmail = async user => {
     year: new Date().getFullYear(),
   });
 
-  return await sendFrostmailEmail(user.email, '🎉 Onboarding Complete – Let the LinkedIn Magic Begin!', html);
+  return await sendAutoSendEmail(user.email, '🎉 Onboarding Complete – Let the LinkedIn Magic Begin!', html);
 };
 
 // MEMBER - MILESTONE MAIL
@@ -65,5 +65,5 @@ exports.sendMilestoneEmail = async user => {
 
   const subject = isSpecial ? `🎉 ${daysActive} Days of EngageGPT - You're a Star!` : `👏 ${daysActive} Active Days – Keep Going!`;
 
-  return await sendFrostmailEmail(email, subject, html);
+  return await sendAutoSendEmail(email, subject, html);
 };

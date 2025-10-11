@@ -1,5 +1,8 @@
+
 // config/database.js
+require('dotenv').config();
 const mongoose = require('mongoose');
+
 
 const createConnections = () => {
   const DB = process.env.DATABASE;
@@ -14,7 +17,6 @@ const createConnections = () => {
   newDBConnection.on('connected', () => {
     console.log('Connected to MongoDB (N)');
   });
-
   newDBConnection.on('error', error => {
     console.error('New MongoDB Connection Error:', error);
   });

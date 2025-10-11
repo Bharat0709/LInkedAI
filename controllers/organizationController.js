@@ -34,7 +34,6 @@ exports.getProfile = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.updateProfile = catchAsync(async (req, res, next) => {
   const organizationId = req.organization._id;
   const profileData = req.body;

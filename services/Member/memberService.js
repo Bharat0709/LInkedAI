@@ -1,5 +1,6 @@
 const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
+const aiRepository = require('../../repositories/aiRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
 const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
 const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
@@ -139,6 +140,57 @@ const updateLeaderboardVisibility = async (memberId, visibility) => {
   await logMemberActivity(memberId, 'leaderboard_visibility_updated', {
     visibility,
   });
+
+  return updatedMember;
+};
+
+const updateCreditsUsedToday = async (memberId, organizationId) => {
+  const member = await memberRepository.findById(memberId);
+  if (!member) {
+    throw new AppError('Member not found', 404);
+  }
+  const organization = await organizationRepository.findById(organizationId);
+  if (!member) throw new AppError('Member not found', 404);
+  if (!organization) throw new AppError('Organization not found', 404);
+  console.log(organization.credits.balance);
+  if (member.creditsUsedToday === 0) {
+    throw new AppError('No Credits used by member today');
+  }
+  if (organization.credits.balance < 10) {
+    throw new AppError('Insuffient Credits to perfom this action', 403);
+  }
+
+  const newOrgBalance = organization.credits.balance - 10;
+
+  console.log(newOrgBalance);
+
+  const orgTransaction = {
+    type: 'usage',
+    amount: 10,
+    balance: newOrgBalance,
+    description: `Credits used by member ${member.name} for Resetting Credit used for ${new Date().toLocaleString()}`,
+    createdAt: new Date(),
+  };
+
+  await aiRepository.updateOrganizationCredits(organization._id, {
+    balance: newOrgBalance,
+    totalUsed: organization.credits.totalUsed + 10,
+    transaction: orgTransaction,
+  });
+
+  member.creditsUsedToday = 0;
+  member.totalCreditsUsed += 10;
+  member.lastActive = new Date();
+  const updatedMember = await aiRepository.updateMemberCredits(member._id, {
+    totalCreditsUsed: member.totalCreditsUsed,
+    creditsUsedToday: member.creditsUsedToday,
+    lastActive: member.lastActive,
+  });
+
+  console.log(updatedMember);
+
+  // Log activity
+  await logMemberActivity(memberId, `Credits Reset Perfomed for ${new Date().toLocaleString()}`);
 
   return updatedMember;
 };
@@ -765,6 +817,7 @@ module.exports = {
   getMemberById,
   connectMember,
   updateMemberProfile,
+  updateCreditsUsedToday,
   consumeCredits,
   deleteMember,
   updateMemberSettings,

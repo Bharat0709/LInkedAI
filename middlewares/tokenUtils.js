@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const AppError = require('../utils/appError');
+const { encodeToken } = require('../utils/tokenUtils');
 
 const signToken = (id, isOrganization, isMember) => {
   return jwt.sign(
@@ -28,12 +29,13 @@ const createSendToken = async (user, statusCode, res, isOrganization, isMember) 
   if (process.env.NODE_ENV === 'production') {
     cookieOptions.secure = true;
   }
+  const encodedToken = encodeToken(token);
 
-  res.cookie('engage-gpt', token, cookieOptions);
+  res.cookie('engage-gpt', encodedToken, cookieOptions);
   res.status(statusCode).json({
     status: 'success',
+    user,
     token,
-    user, 
   });
 };
 

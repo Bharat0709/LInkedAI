@@ -253,6 +253,18 @@ exports.updateCompleteSummary = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.updateCreditsUsedToday = catchAsync(async (req, res, next) => {
+  const memberId = req.params.memberId || req.member.id;
+  const organizationId = req.organization.id;
+
+  const updatedMember = await memberService.updateCreditsUsedToday(memberId, organizationId);
+
+  res.status(200).json({
+    status: 'success',
+    data: updatedMember,
+  });
+});
+
 // WEB REQUEST TO GET MEMBER SUMMARY
 exports.getMemberSummary = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId || req.member.id;
