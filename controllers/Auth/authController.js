@@ -131,27 +131,26 @@ exports.googleAuthCallback = (req, res, next) => {
     }
 
     try {
-      console.log('Google authentication successful:', organization);
-
-      // Sign JWT token
-      const token = signToken(organization._id, true); // _id is safer
+      console.log('Google authentication successful:');
+      const token = signToken(organization.id, true);
       const encodedToken = encodeToken(token);
+      console.log(encodedToken);
 
-      // Set cookie
+      // Environment-specific cookie options
       const cookieOptions = {
         expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        secure: process.env.NODE_ENV === 'production', // only true in prod for HTTPS
       };
+      console.log(cookieOptions)
+      // Set cookie
       res.cookie('engage-gpt', encodedToken, cookieOptions);
-
-      // Redirect to the frontend Google redirect page
+      // Redirect to frontend callback page with token in query
       res.redirect(`${process.env.CLIENT_URL}/auth/google/callback?token=${token}`);
     } catch (error) {
-      console.error('Token generation failed:', error);
-      res.redirect(`${process.env.CLIENT_URL}/login?error=token_failed`);
+      console.error(error);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=token_failed`);
     }
   })(req, res, next);
 };

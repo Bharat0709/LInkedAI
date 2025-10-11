@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../mailUtils/compileTemplate');
+const sendAutoSendEmail = require('../../config/autoSendConfig');
 const admin1 = process.env.ADMIN_EMAIL1;
 const admin2 = process.env.ADMIN_EMAIL2;
 
@@ -42,7 +43,7 @@ exports.sendHelpRequest = async (user, helpMessage) => {
   });
   console.log('Help Request Email HTML:', html);
 
-  return await sendFrostmailEmail(admin1, `Help Request from ${user?.name}`, html);
+  return await sendAutoSendEmail(admin1, `Help Request from ${user?.name}`, html);
 };
 
 // TO ADMIN - USER FEEDBACK - MANUALLY BY ORGANIZATION
@@ -54,7 +55,7 @@ exports.sendFeedback = async (organization, rating, feedbackText) => {
     feedback: feedbackText,
   });
 
-  return await sendFrostmailEmail(admin1, `Feedback from ${organization?.name}`, html);
+  return await sendAutoSendEmail(admin1, `Feedback from ${organization?.name}`, html);
 };
 
 // Updated sendDailyStatsReport function in your email service file
