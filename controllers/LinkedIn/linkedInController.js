@@ -33,9 +33,7 @@ exports.shareLinkedInPost = catchAsync(async (req, res, next) => {
 exports.processScheduledPosts = catchAsync(async (req, res, next) => {
   try {
     const result = await linkedInService.schedulePosts();
-    console.log('Scheduled posts processing completed:', result);
   } catch (error) {
-    console.error('Error in processScheduledPosts controller:', error);
     return next(new AppError('Failed to process scheduled posts', 500));
   }
 });

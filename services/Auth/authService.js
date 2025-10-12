@@ -211,13 +211,11 @@ const resendVerificationEmail = async email => {
 };
 
 const loginOrganization = async (email, password) => {
-  console.log('Login attempt for email:', email, password);
   if (!email || !password) {
     throw new AppError('Please provide email and password', 400);
   }
 
   const organization = await organizationRepository.findByEmailWithPassword(email);
-  console.log('Found organization:', organization ? organization._id : 'none');
   if (!organization) {
     throw new AppError('User does not exist', 401);
   }
@@ -231,7 +229,6 @@ const loginOrganization = async (email, password) => {
   }
 
   const isMatch = await bcrypt.compare(password, organization.password);
-  console.log('Password match:', isMatch);
   if (!isMatch) {
     await organizationRepository.incrementFailedLoginAttempts(organization._id);
     throw new AppError('Incorrect email or password', 401);
@@ -304,7 +301,6 @@ const initiatePasswordReset = async email => {
   if (!organization) {
     throw new AppError('There is no user with that email address.', 404);
   }
-  console.log('Found organization for password reset:', organization._id, organization.email);
 
   if (!organization.isActive || !organization.isVerified) {
     throw new AppError('Email is not yet verified! Verify your email first.', 401);
@@ -312,7 +308,6 @@ const initiatePasswordReset = async email => {
 
   // Mode: set (first time) or reset
   const mode = !organization.password ? 'set' : 'reset';
-  console.log(`Password ${mode} initiated for org ${organization._id}`);
   // Generate reset token + hash
   const resetToken = authHelper.generatePasswordResetToken();
   const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
@@ -347,15 +342,12 @@ const initiatePasswordReset = async email => {
       },
     });
 
-    console.log(`Password ${mode} initiated for org ${organization._id} - expires at ${new Date(expiryTime).toISOString()}`);
-
     return {
       message: `${mode === 'set' ? 'Set password' : 'Reset password'} link sent to email!`,
       mode,
       expiresAt: new Date(expiryTime),
     };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
     await organizationRepository.clearResetTokens(organization._id);
     await passwordHelper.closePwSetupWindow(organization._id);
     throw new AppError('There was an error sending the email. Try again later!', 500);
@@ -396,13 +388,6 @@ const resetPassword = async (token, password, passwordConfirm) => {
 
   // CRITICAL CHECK: Verify the password setup window is still open
   const windowOpen = await passwordHelper.isPwSetupWindowOpen(organization._id);
-  console.log(`Password reset attempt for org ${organization._id}:`, {
-    tokenValid: true,
-    windowOpen,
-    tokenExpiry: organization.resetPasswordExpires,
-    currentTime: Date.now(),
-    timeRemaining: organization.resetPasswordExpires - Date.now(),
-  });
 
   if (!windowOpen) {
     // Clean up expired token
@@ -444,8 +429,6 @@ const resetPassword = async (token, password, passwordConfirm) => {
 
   // Send confirmation email
   mailService.sendPasswordChangedConfirmation(updatedOrganization);
-
-  console.log(`Password ${isFirstTimeSetup ? 'set' : 'reset'} completed successfully for org ${organization._id}`);
 
   return {
     _id: updatedOrganization._id,

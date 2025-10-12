@@ -208,7 +208,6 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
   ];
 
   const generatedReply = await aiHelper.makeAPICall(provider, messages, 100);
-  console.log(generatedReply)
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_REPLY,
     service: 'message_reply',

@@ -11,7 +11,6 @@ const sendResetPasswordURL = async (email, subject, resetURL) => {
 
 // ORANIZATION - SEND EMAIL VERIFICATION MAIL
 const sendVerificationMail = async (email, subject, verificationURL) => {
-  console.log('Verification URL:', verificationURL, email);
   const html = compileTemplate('authentication/email_verification', { verificationURL });
   return await sendAutoSendEmail(email, subject, html);
 };

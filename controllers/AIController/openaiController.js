@@ -69,7 +69,6 @@ exports.generateMessageTemplate = catchAsync(async (req, res, next) => {
 exports.generateMessageReply = catchAsync(async (req, res, next) => {
   const { formattedMessages, userName, provider = 'chatgpt' } = req.body;
   const { userType, userId } = await getUserTypeAndId(req);
-  console.log(formattedMessages , userName , provider)
 
   const result = await openaiService.generateMessageReply(userType, userId, formattedMessages, userName, provider);
 

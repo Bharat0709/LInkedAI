@@ -45,7 +45,6 @@ exports.updateSavedPost = catchAsync(async (req, res, next) => {
   const postId = req.params.id;
   const { updateData } = req.body;
   const user = req.organization;
-  console.log(postId, updateData);
 
   const updatedPost = await savedPostService.updateSavedPost(postId, updateData, user);
 
@@ -212,7 +211,6 @@ exports.updateFollowUpDate = catchAsync(async (req, res, next) => {
 exports.updateEmailContent = catchAsync(async (req, res, next) => {
   const postId = req.params.id;
   const { emailSubject, emailBody } = req.body;
-  console.log(emailSubject, emailBody);
   if (!emailSubject || !emailBody) {
     return next(new AppError('Required Data is missing', 400));
   }
@@ -311,7 +309,6 @@ exports.getExpiringPosts = catchAsync(async (req, res, next) => {
 exports.bulkUpdateStatus = catchAsync(async (req, res, next) => {
   const { postIds, status } = req.body;
   const user = req.organization;
-  console.log(postIds, status, user);
   if (!Array.isArray(postIds) || postIds.length === 0) {
     return next(new AppError('Post IDs are required', 400));
   }
@@ -335,7 +332,6 @@ exports.bulkUpdatePriority = catchAsync(async (req, res, next) => {
   }
   const { postIds, priority } = req.body;
   const user = req.organization;
-  console.log(req.body.postIds, req.body.priority, req.user);
 
   if (!Array.isArray(postIds) || postIds.length === 0) {
     return next(new AppError('Post IDs are required', 400));
@@ -388,7 +384,6 @@ exports.bulkUpdateAutomation = catchAsync(async (req, res, next) => {
 
 exports.bulkDeleteSavedPosts = catchAsync(async (req, res, next) => {
   const { postIds } = req.body;
-  console.log(req.body);
   const user = req.organization;
 
   if (!Array.isArray(postIds) || postIds.length === 0) {

@@ -126,15 +126,12 @@ exports.googleAuth = passport.authenticate('google', {
 exports.googleAuthCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, async (err, organization) => {
     if (err || !organization) {
-      console.error('Google authentication error:', err);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
     }
 
     try {
-      console.log('Google authentication successful:');
       const token = signToken(organization.id, true);
       const encodedToken = encodeToken(token);
-      console.log(encodedToken);
 
       // Environment-specific cookie options
       const cookieOptions = {
@@ -143,13 +140,11 @@ exports.googleAuthCallback = (req, res, next) => {
         sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
         secure: process.env.NODE_ENV === 'production', // only true in prod for HTTPS
       };
-      console.log(cookieOptions)
       // Set cookie
       res.cookie('engage-gpt', encodedToken, cookieOptions);
       // Redirect to frontend callback page with token in query
       res.redirect(`${process.env.CLIENT_URL}/auth/google/callback?token=${token}`);
     } catch (error) {
-      console.error(error);
       return res.redirect(`${process.env.CLIENT_URL}/login?error=token_failed`);
     }
   })(req, res, next);
@@ -157,9 +152,7 @@ exports.googleAuthCallback = (req, res, next) => {
 
 exports.initiatePasswordReset = catchAsync(async (req, res, next) => {
   const { email } = req.body;
-  console.log('Password reset requested for email:', email);
   const result = await authService.initiatePasswordReset(email);
-  console.log('Password reset initiation result:', result);
   res.status(200).json({
     status: 'success',
     message: result.message,

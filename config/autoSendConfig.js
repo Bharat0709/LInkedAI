@@ -35,15 +35,8 @@ const sendAutoSendEmail = async (to, subject, html, attachments = []) => {
         },
       }
     );
-
-    console.log("✅ Email sent successfully:", response.data);
     return response.data;
   } catch (error) {
-    console.log(error.details)
-    console.error(
-      "❌ AutoSend Error:",
-      error.response?.data || error.details
-    );
     throw error;
   }
 };

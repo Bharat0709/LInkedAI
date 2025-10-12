@@ -23,7 +23,6 @@ exports.createMember = catchAsync(async (req, res, next) => {
 exports.getProfile = catchAsync(async (req, res, next) => {
   const memberId = req.member._id;
   const profile = await memberService.getMemberWithOrganizationDetails(memberId);
-  console.log(profile);
   res.status(200).json({
     status: 'success',
     profile,
@@ -45,7 +44,6 @@ exports.checkMemberExists = catchAsync(async (req, res, next) => {
 // EXTN REQUEST TO CONNECT THE EXTN USING EXTN TOKEN
 exports.addConnectionToken = catchAsync(async (req, res, next) => {
   const { connectionToken, name, profileLink, profilePicture, email } = req.body;
-  console.log(connectionToken, name, profileLink, profilePicture, email);
 
   const member = await memberService.connectMember({
     connectionToken,
@@ -83,7 +81,6 @@ exports.getAllMembersOfOrganization = catchAsync(async (req, res, next) => {
 exports.updateDaysActive = catchAsync(async (req, res, next) => {
   const { activeDays } = req.body;
   const memberId = req.member._id;
-  console.log(activeDays);
 
   if (activeDays < 0) {
     return next(new AppError('Please provide valid active days', 400));

@@ -2,20 +2,16 @@ const creditRepository = require('../../repositories/creditsRepository');
 
 const processExpiredCredits = async () => {
   try {
-    console.log('Starting credit expiry process...');
 
     const organizations = await creditRepository.findOrganizationsWithExpiredCredits();
 
     if (organizations.length === 0) {
-      console.log('No expired credits found');
       return {
         success: true,
         processedCount: 0,
         results: [],
       };
     }
-
-    console.log(`Found ${organizations.length} organizations with expired credits`);
 
     const results = [];
     let successCount = 0;
@@ -28,11 +24,9 @@ const processExpiredCredits = async () => {
         if (result) {
           results.push(result);
           successCount++;
-          console.log(`Expired ${result.expiredAmount} credits for organization ${result.email}`);
         }
       } catch (error) {
         failureCount++;
-        console.log(`Failed to expire credits for organization ${org._id}:`, error);
         results.push({
           organizationId: org._id,
           email: org.email,
@@ -41,8 +35,6 @@ const processExpiredCredits = async () => {
       }
     }
 
-    console.log(`Credit expiry process completed. Success: ${successCount}, Failed: ${failureCount}`);
-
     return {
       success: true,
       processedCount: successCount,
@@ -50,7 +42,6 @@ const processExpiredCredits = async () => {
       results,
     };
   } catch (error) {
-    console.log('Error in credit expiry process:', error);
     throw error;
   }
 };
@@ -59,26 +50,21 @@ const getExpiryStats = async () => {
   try {
     return await creditRepository.getCreditExpiryStats();
   } catch (error) {
-    console.log('Error fetching credit expiry stats:', error);
     throw error;
   }
 };
 
 const sendExpiryNotifications = async (daysBeforeExpiry = 3) => {
   try {
-    console.log(`Checking for credits expiring in ${daysBeforeExpiry} days...`);
 
     const organizations = await creditRepository.findOrganizationsWithCreditsExpiringSoon(daysBeforeExpiry);
 
     if (organizations.length === 0) {
-      console.log('No organizations with credits expiring soon');
       return {
         success: true,
         notificationsSent: 0,
       };
     }
-
-    console.log(`Found ${organizations.length} organizations with credits expiring soon`);
 
     // TODO: Integrate with your email service
     // const emailService = require('./emailService');
@@ -99,13 +85,10 @@ const sendExpiryNotifications = async (daysBeforeExpiry = 3) => {
         // });
 
         notificationsSent++;
-        console.log(`Sent expiry notification to ${org.email} (${org.credits.balance} credits, ${daysLeft} days left)`);
       } catch (error) {
         console.log(`Failed to send notification to ${org.email}:`, error);
       }
     }
-
-    console.log(`Expiry notifications completed. Sent: ${notificationsSent}`);
 
     return {
       success: true,
@@ -113,7 +96,6 @@ const sendExpiryNotifications = async (daysBeforeExpiry = 3) => {
       totalOrganizations: organizations.length,
     };
   } catch (error) {
-    console.log('Error sending expiry notifications:', error);
     throw error;
   }
 };

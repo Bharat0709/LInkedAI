@@ -218,7 +218,6 @@ const getDefaultTemplates = async (memberId, organizationId) => {
 // ADD PLACEHOLDER TO TEMPLATE
 const addPlaceholder = async (templateId, memberId, organizationId, placeholders) => {
   await verifyMemberAndOrganization(memberId, organizationId);
-  console.log(templateId, memberId, organizationId, placeholders);
   if (!templateId || !placeholders) {
     throw new AppError('Template ID and placeholder are required', 400);
   }

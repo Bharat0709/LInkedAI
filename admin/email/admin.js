@@ -35,13 +35,11 @@ exports.sendNewUserEmail = async user => {
 
 // TO ADMIN - USER NEEDS HELP - MANUALLY BY ORGANIZATION
 exports.sendHelpRequest = async (user, helpMessage) => {
-  console.log('Admin Email:', user.name);
   const html = compileTemplate('adminMails/help_request', {
     name: user?.name || 'N/A',
     email: user?.email || 'N/A',
     helpMessage,
   });
-  console.log('Help Request Email HTML:', html);
 
   return await sendAutoSendEmail(admin1, `Help Request from ${user?.name}`, html);
 };

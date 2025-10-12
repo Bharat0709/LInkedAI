@@ -20,8 +20,6 @@ const createSendToken = async (user, statusCode, res, isOrganization, isMember) 
   }
 
   const token = signToken(user._id, isOrganization, isMember);
-  console.log(token);
-  console.log(process.env.NODE_ENV)
   const encodedToken = encodeToken(token);
 
   // 🧠 Define environment-specific cookie options

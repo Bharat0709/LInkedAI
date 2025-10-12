@@ -12,13 +12,9 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   // 1️⃣ Get token from Authorization header or cookie
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
-    console.log('✅ TOKEN FOUND IN HEADERS');
   } else if (req.cookies?.['engage-gpt']) {
-    console.log('✅ TOKEN FOUND IN COOKIES');
     token = decodeToken(req.cookies['engage-gpt']);
   }
-
-  console.log('---------------- TOKEN ----------', token);
 
   // 2️⃣ If no token found → unauthorized
   if (!token) {
@@ -67,7 +63,5 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   // 5️⃣ Attach user to request for downstream access
   if (decoded.isMember) req.member = user;
   else req.organization = user;
-
-  console.log('✅ Token Verified Successfully');
   next();
 });

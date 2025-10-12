@@ -84,7 +84,6 @@ const getSimpleStats = async () => {
       reportTime: now.toLocaleTimeString(),
     };
   } catch (error) {
-    console.error('Error getting stats:', error);
     throw error;
   }
 };

@@ -65,9 +65,6 @@ const sendHelpRequestHandler = async (organization, helpTextContent) => {
   if (!organization || !organization.email) {
     throw new AppError('Organization details are missing.', 404);
   }
-
-  console.log('Sending help request email...');
-  console.log('Help Text Content:', helpTextContent, organization.email, organization.name);
   // Send help request email
   await mailService.sendHelpRequest(organization, helpTextContent);
 

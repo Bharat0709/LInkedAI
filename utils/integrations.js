@@ -19,7 +19,6 @@ exports.fetchGoogleSheetData = catchAsync(async (req, res, next) => {
       data: sheetData,
     });
   } catch (error) {
-    console.error('Error fetching Google Sheets data:', error);
 
     return next(
       new AppError(
@@ -81,7 +80,6 @@ async function googleSheetData(googleSheetUrl) {
 
     return { sheetNames, headers, rows };
   } catch (error) {
-    console.error('Error:', error.message);
     throw new Error(
       error.message || 'An error occurred while fetching the data.'
     );

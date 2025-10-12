@@ -9,17 +9,13 @@ const { logMemberActivity } = require('../Member/memberHelper');
 
 const createScheduledPost = async (memberId, organizationId, postData, files) => {
   const { content, postDate, postTime, visibility, timeZone, status } = postData;
-  console.log(postDate, postTime, visibility, timeZone, status);
 
   // Validate member credentials
   const member = await linkedInRepository.findMemberWithCredentials(memberId);
-  console.log(member);
   const { accessToken, profileUrn } = linkedInHelper.validateMemberCredentials(member);
-  console.log(accessToken, profileUrn);
 
   // Convert to UTC
   const utcDateTime = await linkedInHelper.convertToUTC(postDate, postTime, timeZone);
-  console.log(utcDateTime);
 
   // Upload media to Firebase
   const media = await linkedInHelper.uploadMediaToFirebase(files);
@@ -39,7 +35,6 @@ const createScheduledPost = async (memberId, organizationId, postData, files) =>
   };
 
   const scheduledPost = await linkedInRepository.createScheduledPost(scheduledPostData);
-  console.log(scheduledPost);
 
   // Log member activity
   await logMemberActivity(memberId, 'linkedin_post_scheduled', {
@@ -147,8 +142,6 @@ const getScheduledPosts = async (memberId, organizationId, filters = {}) => {
 
 const updateScheduledPost = async (postId, organizationId, updateData, files) => {
   const { content, postDate, postTime, visibility, timeZone, status, existingMediaUrls } = updateData;
-  console.log(postDate, postTime, visibility, timeZone, content, status, existingMediaUrls);
-
   // Find existing post
   const scheduledPost = await linkedInRepository.findScheduledPostByIdAndOrg(postId, organizationId);
   if (!scheduledPost) {
@@ -172,7 +165,6 @@ const updateScheduledPost = async (postId, organizationId, updateData, files) =>
   // Convert to UTC if date/time provided
   let utcDateTime = scheduledPost.effectivePostTime;
   if (postDate && postTime && timeZone) {
-    console.log(postDate, postTime, timeZone);
     utcDateTime = await linkedInHelper.convertToUTC(postDate, postTime, timeZone);
   }
 
@@ -188,9 +180,7 @@ const updateScheduledPost = async (postId, organizationId, updateData, files) =>
     effectivePostTime: utcDateTime,
   };
 
-  console.log('PAYLOAD', updatePayload);
   const updatedPost = await linkedInRepository.updateScheduledPost(postId, updatePayload);
-  console.log(updatedPost);
   // Log member activity
 
   return updatedPost;
@@ -223,7 +213,6 @@ const postToLinkedIn = async post => {
     // Get member credentials
     const member = await linkedInRepository.findMemberWithCredentials(post.memberId);
     if (!member || !member.linkedinAccessToken) {
-      console.error(`LinkedIn not connected for member ${post.memberId}`);
       await updatePostStatusToFailed(post._id);
       return;
     }
@@ -268,14 +257,12 @@ const postToLinkedIn = async post => {
       },
       'Posted'
     );
-    console.log(`✅ Successfully posted scheduled post ${post._id}`);
     return {
       success: true,
       postId: post._id,
       linkedinPostId: response.id,
     };
   } catch (error) {
-    console.error(`❌ Error posting scheduled post ${post._id}:`, error.message);
     await handlePostingError(post, error);
   }
 };
@@ -362,7 +349,6 @@ const schedulePosts = async () => {
     // }
 
     // if (postsToProcess.length === 0) {
-    //   console.log('⚠️ No posts to process after limit checking.');
     //   return {
     //     success: true,
     //     message: 'All posts exceeded organization limits',
@@ -377,7 +363,6 @@ const schedulePosts = async () => {
     //   };
     // }
 
-    console.log(`✅ ${postsToProcess.length} posts passed limit check, posts exceeded limits`);
 
     // Log bulk processing activity (system level)
     const memberIds = [...new Set(postsToProcess.map(post => post.memberId))];
@@ -426,10 +411,8 @@ const schedulePosts = async () => {
       results,
     };
 
-    console.log(`✅ Processing complete: ${successCount} successful, ${failureCount} failed`);
     return summary;
   } catch (error) {
-    console.error('❌ Error in scheduled posts processing:', error.message);
 
     return {
       success: false,

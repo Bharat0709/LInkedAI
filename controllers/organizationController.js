@@ -51,10 +51,8 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
 
 exports.sendHelpRequest = catchAsync(async (req, res, next) => {
   const { helpTextContent } = req.body;
-  console.log(helpTextContent);
   const organization = req.organization;
   const result = await organizationService.sendHelpRequest(organization, helpTextContent);
-console.log(result)
   res.status(200).json({
     status: 'success',
     message: result.message,

@@ -10,7 +10,6 @@ export const decodeToken = encodedToken => {
     const decoded = atob(base64);
     return decodeURIComponent([...decoded].map(c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
   } catch (error) {
-    console.error('Invalid Base64 token:', error);
     return null;
   }
 };

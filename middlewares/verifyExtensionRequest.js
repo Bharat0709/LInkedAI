@@ -21,18 +21,6 @@ exports.verifyExtension = catchAsync(async (req, res, next) => {
     const fetchSite = req.headers['sec-fetch-site'];
     const allowedId = process.env.ALLOWED_EXTENSION_ID;
 
-    console.log('📥 Incoming Extension Request:', {
-      method: req.method,
-      path: req.originalUrl,
-      headers: {
-        origin: req.headers.origin,
-        'x-extension-id': req.headers['x-extension-id'],
-        'x-timestamp': req.headers['x-timestamp'],
-        'x-engagegpt-nonce': req.headers['x-engagegpt-nonce'],
-        'sec-fetch-site': req.headers['sec-fetch-site'],
-      },
-    });
-
     // 1. Validate Extension ID
     if (!extensionId || extensionId !== allowedId) {
       return res.status(403).json({ error: 'Unauthorized extension ID' });
@@ -63,7 +51,6 @@ exports.verifyExtension = catchAsync(async (req, res, next) => {
 
     return next();
   } catch (err) {
-    console.error('❌ Extension verification failed:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -153,7 +153,6 @@ const updateAutomationStatus = async (automationId, memberId, updateData) => {
 // Open Route to Approve Automation Mail
 const approveAutomation = async (automationId, approvedBy) => {
   const automation = await automationHistoryRepository.findById(automationId);
-  console.log(automation);
   if (!automation) {
     throw new AppError('Automation not found', 404);
   }
@@ -228,13 +227,10 @@ const scheduleAutomation = async (automationId, scheduleData, user, scheduledBy)
 const getPendingApprovals = async (user, memberId) => {
   const organizationId = user._id;
   const organization = await findOrganizationById(organizationId);
-  console.log(organizationId, memberId);
   if (!organization) {
     throw new AppError('Organization not found', 404);
   }
   await getMemberById(memberId);
-
-  console.log(organizationId, memberId);
   return await automationHistoryRepository.findPendingApprovalsByMemberId(memberId);
 };
 

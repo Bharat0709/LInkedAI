@@ -7,11 +7,9 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.organization.id;
   const { calendarData } = req.body;
-  console.log(memberId, organizationId, calendarData);
 
   const createdEntries = await contentCalendarService.addContentCalendar(memberId, organizationId, calendarData);
 
-  console.log(createdEntries);
 
   res.status(201).json({
     status: 'success',
@@ -26,8 +24,7 @@ exports.addContentCalendar = catchAsync(async (req, res, next) => {
 exports.getContentCalendar = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.organization.id;
-  const { status, startDate, endDate } = req.query;
-  console.log(memberId, organizationId);
+  const { status, startDate, endDate } = req.query
 
   const filters = {};
   if (status) filters.status = status;

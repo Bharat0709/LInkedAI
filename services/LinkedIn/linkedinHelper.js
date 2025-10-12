@@ -47,7 +47,6 @@ const uploadSingleFileToFirebase = async file => {
       stream.end(file.buffer);
     });
   } catch (error) {
-    console.error('Firebase upload error:', error);
     throw new AppError('Failed to upload media to Firebase', 500);
   }
 };
@@ -60,7 +59,6 @@ const fetchMediaFromFirebase = async url => {
       contentType: response.headers['content-type'] || 'application/octet-stream',
     };
   } catch (error) {
-    console.error('Error fetching media from Firebase:', error);
     throw new AppError('Failed to fetch media from Firebase', 500);
   }
 };
@@ -80,7 +78,6 @@ const parseExistingMedia = async existingMediaUrls => {
 
     // Ensure it's an array
     if (!Array.isArray(parsedMedia)) {
-      console.error('Parsed media is not an array:', parsedMedia);
       throw new AppError('Invalid existing media format', 400);
     }
 
@@ -91,7 +88,6 @@ const parseExistingMedia = async existingMediaUrls => {
       description: media.description || '',
     }));
   } catch (error) {
-    console.error('Error parsing existing media URLs:', error);
     throw new AppError('Invalid existing media format', 400);
   }
 };
@@ -150,7 +146,6 @@ const uploadMediaToLinkedIn = async (mediaFiles, accessToken, profileUrn) => {
 
 const createLinkedInPostBody = async (content, visibility, profileUrn, media = []) => {
   const mediaCategory = media.some(file => file.title?.text?.toLowerCase().includes('pdf') || file.media?.includes('document')) ? 'DOCUMENT' : media.length > 0 ? 'IMAGE' : 'NONE';
-  console.log(visibility, profileUrn, content, media);
   return {
     author: `urn:li:person:${profileUrn}`,
     lifecycleState: 'PUBLISHED',
@@ -168,7 +163,6 @@ const createLinkedInPostBody = async (content, visibility, profileUrn, media = [
 };
 
 const postToLinkedInAPI = async (postBody, accessToken) => {
-  console.log(postBody);
   try {
     const response = await axios.post(process.env.LINKEDIN_POST_URL, postBody, {
       headers: {
@@ -176,10 +170,8 @@ const postToLinkedInAPI = async (postBody, accessToken) => {
         'Content-Type': 'application/json',
       },
     });
-    console.log(response);
     return response.data;
   } catch (error) {
-    console.error('LinkedIn API Error:', error.response?.data || error.message);
     throw new AppError(`LinkedIn posting failed: ${error.response?.data?.message || error.message}`, 500);
   }
 };

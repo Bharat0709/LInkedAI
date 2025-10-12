@@ -77,8 +77,6 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   // Generate post content
   const generatedPostContent = await geminiService.generatePostContent(organization._id, postType, selectedTone);
 
-  console.log(generatedPostContent);
-
   res.status(200).json({
     status: 'success',
     generatedPostContent,
@@ -89,7 +87,6 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
 
 exports.generatePostContentGeminiExtn  = catchAsync(async (req, res, next) => {
   const { postType, selectedTone } = req.body;
-console.log(postType , selectedTone)
   if (!postType || !selectedTone) {
     return next(new AppError('Post type and selected tone are required', 400));
   }
@@ -104,8 +101,6 @@ console.log(postType , selectedTone)
 
   // Generate post content
   const generatedPostContent = await geminiService.generatePostContent(member._id, postType, selectedTone);
-
-  console.log(generatedPostContent);
 
   res.status(200).json({
     status: 'success',
@@ -198,7 +193,6 @@ exports.generateTemplateGemini = catchAsync(async (req, res, next) => {
 
 exports.generateEmailTemplateGemini = catchAsync(async (req, res, next) => {
   const { format, templateType, prompt } = req.body;
-  console.log(req.body);
 
   if (!format || !templateType) {
     return next(new AppError('Email format and template type are required', 400));
@@ -211,8 +205,6 @@ exports.generateEmailTemplateGemini = catchAsync(async (req, res, next) => {
 
   // Generate email template
   const generatedEmailTemplate = await geminiService.generateEmailTemplate(user._id, format, templateType, prompt);
-
-  console.log(generatedEmailTemplate);
   res.status(200).json({
     status: 'success',
     data: {

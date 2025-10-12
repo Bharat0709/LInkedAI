@@ -65,11 +65,6 @@ exports.linkedinAuth = [
 
       res.redirect(authUrl);
     } catch (err) {
-      console.error('Error in linkedinAuth:', {
-        message: err.message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-        sessionId: req.sessionID?.substring(0, 8),
-      });
       next(new AppError('Authentication initialization failed', 500));
     }
   },
@@ -84,7 +79,6 @@ exports.linkedinAuthCallback = [
       const { code, state: receivedState, error } = req.query;
       // Handle LinkedIn error responses
       if (error) {
-        console.error('LinkedIn OAuth error:', { error, sessionId: req.sessionID?.substring(0, 8) });
         return res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=false&error=${encodeURIComponent('Authentication was cancelled or failed')}`);
       }
 
@@ -200,14 +194,6 @@ exports.linkedinAuthCallback = [
 
       res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=true&timestamp=${Date.now()}`);
     } catch (err) {
-      console.error('Error in linkedinAuthCallback:', {
-        message: err.message,
-        status: err.status || err.response?.status,
-        responseData: err.response?.data ? 'Present (hidden)' : 'None',
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-        sessionId: req.sessionID?.substring(0, 8),
-        duration: Date.now() - startTime,
-      });
 
       if (req.session.linkedinState) {
         delete req.session.linkedinState;

@@ -20,7 +20,6 @@ const expireCredits = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Error in expireCredits controller:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to process expired credits',
@@ -38,7 +37,6 @@ const getExpiryStats = async (req, res) => {
       data: stats,
     });
   } catch (error) {
-    console.error('Error in getExpiryStats controller:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch expiry stats',
@@ -59,7 +57,6 @@ const sendExpiryNotifications = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error('Error in sendExpiryNotifications controller:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to send expiry notifications',

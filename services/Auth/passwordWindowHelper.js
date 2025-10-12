@@ -10,10 +10,8 @@ const DEFAULT_WINDOW_DURATION_SECONDS = 10 * 60; // 10 minutes
  */
 exports.openPwSetupWindow = async (orgId, ttlSeconds = DEFAULT_WINDOW_DURATION_SECONDS) => {
   try {
-    console.log(`Password setup window opened for org ${orgId} - expires in ${ttlSeconds} seconds`);
     await redisClient.set(WINDOW_KEY(orgId), '1', 'EX', ttlSeconds);
   } catch (error) {
-    console.error('Error opening password setup window:', error);
     throw error;
   }
 };
@@ -24,10 +22,8 @@ exports.openPwSetupWindow = async (orgId, ttlSeconds = DEFAULT_WINDOW_DURATION_S
 exports.isPwSetupWindowOpen = async orgId => {
   try {
     const exists = await redisClient.exists(WINDOW_KEY(orgId));
-    console.log(`Password setup window check for org ${orgId}: ${exists === 1 ? 'OPEN' : 'CLOSED'}`);
     return exists === 1;
   } catch (error) {
-    console.error('Error checking password setup window:', error);
     return false;
   }
 };
@@ -38,7 +34,6 @@ exports.isPwSetupWindowOpen = async orgId => {
 exports.closePwSetupWindow = async orgId => {
   try {
     await redisClient.del(WINDOW_KEY(orgId));
-    console.log(`Password setup window closed for org ${orgId}`);
   } catch (error) {
     console.error('Error closing password setup window:', error);
   }
@@ -53,7 +48,6 @@ exports.getWindowRemainingTime = async orgId => {
     if (ttl < 0) return null;
     return ttl;
   } catch (error) {
-    console.error('Error getting window remaining time:', error);
     return null;
   }
 };
@@ -67,12 +61,10 @@ exports.extendPwSetupWindow = async (orgId, additionalSeconds = 300) => {
     if (currentTtl > 0) {
       const newTtl = currentTtl + additionalSeconds;
       await redisClient.expire(WINDOW_KEY(orgId), newTtl);
-      console.log(`Password setup window extended for org ${orgId} by ${additionalSeconds}s`);
       return true;
     }
     return false;
   } catch (error) {
-    console.error('Error extending password setup window:', error);
     return false;
   }
 };

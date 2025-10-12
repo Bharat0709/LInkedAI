@@ -235,12 +235,11 @@ const bulkUpdatePosts = async (postIds, updateData, user) => {
 };
 
 const deleteSavedPost = async (postId, user) => {
-  console.log(postId);
   const post = await savedPostRepository.findById(postId);
   if (!post) {
     throw new AppError('Saved post not found', 404);
   }
-  console.log(post?.organizationId, user._id);
+
   // Check permissions (typically only organization admins can delete)
   const canDelete = post?.organizationId.toString() === user._id.toString();
 

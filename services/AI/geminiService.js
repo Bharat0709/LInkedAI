@@ -307,7 +307,6 @@ const generateTemplate = async (userId, templateRequirements, selectedTone) => {
 };
 
 const generateEmailTemplate = async (userId, format, templateType, prompt) => {
-  console.log('In service:', userId, format, templateType, prompt);
   const parts = [
     {
       text: `Generate a ${format} email template with the following specifications:

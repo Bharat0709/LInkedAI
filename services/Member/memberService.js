@@ -16,14 +16,12 @@ const checkMemberExists = async (name, profileLink) => {
 
     return (exists = !!(existingMember && existingMember.email));
   } catch (error) {
-    console.error('checkMemberExists error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
 
 const createMember = async (organizationId, memberData) => {
   const { name, email, timeZone } = memberData;
-  console.log(organizationId, memberData);
 
   if (!name || !email) {
     throw new AppError('Name and email are required', 400);
@@ -121,7 +119,6 @@ const findAllByOrganizationId = async organizationId => {
 
     return members;
   } catch (error) {
-    console.error('Error finding members by organization ID:', error);
     throw error;
   }
 };
@@ -152,7 +149,6 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
   const organization = await organizationRepository.findById(organizationId);
   if (!member) throw new AppError('Member not found', 404);
   if (!organization) throw new AppError('Organization not found', 404);
-  console.log(organization.credits.balance);
   if (member.creditsUsedToday === 0) {
     throw new AppError('No Credits used by member today');
   }
@@ -161,8 +157,6 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
   }
 
   const newOrgBalance = organization.credits.balance - 10;
-
-  console.log(newOrgBalance);
 
   const orgTransaction = {
     type: 'usage',
@@ -186,8 +180,6 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
     creditsUsedToday: member.creditsUsedToday,
     lastActive: member.lastActive,
   });
-
-  console.log(updatedMember);
 
   // Log activity
   await logMemberActivity(memberId, `Credits Reset Perfomed for ${new Date().toLocaleString()}`);
@@ -244,7 +236,6 @@ const getMemberWithOrganizationDetails = async memberId => {
       creditsLeft: organization.credits.balance,
     },
   };
-  console.log(memberData);
   return memberData;
 };
 
@@ -606,11 +597,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
 
     const formData = memberData.formData;
 
-    console.log('=== UPDATING COMPLETE SUMMARY ===');
-    console.log('Member ID:', memberId);
-    console.log('Organization ID:', organizationId);
-    console.log('Form Data:', JSON.stringify(formData, null, 2));
-
     // Prepare comprehensive update object
     const updateFields = {};
 
@@ -634,8 +620,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
         autoDetectFormLinks: leadSavingData.autoDetectFormLinks !== undefined ? leadSavingData.autoDetectFormLinks : true,
         saveFrequency: leadSavingData.saveFrequency || 'realtime',
       };
-
-      console.log('Updated postSavingPreferences:', updateFields.postSavingPreferences);
     }
     // Handle Step 2: Professional Profile -> summary.professionalProfile
     if (formData['summary.professionalProfile']) {
@@ -663,8 +647,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
           workMode: profileData.location?.workMode || 'hybrid',
         },
       };
-
-      console.log('Updated professionalProfile:', updateFields.summary.professionalProfile);
     }
 
     // Handle Step 3: Lead Generation Goals -> leadGenerationGoals (root level)
@@ -685,7 +667,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
         },
       };
 
-      console.log('Updated leadGenerationGoals:', updateFields.leadGenerationGoals);
     }
 
     // Handle Step 5: Automation Settings -> leadGenerationGoals.automation
@@ -717,33 +698,24 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
           customCronExpression: automationData.customCronExpression || null,
         },
       };
-
-      console.log('Updated automation settings:', updateFields.leadGenerationGoals.automation);
     }
 
     // Handle Step 4: Custom Requirements (if you want to store this)
     if (formData.customRequirements) {
       updateFields.customRequirements = formData.customRequirements.customRequirements;
-      console.log('Updated customRequirements:', updateFields.customRequirements);
+
     }
 
-    console.log('=== FINAL UPDATE FIELDS ===');
-    console.log(JSON.stringify(updateFields, null, 2));
 
     // Validate the update fields against schema constraints
     const validationResult = validateUpdateFields(updateFields);
     if (!validationResult.isValid) {
-      console.error('Validation errors:', validationResult.errors);
       throw new AppError(`Validation failed: ${validationResult.errors.join(', ')}`, 400);
     }
-
-    console.log('✅ Validation passed');
 
     // Perform the update
     const updatedMember = await memberRepository.updateById(memberId, updateFields);
 
-    console.log('✅ Member updated successfully');
-    console.log('Updated member fields:', Object.keys(updateFields));
 
     return {
       success: true,
@@ -752,7 +724,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
       message: 'Member summary and settings updated successfully',
     };
   } catch (error) {
-    console.error('❌ Error in updateCompleteSummary:', error);
     throw error;
   }
 };

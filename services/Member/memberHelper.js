@@ -36,7 +36,6 @@ const calculateMemberRank = async memberId => {
 
     return rank;
   } catch (error) {
-    console.error('Error calculating member rank:', error);
     return 0;
   }
 };
@@ -58,7 +57,6 @@ const getMemberPlanFeatures = async memberId => {
       memberRole: member.role,
     };
   } catch (error) {
-    console.error('Error getting member plan features:', error);
     return null;
   }
 };
@@ -77,7 +75,6 @@ const checkMemberPermissions = async (memberId, requiredRole = 'member') => {
 
     return roleHierarchy[member.role] >= roleHierarchy[requiredRole];
   } catch (error) {
-    console.error('Error checking member permissions:', error);
     return false;
   }
 };
@@ -128,7 +125,6 @@ const getMemberStats = async memberId => {
       isLinkedinConnected: member.isLinkedinConnected,
     };
   } catch (error) {
-    console.error('Error getting member stats:', error);
     return null;
   }
 };

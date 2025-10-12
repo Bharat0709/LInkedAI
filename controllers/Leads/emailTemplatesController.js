@@ -63,8 +63,6 @@ exports.getEmailTemplateAdmin = catchAsync(async (req, res, next) => {
 exports.getMemberTemplatesAdmin = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.params.organizationId;
-  console.log('Member ID:', memberId);
-  console.log('Organization ID:', organizationId);
 
   const templates = await emailTemplateService.getMemberTemplates(memberId, organizationId);
 
@@ -81,8 +79,6 @@ exports.getMemberTemplatesAdmin = catchAsync(async (req, res, next) => {
 exports.getMemberTemplates = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const organizationId = req.organization._id;
-  console.log('Member ID:', memberId);
-  console.log('Organization ID:', organizationId);
 
   const templates = await emailTemplateService.getMemberTemplates(memberId, organizationId);
 
@@ -295,7 +291,6 @@ exports.getTemplateStats = catchAsync(async (req, res, next) => {
 // BULK DELETE TEMPLATES
 exports.bulkDeleteTemplates = catchAsync(async (req, res, next) => {
   const { memberId, templateIds } = req.body;
-  console.log('Member ID for bulk delete:', memberId, templateIds);
 
   const organizationId = req.organization._id;
 
@@ -326,7 +321,6 @@ exports.bulkDeleteTemplates = catchAsync(async (req, res, next) => {
 exports.bulkUpdateTemplates = catchAsync(async (req, res, next) => {
   const { templateIds, updateData, memberId } = req.body;
   const organizationId = req.organization._id;
-  console.log('Member ID for bulk update:', memberId, templateIds, updateData);
   if (!templateIds || !Array.isArray(templateIds) || templateIds.length === 0) {
     return next(new AppError('Template IDs array is required', 400));
   }

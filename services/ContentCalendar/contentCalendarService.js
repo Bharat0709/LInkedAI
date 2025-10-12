@@ -22,15 +22,12 @@ const addContentCalendar = async (memberId, organizationId, calendarData) => {
   for (let data of calendarData) {
     const { title, date, time } = data;
 
-    console.log('Processing entry:', data);
-
     if (!title || !date || !time) {
       throw new AppError('Title, Date, and Time are required fields for each calendar entry.', 400);
     }
 
     // Parse date in DD-MM-YYYY format
     const entryDate = calendarHelper.parseDate(date);
-    console.log('Parsed date:', entryDate.getTime());
 
     if (!entryDate || isNaN(entryDate.getTime())) {
       throw new AppError(`Invalid date format for entry: ${title}. Please use DD-MM-YYYY format.`, 400);
@@ -38,7 +35,6 @@ const addContentCalendar = async (memberId, organizationId, calendarData) => {
 
     // Convert and validate time
     const convertedTime = calendarHelper.convertTo24Hour(time);
-    console.log('Converted time:', convertedTime);
 
     if (!convertedTime) {
       throw new AppError(`Invalid time format for entry: ${title}. Use HH:MM (24-hour) or HH:MM AM/PM format.`, 400);
@@ -88,7 +84,6 @@ const getContentCalendar = async (memberId, organizationId, filters = {}) => {
   if (!member) {
     throw new AppError('Member not found or does not belong to the organization.', 404);
   }
-  console.log(member);
 
   // Build query filters
   const queryFilters = { memberId, organizationId };
@@ -108,9 +103,6 @@ const getContentCalendar = async (memberId, organizationId, filters = {}) => {
   }
 
   const contentCalendar = await contentCalendarRepository.findByFilters(queryFilters);
-
-  console.log(contentCalendar);
-
   return contentCalendar || [];
 };
 
@@ -130,7 +122,6 @@ const updateContentCalendar = async (memberId, organizationId, contentId, update
 
   // Parse date in DD-MM-YYYY format
   const entryDate = calendarHelper.parseDate(date);
-  console.log('Parsed date:', entryDate.getTime());
 
   if (isNaN(entryDate.getTime())) {
     throw new AppError('Invalid date format', 400);

@@ -159,7 +159,6 @@ const getMemberStats = async (memberId, timeframe = 'all') => {
 
 // Get member's pending approvals
 const findPendingApprovalsByMemberId = async memberId => {
-  console.log(memberId);
   return await AutomationHistory.find({
     memberId,
     status: 'pending_approval',

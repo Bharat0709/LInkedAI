@@ -9,7 +9,6 @@ exports.createAutomation = catchAsync(async (req, res, next) => {
   const organizationId = req.params.organizationId;
   const adminPassword = process.env.ADMIN_PASSWORD;
   const { adminPass } = req.body;
-  console.log(adminPass, adminPassword);
   if (adminPassword != adminPass) {
     return next(new AppError('You are not authorized to perform this action', 400));
   }
@@ -55,7 +54,6 @@ exports.getAutomation = catchAsync(async (req, res, next) => {
   const automationId = req.params.id;
   const memberId = req.params.memberId;
   const user = req.organization;
-  console.log(automationId);
   const automation = await automationHistoryService.getAutomation(automationId, memberId, user);
 
   res.status(200).json({
@@ -68,7 +66,6 @@ exports.getAutomation = catchAsync(async (req, res, next) => {
 exports.updateAutomation = catchAsync(async (req, res, next) => {
   const automationId = req.params.id;
   const { updateData } = req.body;
-  console.log(updateData);
   const memberId = req.params.memberId;
   const user = req.organization;
 
@@ -152,9 +149,6 @@ exports.getScheduledAutomations = catchAsync(async (req, res, next) => {
   const user = req.organization;
   const { upcoming = true, overdue = false } = req.query;
   const memberId = req.params.memberId;
-
-  console.log(memberId);
-
   const scheduledAutomations = await automationHistoryService.getScheduledAutomations(user, memberId, {
     upcoming: upcoming === 'true',
     overdue: overdue === 'true',
@@ -286,7 +280,6 @@ exports.updateAutomationStatus = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const { status, adminPass } = req.body;
   const adminPassword = process.env.ADMIN_PASSWORD;
-  console.log(adminPass, adminPassword);
   if (adminPassword != adminPass) {
     return next(new AppError('You are not authorized to perform this action', 400));
   }
@@ -393,7 +386,6 @@ exports.updateDeliveryStatus = catchAsync(async (req, res, next) => {
   const memberId = req.params.memberId;
   const { deliveryStatus, adminPass } = req.body;
   const adminPassword = process.env.ADMIN_PASSWORD;
-  console.log(adminPass, adminPassword);
   if (adminPassword != adminPass) {
     return next(new AppError('You are not authorized to perform this action', 400));
   }

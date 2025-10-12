@@ -212,7 +212,6 @@ const checkSubscription = async orgId => {
   }
 
   const { subscription } = organization;
-  console.log(subscription);
 
   if (!subscription || !subscription.plan || !subscription.status) {
     throw new AppError('Organization subscription details are missing.', 403);

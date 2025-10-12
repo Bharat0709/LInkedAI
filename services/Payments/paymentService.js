@@ -80,7 +80,6 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
 
     return session;
   } catch (error) {
-    console.error('Error creating Dodo checkout session:', error);
     throw new AppError(error.message || 'Internal Server Error', 500);
   }
 };
@@ -100,7 +99,6 @@ const getDecryptedBillingDetails = org => {
       phoneNumber: org.billingDetails.phoneNumber ? decryptToken(org.billingDetails.phoneNumber) : null,
     };
   } catch (error) {
-    console.error('Error decrypting billing details:', error);
     return null;
   }
 };
@@ -118,7 +116,6 @@ const getCreditsForProduct = async productId => {
 
     // Find the product by ID
     const product = products.find(p => p.product_id === productId);
-    console.log('Product found for ID:', productId, product);
 
     if (!product) {
       console.warn(`Product not found for ID: ${productId}`);
@@ -127,7 +124,6 @@ const getCreditsForProduct = async productId => {
 
     // Get credits from metadata
     const credits = product.metadata?.creditsApplicable;
-    console.log('Credits found in product metadata:', credits);
 
     if (!credits) {
       console.warn(`No creditsApplicable found in metadata for product: ${productId}`);
@@ -136,7 +132,6 @@ const getCreditsForProduct = async productId => {
 
     // Parse credits (it's a string in the metadata)
     const creditsToAdd = parseInt(credits, 10);
-    console.log('Parsed credits to add:', creditsToAdd);
 
     if (isNaN(creditsToAdd)) {
       console.warn(`Invalid credits value in metadata: ${credits}`);
@@ -145,7 +140,6 @@ const getCreditsForProduct = async productId => {
 
     return creditsToAdd;
   } catch (error) {
-    console.error('Error getting credits for product:', error);
     return 0;
   }
 };
@@ -172,9 +166,6 @@ const handleWebhook = async payload => {
       subscription_id,
       digital_products_delivered,
     } = data;
-
-    console.log('Webhook payload received:', payload);
-    console.log('Processing webhook for session:', payment_id, 'with status:', status);
 
     // 1. Save/update payment record
     const paymentRecord = {
@@ -213,8 +204,6 @@ const handleWebhook = async payload => {
 
       // Dynamically fetch credits based on product_id
       const creditsToAdd = await getCreditsForProduct(metadata.product_id);
-      console.log(`Credits to add for product ${metadata.product_id}:`, creditsToAdd);
-
       if (creditsToAdd === 0) {
         console.warn(`No credits to add for product: ${metadata.product_id}`);
         // Still save the payment record but don't add credits
@@ -223,8 +212,6 @@ const handleWebhook = async payload => {
 
       // Calculate expiry date (30 days from now)
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      console.log(`Credits will expire at: ${expiresAt}`);
-
       // Update credit balance and expiry
       org.credits.balance += creditsToAdd;
       org.credits.expiresAt = expiresAt;
@@ -275,8 +262,6 @@ const handleWebhook = async payload => {
 
           // Update organization billing details
           org.billingDetails = encryptedBillingDetails;
-
-          console.log('Billing details encrypted and saved successfully');
         } catch (encryptionError) {
           console.error('Error encrypting billing details:', encryptionError);
           // Continue processing even if billing encryption fails
@@ -284,13 +269,8 @@ const handleWebhook = async payload => {
       }
 
       await org.save();
-
-      console.log(`Added ${creditsToAdd} credits to org ${metadata.organizationId}, expires at ${expiresAt}`);
     }
-
-    console.log('Webhook processed successfully for session:', payment_id);
   } catch (error) {
-    console.error('Error handling webhook:', error);
     throw new Error(error.message || 'Failed to process webhook');
   }
 };
@@ -322,7 +302,6 @@ const fetchAllProducts = async () => {
     const data = await res.json();
     return data || [];
   } catch (error) {
-    console.error('Error fetching Dodo products:', error);
     throw new AppError(error.message || 'Failed to fetch products', 500);
   }
 };
