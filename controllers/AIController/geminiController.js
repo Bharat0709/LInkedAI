@@ -86,6 +86,35 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   });
 });
 
+
+exports.generatePostContentGeminiExtn  = catchAsync(async (req, res, next) => {
+  const { postType, selectedTone } = req.body;
+console.log(postType , selectedTone)
+  if (!postType || !selectedTone) {
+    return next(new AppError('Post type and selected tone are required', 400));
+  }
+
+  const member = req.member;
+  if (!member) {
+    return next(new AppError('Organization not found', 404));
+  }
+
+  // Verify and deduct credits
+  const updatedUser = await aiHelper.processCredits('member', member._id, CREDITS_CONFIG.POST_GENERATION, 'Post Generation using Gemini');
+
+  // Generate post content
+  const generatedPostContent = await geminiService.generatePostContent(member._id, postType, selectedTone);
+
+  console.log(generatedPostContent);
+
+  res.status(200).json({
+    status: 'success',
+    generatedPostContent,
+    remainingCredits: updatedUser.creditsLeft,
+  });
+});
+
+
 exports.generateOrganizationPostContentUsePersona = catchAsync(async (req, res, next) => {
   const { postType, language, persona, selectedTone } = req.body;
 

@@ -150,7 +150,7 @@ const generateMessageTemplate = async (userType, userId, templateRequirements, s
   }
 
   // Process credits first
-  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE, 'message_template');
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE, 'Message Template');
 
   const messages = [
     {
@@ -190,7 +190,7 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
   }
 
   // Process credits first
-  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.MESSAGE_REPLY, 'message_reply');
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.MESSAGE_REPLY, 'Message Reply');
 
   const messages = [
     {
@@ -208,6 +208,7 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
   ];
 
   const generatedReply = await aiHelper.makeAPICall(provider, messages, 100);
+  console.log(generatedReply)
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_REPLY,
     service: 'message_reply',

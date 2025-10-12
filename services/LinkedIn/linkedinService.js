@@ -316,11 +316,11 @@ const updatePostStatusToFailed = async postId => {
 
 const schedulePosts = async () => {
   console.log('🔄 Checking for scheduled posts to publish...');
+  let postsToProcess = []; 
 
   try {
     const now = moment().utc().format();
     console.log('Current UTC Time:', now);
-
     const postsToPublish = await linkedInRepository.findPostsToPublish(now);
 
     if (postsToPublish.length === 0) {
@@ -336,48 +336,48 @@ const schedulePosts = async () => {
     console.log(`🚀 Found ${postsToPublish.length} posts to publish.`);
 
     for (const post of postsToPublish) {
-      const orgId = post.organizationId;
+      // const orgId = post.organizationId;
 
-      // Check if we already validated this organization
-      if (!organizationLimits.has(orgId)) {
-        const organization = await organizationRepository.findById(orgId);
+      // // Check if we already validated this organization
+      // if (!organizationLimits.has(orgId)) {
+      //   const organization = await organizationRepository.findById(orgId);
 
-        if (!organization) {
-          console.warn(`⚠️ Organization ${orgId} not found for post ${post._id}`);
-          limitExceededPosts.push({
-            post,
-            error: 'Organization not found',
-          });
-          continue;
-        }
-      }
+      //   if (!organization) {
+      //     console.warn(`⚠️ Organization ${orgId} not found for post ${post._id}`);
+      //     limitExceededPosts.push({
+      //       post,
+      //       error: 'Organization not found',
+      //     });
+      //     continue;
+      //   }
+      // }
       {
         postsToProcess.push(post);
       }
     }
 
     // Handle posts that exceeded limits
-    for (const { post, error } of limitExceededPosts) {
-      await handlePostingError(post, new Error(error));
-    }
+    // for (const { post, error } of limitExceededPosts) {
+    //   await handlePostingError(post, new Error(error));
+    // }
 
-    if (postsToProcess.length === 0) {
-      console.log('⚠️ No posts to process after limit checking.');
-      return {
-        success: true,
-        message: 'All posts exceeded organization limits',
-        postsProcessed: postsToPublish.length,
-        successCount: 0,
-        failureCount: limitExceededPosts.length,
-        results: limitExceededPosts.map(({ post, error }) => ({
-          postId: post._id,
-          status: 'failed',
-          message: error,
-        })),
-      };
-    }
+    // if (postsToProcess.length === 0) {
+    //   console.log('⚠️ No posts to process after limit checking.');
+    //   return {
+    //     success: true,
+    //     message: 'All posts exceeded organization limits',
+    //     postsProcessed: postsToPublish.length,
+    //     successCount: 0,
+    //     failureCount: limitExceededPosts.length,
+    //     results: limitExceededPosts.map(({ post, error }) => ({
+    //       postId: post._id,
+    //       status: 'failed',
+    //       message: error,
+    //     })),
+    //   };
+    // }
 
-    console.log(`✅ ${postsToProcess.length} posts passed limit check, ${limitExceededPosts.length} posts exceeded limits`);
+    console.log(`✅ ${postsToProcess.length} posts passed limit check, posts exceeded limits`);
 
     // Log bulk processing activity (system level)
     const memberIds = [...new Set(postsToProcess.map(post => post.memberId))];

@@ -1,6 +1,7 @@
 const catchAsync = require('../../utils/catchAsync');
 const openaiService = require('../../services/AI/openaiService');
 const AppError = require('../../utils/appError');
+const { UserMetadata } = require('firebase-admin/auth');
 
 const getUserTypeAndId = async req => {
   if (req.member) {
@@ -68,6 +69,7 @@ exports.generateMessageTemplate = catchAsync(async (req, res, next) => {
 exports.generateMessageReply = catchAsync(async (req, res, next) => {
   const { formattedMessages, userName, provider = 'chatgpt' } = req.body;
   const { userType, userId } = await getUserTypeAndId(req);
+  console.log(formattedMessages , userName , provider)
 
   const result = await openaiService.generateMessageReply(userType, userId, formattedMessages, userName, provider);
 
