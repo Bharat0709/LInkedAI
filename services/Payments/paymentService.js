@@ -7,7 +7,7 @@ const orgRepo = require('../../repositories/organizationRepository');
 const DODO_API_URL = process.env.DODO_API_URL;
 const DODO_PRODUCTS_URL = process.env.DODO_PRODUCTS_URL;
 const DODO_API_KEY = process.env.DODO_PAYMENT_TOKEN;
-const DODO_REDIRECT_URL = process.env.DODO_REDIRECT_URL ;
+const DODO_REDIRECT_URL = process.env.DODO_REDIRECT_URL;
 // Create checkout session
 const createCheckoutSession = async ({ organizationId, product_id }) => {
   try {
@@ -128,7 +128,7 @@ const getCreditsForProduct = async productId => {
   }
 };
 
-const handleWebhook = async (payload) => {
+const handleWebhook = async payload => {
   try {
     const { data } = payload;
     const {
@@ -148,9 +148,9 @@ const handleWebhook = async (payload) => {
       payment_method_type,
       refunds,
       subscription_id,
+      checkout_session_id,
       digital_products_delivered,
     } = data;
-
     // --- Step 1: Validate Org ---
     const org = await orgRepo.findById(metadata.organizationId);
     if (!org) {
@@ -168,7 +168,6 @@ const handleWebhook = async (payload) => {
     // --- Step 3: Record Payment ---
     const paymentRecord = {
       organizationId: metadata.organizationId,
-      sessionId: payment_id,
       productId: metadata.product_id,
       dodoPaymentId: payment_id,
       amount: settlement_amount || amount || 0,
@@ -186,6 +185,7 @@ const handleWebhook = async (payload) => {
       digitalProductsDelivered: digital_products_delivered,
       subscriptionId: subscription_id,
       refunds,
+      sessionId: checkout_session_id,
       type: payload.type,
       rawPayload: payload,
     };
@@ -230,8 +230,7 @@ const handleWebhook = async (payload) => {
           if (billing.country) encryptedBilling.country = encryptToken(billing.country);
           if (billing.zipcode) encryptedBilling.postalCode = encryptToken(billing.zipcode);
 
-          if (customer?.phone_number)
-            encryptedBilling.phoneNumber = encryptToken(customer.phone_number);
+          if (customer?.phone_number) encryptedBilling.phoneNumber = encryptToken(customer.phone_number);
 
           org.billingDetails = { ...org.billingDetails, ...encryptedBilling };
         } catch (err) {
