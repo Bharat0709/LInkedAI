@@ -8,7 +8,7 @@ const paymentSchema = new mongoose.Schema(
       ref: 'Organization',
       required: true,
     },
-    sessionId: { type: String, required: true },
+    sessionId: { type: String, required: true ,unique: true},
     productId: { type: String, required: true },
     dodoPaymentId: { type: String }, // Dodo payment ID
     paymentLink: { type: String },
@@ -54,6 +54,7 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+paymentSchema.index({ sessionId: 1 }, { unique: true });  
 
 const Payment = newDBConnection.model('Payment', paymentSchema);
 module.exports = Payment;

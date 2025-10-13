@@ -7,7 +7,7 @@ const orgRepo = require('../../repositories/organizationRepository');
 const DODO_API_URL = process.env.DODO_API_URL;
 const DODO_PRODUCTS_URL = process.env.DODO_PRODUCTS_URL;
 const DODO_API_KEY = process.env.DODO_PAYMENT_TOKEN;
-
+const DODO_REDIRECT_URL = process.env.DODO_REDIRECT_URL ;
 // Create checkout session
 const createCheckoutSession = async ({ organizationId, product_id }) => {
   try {
@@ -18,7 +18,6 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
     const organization = await organizationService.getOrganizationById(organizationId);
     if (!organization) throw new AppError('Organization not found', 404);
 
-    // Build request body with customer info
     const requestBody = {
       product_cart: [{ product_id, quantity: 1 }],
       customer: {
@@ -26,40 +25,25 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
         name: organization.name,
         phone_number: null,
       },
-      return_url: process.env.DODO_REDIRECT_URL,
+      return_url: DODO_REDIRECT_URL,
       metadata: {
         organizationId: organization._id.toString(),
         product_id,
       },
     };
 
-    // Decrypt and add billing address if available
-    if (organization.billingDetails) {
-      try {
-        const decryptedBilling = getDecryptedBillingDetails(organization);
-
-        if (decryptedBilling) {
-          // Only add billing_address if we have at least the country (required field)
-          if (decryptedBilling.country) {
-            requestBody.confirm = true; // Auto-confirm the payment
-            requestBody.billing_address = {
-              street: decryptedBilling.addressLine1 || '',
-              city: decryptedBilling.city || '',
-              state: decryptedBilling.state || '',
-              country: decryptedBilling.country,
-              zipcode: decryptedBilling.postalCode || '',
-            };
-
-            // Add phone number to customer if available
-            if (decryptedBilling.phoneNumber) {
-              requestBody.customer.phone_number = decryptedBilling.phoneNumber;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error decrypting billing details:', error);
-        // Continue without billing info if decryption fails
-      }
+    // Optionally include decrypted billing info
+    const decryptedBilling = getDecryptedBillingDetails(organization);
+    if (decryptedBilling?.country) {
+      requestBody.confirm = true;
+      requestBody.billing_address = {
+        street: decryptedBilling.addressLine1 || '',
+        city: decryptedBilling.city || '',
+        state: decryptedBilling.state || '',
+        country: decryptedBilling.country,
+        zipcode: decryptedBilling.postalCode || '',
+      };
+      if (decryptedBilling.phoneNumber) requestBody.customer.phone_number = decryptedBilling.phoneNumber;
     }
 
     const response = await fetch(DODO_API_URL, {
@@ -77,10 +61,10 @@ const createCheckoutSession = async ({ organizationId, product_id }) => {
     }
 
     const session = await response.json();
-
     return session;
   } catch (error) {
-    throw new AppError(error.message || 'Internal Server Error', 500);
+    console.error('Error in createCheckoutSession:', error);
+    throw new AppError(error.message || 'Failed to create checkout session', 500);
   }
 };
 
@@ -144,7 +128,7 @@ const getCreditsForProduct = async productId => {
   }
 };
 
-const handleWebhook = async payload => {
+const handleWebhook = async (payload) => {
   try {
     const { data } = payload;
     const {
@@ -167,7 +151,21 @@ const handleWebhook = async payload => {
       digital_products_delivered,
     } = data;
 
-    // 1. Save/update payment record
+    // --- Step 1: Validate Org ---
+    const org = await orgRepo.findById(metadata.organizationId);
+    if (!org) {
+      console.warn(`Organization not found: ${metadata.organizationId}`);
+      return;
+    }
+
+    // --- Step 2: Idempotency Check in DB ---
+    const existingPayment = await paymentRepository.findPaymentBySessionId(payment_id);
+    if (existingPayment) {
+      console.warn(`Duplicate webhook ignored for payment_id: ${payment_id}`);
+      return;
+    }
+
+    // --- Step 3: Record Payment ---
     const paymentRecord = {
       organizationId: metadata.organizationId,
       sessionId: payment_id,
@@ -194,84 +192,59 @@ const handleWebhook = async payload => {
 
     await paymentRepository.createPayment(paymentRecord);
 
-    // 2. Update organization credits if payment succeeded
+    // --- Step 4: Handle Successful Payments ---
     if (status === 'succeeded') {
-      const org = await orgRepo.findById(metadata.organizationId);
-      if (!org) {
-        console.warn(`Organization not found: ${metadata.organizationId}`);
-        return;
-      }
-
-      // Dynamically fetch credits based on product_id
       const creditsToAdd = await getCreditsForProduct(metadata.product_id);
-      if (creditsToAdd === 0) {
-        console.warn(`No credits to add for product: ${metadata.product_id}`);
-        // Still save the payment record but don't add credits
-        return;
+      if (creditsToAdd > 0) {
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        org.credits.balance += creditsToAdd;
+        org.credits.expiresAt = expiresAt;
+
+        org.credits.transactions.push({
+          type: 'purchase',
+          amount: creditsToAdd,
+          balance: org.credits.balance,
+          expiresAt,
+          description: `Purchased ${creditsToAdd} credits via Dodo Payment`,
+          metadata: { paymentId: payment_id, productId: metadata.product_id },
+        });
       }
 
-      // Calculate expiry date (30 days from now)
-      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      // Update credit balance and expiry
-      org.credits.balance += creditsToAdd;
-      org.credits.expiresAt = expiresAt;
-
-      // Add transaction with expiry info
-      org.credits.transactions.push({
-        type: 'purchase',
-        amount: creditsToAdd,
-        balance: org.credits.balance,
-        expiresAt: expiresAt,
-        description: `Purchased ${creditsToAdd} credits via Dodo Payment (expires in 30 days)`,
-        metadata: {
-          paymentId: payment_id,
-          productId: metadata.product_id,
-        },
-      });
-
-      // Add payment record
       org.payments.push({
         paymentId: payment_id,
         amount: settlement_amount || amount || 0,
         currency: settlement_currency || currency || 'INR',
-        creditsAdded: creditsToAdd,
+        creditsAdded: creditsToAdd || 0,
         status,
         processedAt: new Date(),
         paymentMethod: payment_method,
-        invoiceId: null,
       });
 
-      // 3. Save or update encrypted billing details
+      // --- Step 5: Secure Billing Update ---
       if (billing) {
+        const encryptedBilling = {};
         try {
-          const encryptedBillingDetails = {
-            addressLine1: billing.street ? encryptToken(billing.street) : org.billingDetails?.addressLine1,
-            city: billing.city ? encryptToken(billing.city) : org.billingDetails?.city,
-            state: billing.state ? encryptToken(billing.state) : org.billingDetails?.state,
-            country: billing.country ? encryptToken(billing.country) : org.billingDetails?.country,
-            postalCode: billing.zipcode ? encryptToken(billing.zipcode) : org.billingDetails?.postalCode,
-          };
+          if (billing.street) encryptedBilling.addressLine1 = encryptToken(billing.street);
+          if (billing.city) encryptedBilling.city = encryptToken(billing.city);
+          if (billing.state) encryptedBilling.state = encryptToken(billing.state);
+          if (billing.country) encryptedBilling.country = encryptToken(billing.country);
+          if (billing.zipcode) encryptedBilling.postalCode = encryptToken(billing.zipcode);
 
-          // Add phone number from customer object if available
-          if (customer?.phone_number) {
-            encryptedBillingDetails.phoneNumber = encryptToken(customer.phone_number);
-          } else if (org.billingDetails?.phoneNumber) {
-            // Preserve existing phone if no new one provided
-            encryptedBillingDetails.phoneNumber = org.billingDetails.phoneNumber;
-          }
+          if (customer?.phone_number)
+            encryptedBilling.phoneNumber = encryptToken(customer.phone_number);
 
-          // Update organization billing details
-          org.billingDetails = encryptedBillingDetails;
-        } catch (encryptionError) {
-          console.error('Error encrypting billing details:', encryptionError);
-          // Continue processing even if billing encryption fails
+          org.billingDetails = { ...org.billingDetails, ...encryptedBilling };
+        } catch (err) {
+          console.error('Error encrypting billing details:', err);
         }
       }
 
       await org.save();
+      console.log(`✅ Payment processed successfully: ${payment_id}`);
     }
   } catch (error) {
-    throw new Error(error.message || 'Failed to process webhook');
+    console.error('Webhook Processing Error:', error);
+    throw new AppError(error.message || 'Failed to process webhook', 500);
   }
 };
 
