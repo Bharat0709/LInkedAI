@@ -34,8 +34,8 @@ const CREDIT_COSTS = {
   COMMENT: 5,
   CUSTOM_COMMENT: 5,
   POST_CONTENT: 10,
-  MESSAGE_TEMPLATE: 10,
-  MESSAGE_REPLY: 10,
+  MESSAGE_TEMPLATE: 5,
+  MESSAGE_REPLY: 5,
 };
 
 // Create OpenAI client for specific provider
