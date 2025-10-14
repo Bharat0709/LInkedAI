@@ -38,7 +38,7 @@ const createSendToken = async (user, statusCode, res, isOrganization, isMember) 
     case 'staging':
       cookieOptions.secure = true;
       cookieOptions.sameSite = 'None'; // required for cross-origin cookies
-      cookieOptions.domain = '.staging.engagegpt.in';
+      cookieOptions.domain = '.engagegpt.in';
       break;
 
     case 'production':
