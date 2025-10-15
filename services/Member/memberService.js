@@ -336,6 +336,7 @@ const updateDaysActive = async (memberId, activeDays) => {
   if (lastActiveDate >= today) {
     const updateData = {
       lastActive: new Date(),
+      creditsUsedToday : 0,
     };
 
     await memberRepository.updateById(memberId, updateData);
@@ -348,6 +349,7 @@ const updateDaysActive = async (memberId, activeDays) => {
   const updateData = {
     lastActive: new Date(),
     daysActive: newDaysActive,
+    creditsUsedToday : 0,
   };
 
   await memberRepository.updateById(memberId, updateData);

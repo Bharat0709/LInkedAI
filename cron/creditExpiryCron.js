@@ -16,7 +16,7 @@ exports.initCreditExpiryCronJobs = async () => {
   cron.schedule('0 9 * * *', async () => {
     console.log('Running daily expiry notification cron job...');
     try {
-      await creditExpiryService.sendExpiryNotifications(3);
+      await creditExpiryService.processExpiredCredits(3);
     } catch (error) {
       console.log('Expiry notification cron job failed:', error);
     }
