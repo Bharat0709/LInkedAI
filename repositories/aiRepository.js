@@ -14,7 +14,6 @@ const findOrganizationById = async organizationId => {
 const updateMemberCredits = async (memberId, { creditsUsedToday, lastActive, totalCreditsUsed }) => {
   const update = {
     creditsUsedToday,
-    lastActive: lastActive || new Date(),
   };
 
   if (totalCreditsUsed !== undefined) {

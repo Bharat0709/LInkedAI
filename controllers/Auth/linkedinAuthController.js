@@ -1,12 +1,14 @@
 const axios = require('axios');
 const dotenv = require('dotenv');
-const Member = require('../../models/members');
-const AppError = require('../../utils/appError');
 const querystring = require('querystring');
 const rateLimit = require('express-rate-limit');
 const validator = require('validator');
-const { encryptToken, generateState, validateAuthParams, validateEnvironmentVariables, validateCallbackParams, generateCSRFToken } = require('../../utils/linkedInAuth');
+const Member = require('../../models/members');
+const AppError = require('../../utils/appError');
+const StateStore = require('../../models/stateStore');
+const { encryptToken, generateState, generateCSRFToken, validateAuthParams, validateCallbackParams, validateEnvironmentVariables } = require('../../utils/linkedInAuth');
 const { findByEmail } = require('../../repositories/memberRepository');
+
 dotenv.config();
 
 const authRateLimit = rateLimit({
@@ -19,52 +21,39 @@ const authRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
-const configureSession = (req, res, next) => {
-  if (!req.session) {
-    return next(new AppError('Session not configured properly', 500));
-  }
-  req.session.cookie.secure = process.env.NODE_ENV === 'production';
-  req.session.cookie.httpOnly = true;
-  req.session.cookie.sameSite = 'lax';
-  req.session.cookie.maxAge = 10 * 60 * 1000;
-  next();
-};
-
 exports.linkedinAuth = [
   authRateLimit,
-  configureSession,
   async (req, res, next) => {
     try {
-      // Generate cryptographically secure state parameter
+      // Generate secure OAuth state & CSRF token
       const state = generateState();
       const csrfToken = generateCSRFToken();
 
-      // Store state and CSRF token in session with expiration
-      req.session.linkedinState = {
+      // Get user info if authenticated
+      const userId = req.organization?._id;
+
+      // Store in DATABASE instead of session
+      await StateStore.create({
         state,
         csrfToken,
-        createdAt: Date.now(),
-        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      };
+        userId,
+      });
 
-      // Prepare LinkedIn OAuth parameters
+      // Build LinkedIn authorization URL
       const params = {
         response_type: 'code',
         client_id: process.env.LINKEDIN_CLIENT_ID,
         redirect_uri: process.env.LINKEDIN_REDIRECT_URL,
-        scope: process.env.LINKEDIN_SCOPE,
-        state: `${state}.${csrfToken}`, // Combine state and CSRF token
+        scope: process.env.LINKEDIN_SCOPE || 'openid profile email w_member_social',
+        state: `${state}.${csrfToken}`, // Combined state
       };
-      // Validate parameters before creating URL
-      const validationErrors = validateAuthParams(params);
-      if (validationErrors.length > 0) {
-        throw new AppError(`Invalid parameters: ${validationErrors.join(', ')}`, 400);
-      }
 
-      const authUrl = `${process.env.LINKEDIN_BASE_URL}?${querystring.stringify(params)}`;
+      const authUrl = `${process.env.LINKEDIN_BASE_URL || 'https://www.linkedin.com/oauth/v2/authorization'}?${querystring.stringify(params)}`;
 
-      res.redirect(authUrl);
+      // Direct redirect (no session needed)
+      return res.redirect(authUrl);
     } catch (err) {
+      console.error('[LinkedInAuth ERROR]', err);
       next(new AppError('Authentication initialization failed', 500));
     }
   },
@@ -72,27 +61,18 @@ exports.linkedinAuth = [
 
 exports.linkedinAuthCallback = [
   authRateLimit,
-  configureSession,
   async (req, res, next) => {
-    const startTime = Date.now();
     try {
       const { code, state: receivedState, error } = req.query;
-      // Handle LinkedIn error responses
+      // Handle LinkedIn errors
       if (error) {
-        return res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=false&error=${encodeURIComponent('Authentication was cancelled or failed')}`);
+        console.error('[LinkedInAuth CALLBACK] LinkedIn error:', error);
+        return res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=false&error=${encodeURIComponent('Authentication cancelled or failed')}`);
       }
 
-      // Validate callback parameters
-      const validationErrors = validateCallbackParams({ code, state: receivedState });
-      if (validationErrors.length > 0) {
-        throw new AppError(`Invalid callback parameters: ${validationErrors.join(', ')}`, 400);
-      }
-
-      // Retrieve and validate session state
-      const sessionState = req.session.linkedinState;
-      if (!sessionState || Date.now() > sessionState.expiresAt) {
-        delete req.session.linkedinState;
-        throw new AppError('Session expired or invalid', 401);
+      // Validate callback params
+      if (!code || !receivedState) {
+        throw new AppError('Missing authorization code or state', 400);
       }
 
       // Parse received state
@@ -101,18 +81,20 @@ exports.linkedinAuthCallback = [
         throw new AppError('Invalid state format', 401);
       }
 
-      // Verify state and CSRF token
-      if (state !== sessionState.state || csrfToken !== sessionState.csrfToken) {
-        delete req.session.linkedinState;
-        throw new AppError('State verification failed - possible CSRF attack', 401);
+      // Retrieve and verify state from DATABASE
+      const storedState = await StateStore.findOne({
+        state,
+        csrfToken,
+      });
+
+      if (!storedState) {
+        throw new AppError('Session expired or invalid', 401);
       }
 
-      // Clean up session state
-      delete req.session.linkedinState;
-
-      // Exchange authorization code for access token with timeout
+      // Delete used state immediately (one-time use)
+      await StateStore.deleteOne({ _id: storedState._id });
       const tokenResponse = await axios.post(
-        process.env.LINKEDIN_ACCESS_TOKEN_URL,
+        process.env.LINKEDIN_ACCESS_TOKEN_URL || 'https://www.linkedin.com/oauth/v2/accessToken',
         querystring.stringify({
           grant_type: 'authorization_code',
           code,
@@ -127,48 +109,41 @@ exports.linkedinAuthCallback = [
             'User-Agent': `${process.env.APP_NAME || 'LinkedInApp'}/1.0`,
           },
           timeout: 30000,
-          maxRedirects: 0,
         }
       );
 
-      // Validate token response
       if (!tokenResponse.data?.access_token) {
         throw new AppError('Invalid token response from LinkedIn', 502);
       }
-
       const { access_token: accessToken, expires_in: expiresIn } = tokenResponse.data;
 
-      // Encrypt the access token
-      const encryptedToken = encryptToken(accessToken);
-
-      // Fetch user profile with timeout and error handling
-      const profileResponse = await axios.get(process.env.LINKEDIN_USER_INFO, {
+      const profileResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${tokenResponse.data.access_token}`,
           Accept: 'application/json',
           'User-Agent': `${process.env.APP_NAME || 'LinkedInApp'}/1.0`,
         },
-        timeout: 30000,
-        maxRedirects: 0,
       });
-      const profile = profileResponse.data;
 
-      // Validate required profile data
+      const profile = profileResponse.data;
+      const encryptedToken = encryptToken(accessToken);
+
       if (!profile.sub || !profile.email) {
         throw new AppError('Incomplete profile data from LinkedIn', 502);
       }
 
-      // Validate email format
       if (!validator.isEmail(profile.email)) {
         throw new AppError('Invalid email format from LinkedIn', 502);
       }
 
-      const profileId = encryptToken(profile.sub);
+      /* ----------------------------- Find or Update Member ----------------------------- */
       const email = profile.email;
-      // Find existing member
+      const profileId = encryptToken(profile.sub);
+
       let member = await findByEmail(email);
+
       if (!member) {
-        console.warn(`Authentication attempt for non-existent member: ${email.substring(0, 3)}***`);
+        console.warn(`[LinkedInAuth] Member not found: ${email}`);
         return res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=false&error=${encodeURIComponent('Member account not found. Please register first.')}`);
       }
 
@@ -187,19 +162,15 @@ exports.linkedinAuthCallback = [
         updateData.name = validator.escape(profile.name.substring(0, 100));
       }
 
-      await Member.findByIdAndUpdate(member._id, { $set: updateData }, { new: true, runValidators: true });
+      await Member.findByIdAndUpdate(member._id, { $set: updateData }, { new: true });
 
+      // Cleanup
       tokenResponse.data = null;
       profileResponse.data = null;
 
-      res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=true&timestamp=${Date.now()}`);
+      return res.redirect(`${process.env.CLIENT_URL}/dashboard/quick-post?isConnected=true&timestamp=${Date.now()}`);
     } catch (err) {
-
-      if (req.session.linkedinState) {
-        delete req.session.linkedinState;
-      }
-
-      // Determine appropriate error response
+      console.error('[LinkedInAuth CALLBACK ERROR]', err);
       let errorMessage = 'Authentication failed';
       let statusCode = 401;
 
@@ -223,6 +194,7 @@ exports.linkedinAuthCallback = [
   },
 ];
 
+/* ------------------------------- Health Endpoint ------------------------------ */
 exports.linkedinAuthHealth = (req, res) => {
   try {
     validateEnvironmentVariables();

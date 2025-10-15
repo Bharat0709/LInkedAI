@@ -5,9 +5,9 @@ const { verifyToken } = require('../middlewares/verifytoken');
 const router = express.Router();
 
 router.get('/auth/callback', linkedInAuthController.linkedinAuthCallback);
-router.get('/auth', linkedInAuthController.linkedinAuth);
 
 router.use(verifyToken);
+router.get('/auth', linkedInAuthController.linkedinAuth);
 router.get('/:memberId/history', linkedInController.getScheduledPosts);
 router.patch('/:memberId/disconnect', linkedInController.disconnectLinkedIn);
 

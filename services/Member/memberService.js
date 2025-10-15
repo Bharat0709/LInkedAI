@@ -174,11 +174,9 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
 
   member.creditsUsedToday = 0;
   member.totalCreditsUsed += 10;
-  member.lastActive = new Date();
   const updatedMember = await aiRepository.updateMemberCredits(member._id, {
     totalCreditsUsed: member.totalCreditsUsed,
     creditsUsedToday: member.creditsUsedToday,
-    lastActive: member.lastActive,
   });
 
   // Log activity

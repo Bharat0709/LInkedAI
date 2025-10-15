@@ -138,11 +138,9 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
       // Deduct from member usage
       member.creditsUsedToday += creditAmount;
       member.totalCreditsUsed += creditAmount;
-      member.lastActive = new Date();
       await aiRepository.updateMemberCredits(member._id, {
         totalCreditsUsed: member.totalCreditsUsed,
         creditsUsedToday: member.creditsUsedToday,
-        lastActive: member.lastActive,
       });
 
       return {
@@ -153,8 +151,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
         member: {
           id: member._id,
           creditsUsedToday: member.creditsUsedToday,
-          creditLimitperDay: member.creditLimitperDay,
-          lastActive: member.lastActive,
+          creditLimitperDay: member.creditLimitperDay
         },
       };
     } else if (userType === 'organization') {
