@@ -24,7 +24,7 @@ const stateStoreSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: 600, // Auto-delete after 10 minutes (TTL index)
+    expires: 600, 
   },
 });
 

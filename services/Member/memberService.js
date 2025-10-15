@@ -5,6 +5,7 @@ const { generateConnectionToken } = require('../../utils/randomString');
 const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
 const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
+const OldMember = require('../../models/OldMember');
 
 const checkMemberExists = async (name, profileLink) => {
   try {
@@ -38,7 +39,8 @@ const createMember = async (organizationId, memberData) => {
   }
 
   const connectionToken = generateConnectionToken(organizationId);
-
+  // 🧠 Check in old DB if this member existed
+  const oldMember = await OldMember.findOne({ email });
   const newMemberData = {
     name,
     email,
@@ -47,6 +49,8 @@ const createMember = async (organizationId, memberData) => {
     creditsLeft: organization.credits.balance,
     connectionToken,
     role: organization.email === email ? 'self' : 'member',
+    daysActive: oldMember ? oldMember.daysActive : 0,
+    totalCreditsUsed: oldMember ? oldMember.totalCreditsUsed : 0,
   };
 
   const member = await memberRepository.create(newMemberData);
@@ -334,9 +338,10 @@ const updateDaysActive = async (memberId, activeDays) => {
   lastActiveDate.setHours(0, 0, 0, 0);
 
   if (lastActiveDate >= today) {
+    ``;
     const updateData = {
       lastActive: new Date(),
-      creditsUsedToday : 0,
+      creditsUsedToday: 0,
     };
 
     await memberRepository.updateById(memberId, updateData);
@@ -349,7 +354,7 @@ const updateDaysActive = async (memberId, activeDays) => {
   const updateData = {
     lastActive: new Date(),
     daysActive: newDaysActive,
-    creditsUsedToday : 0,
+    creditsUsedToday: 0,
   };
 
   await memberRepository.updateById(memberId, updateData);
@@ -666,7 +671,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
           seniority: Array.isArray(goalsData.targetAudience?.seniority) ? goalsData.targetAudience.seniority : [],
         },
       };
-
     }
 
     // Handle Step 5: Automation Settings -> leadGenerationGoals.automation
@@ -703,9 +707,7 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
     // Handle Step 4: Custom Requirements (if you want to store this)
     if (formData.customRequirements) {
       updateFields.customRequirements = formData.customRequirements.customRequirements;
-
     }
-
 
     // Validate the update fields against schema constraints
     const validationResult = validateUpdateFields(updateFields);
@@ -715,7 +717,6 @@ const updateCompleteSummary = async (memberId, organizationId, memberData) => {
 
     // Perform the update
     const updatedMember = await memberRepository.updateById(memberId, updateFields);
-
 
     return {
       success: true,
