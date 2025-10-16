@@ -25,6 +25,9 @@ const initiateSignup = async (email, timeZone = 'Asia/Calcutta') => {
       resetPasswordExpires: Date.now() + 10 * 60 * 1000,
     });
 
+    const ttlSeconds = Math.ceil((expiryTime - Date.now()) / 1000);
+    await passwordHelper.openPwSetupWindow(existingOrg._id, ttlSeconds);
+
     const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}?mode=set&email=${encodeURIComponent(email)}`;
     try {
       await mailService.sendResetPasswordURL(email, 'Set your password (valid for 10 minutes)', resetURL, 'set');
@@ -93,6 +96,7 @@ const initiateSignup = async (email, timeZone = 'Asia/Calcutta') => {
     };
   } catch (error) {
     await organizationRepository.clearVerificationTokens(organization._id);
+    await passwordHelper.closePwSetupWindow(existingOrg._id);
     throw new AppError('There was an error sending the email. Try again later.', 500);
   }
 };
