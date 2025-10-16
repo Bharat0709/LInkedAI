@@ -24,7 +24,8 @@ const initiateSignup = async (email, timeZone = 'Asia/Calcutta') => {
       resetPasswordToken: hashedToken,
       resetPasswordExpires: Date.now() + 10 * 60 * 1000,
     });
-
+    // Expiry = 10 minutes
+    const expiryTime = Date.now() + PASSWORD_RESET_EXPIRY;
     const ttlSeconds = Math.ceil((expiryTime - Date.now()) / 1000);
     await passwordHelper.openPwSetupWindow(existingOrg._id, ttlSeconds);
 
