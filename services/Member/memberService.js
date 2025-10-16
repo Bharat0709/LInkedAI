@@ -2,10 +2,11 @@ const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
 const aiRepository = require('../../repositories/aiRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
-const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
+const { sendNewMemberInviteEmail, sendMilestoneEmail, sendExtensionConnectedConfirmation } = require('../../admin/email/member');
 const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
 const OldMember = require('../../models/OldMember');
+const { sendNewUserEmail } = require('../../admin/email/admin');
 
 const checkMemberExists = async (name, profileLink) => {
   try {
@@ -105,8 +106,8 @@ const connectMember = async ({ connectionToken, name, profileLink, profilePictur
     createdAt: new Date(),
   });
 
-  sendNewUserEmail(member);
-  sendExtensionConnectedConfirmation(member);
+  await sendNewUserEmail(member);
+  await sendExtensionConnectedConfirmation(member);
 
   return member;
 };

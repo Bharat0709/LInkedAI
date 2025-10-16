@@ -4,7 +4,6 @@ const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../mailUtils/compileTemplate');
 const sendAutoSendEmail = require('../../config/autoSendConfig');
 const admin1 = process.env.ADMIN_EMAIL1;
-const admin2 = process.env.ADMIN_EMAIL2;
 
 // TO ADMIN - SURVEY FORM - MANUALLY BY ORGANIZATION
 exports.sendSurveyForm = async (usability, performance, missingFeatures, reason, email, overallSatisfaction) => {
@@ -29,8 +28,7 @@ exports.sendNewUserEmail = async user => {
     accountCreatedAt: new Date(user.accountCreatedAt).toLocaleString(),
   });
 
-  await sendFrostmailEmail(admin1, 'New User Added', html);
-  return await sendFrostmailEmail(admin2, 'New User Added', html);
+  return await sendAutoSendEmail(admin1, 'New User Added', html);
 };
 
 // TO ADMIN - USER NEEDS HELP - MANUALLY BY ORGANIZATION
@@ -75,6 +73,5 @@ exports.sendDailyStatsReport = async (stats, csvPath = null) => {
   }
 
   // Send to both admins with attachments
-  await sendFrostmailEmail(admin1, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
-  return await sendFrostmailEmail(admin2, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
+  return await sendFrostmailEmail(admin1, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
 };
