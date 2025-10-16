@@ -105,10 +105,6 @@ const connectMember = async ({ connectionToken, name, profileLink, profilePictur
     orgId,
     createdAt: new Date(),
   });
-
-  await sendNewUserEmail(member);
-  await sendExtensionConnectedConfirmation(member);
-
   return member;
 };
 
