@@ -104,7 +104,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
 
       // Check if org has enough credits
       if (organization.credits.balance < creditAmount) {
-        throw new AppError('Insufficient credits to perform this action.', 403);
+        throw new AppError('Insufficient credits to perform this action. Visit engagegpt.in to add more.', 403);
       }
 
       if (member.creditLimitperDay !== -1 && member.creditsUsedToday + creditAmount > member.creditLimitperDay) {
