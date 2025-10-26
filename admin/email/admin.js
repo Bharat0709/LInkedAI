@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 dotenv.config();
+const fs = require('fs');
 const sendFrostmailEmail = require('../../config/mailConfig');
 const compileTemplate = require('../mailUtils/compileTemplate');
 const sendAutoSendEmail = require('../../config/autoSendConfig');
@@ -21,7 +22,7 @@ exports.sendSurveyForm = async (usability, performance, missingFeatures, reason,
 
 // TO ADMIN - NEW USER CONNECTED - AUTOMATED
 exports.sendNewUserEmail = async user => {
-  const html = compileTemplate('admin/new_extn_user', {
+  const html = compileTemplate('adminMails/new_extn_user', {
     name: user.name,
     email: user.email,
     profileLink: user.profileLink,

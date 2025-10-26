@@ -415,6 +415,18 @@ const MemberSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+
+  gmailTokens: {
+    email: {
+      type: String,
+    },
+    accessToken: {
+      type: String,
+      select: false,
+    },
+    refreshToken: { type: String, select: false },
+    expiryDate: Number,
+  },
 });
 
 const Member = newDBConnection.model('Member', MemberSchema);

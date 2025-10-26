@@ -2,7 +2,7 @@ const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
 const aiRepository = require('../../repositories/aiRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
-const { sendNewMemberInviteEmail, sendMilestoneEmail, sendExtensionConnectedConfirmation } = require('../../admin/email/member');
+const { sendNewMemberInviteEmail, sendMilestoneEmail} = require('../../admin/email/member');
 const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
 const OldMember = require('../../models/OldMember');
@@ -105,6 +105,8 @@ const connectMember = async ({ connectionToken, name, profileLink, profilePictur
     orgId,
     createdAt: new Date(),
   });
+
+  await sendNewUserEmail(member);
   return member;
 };
 

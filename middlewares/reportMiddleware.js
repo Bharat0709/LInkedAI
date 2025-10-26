@@ -42,48 +42,69 @@ const getSimpleStats = async () => {
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   try {
-    // Basic user counts
-    const totalUsers = await Member.countDocuments({});
+    // 1️⃣ Basic counts
+    const totalUsers = await Member.countDocuments();
+    const verifiedUsers = await Member.countDocuments({ isVerified: true });
+    const gmailConnectedUsers = await Member.countDocuments({ 'gmailTokens.email': { $exists: true, $ne: '' } });
+
+    // 2️⃣ New User Growth
     const newUsers24h = await Member.countDocuments({
       accountCreatedAt: { $gte: yesterday },
     });
     const newUsersWeek = await Member.countDocuments({
       accountCreatedAt: { $gte: lastWeek },
     });
+
+    // 3️⃣ Activity / Retention
     const activeUsers24h = await Member.countDocuments({
       lastActive: { $gte: yesterday },
     });
+    const retentionRate = totalUsers > 0 ? ((activeUsers24h / totalUsers) * 100).toFixed(1) : 0;
 
-    // Credit stats
-    const creditStats = await Member.aggregate([
+    // 4️⃣ Plan Stats
+    const freePlanUsers = await Member.countDocuments({ plan: 'Free' });
+    const premiumUsers = await Member.countDocuments({ plan: { $ne: 'Free' } });
+
+    // 5️⃣ Aggregated Stats (credits, streaks, linkedin metrics, etc.)
+    const aggregate = await Member.aggregate([
       {
         $group: {
           _id: null,
           totalCreditsUsed: { $sum: '$totalCreditsUsed' },
           avgDaysActive: { $avg: '$daysActive' },
+          avgCurrentStreak: { $avg: '$currentStreak' },
+          totalFollowers: { $sum: '$followersCount' },
+          totalConnections: { $sum: '$connectionsCount' },
         },
       },
     ]);
 
-    // Calculate retention rate
-    const retentionRate = totalUsers > 0 ? ((activeUsers24h / totalUsers) * 100).toFixed(1) : 0;
-
     return {
-      // Basic stats
+      reportDate: now.toDateString(),
+      reportTime: now.toLocaleTimeString(),
+
+      // User Stats
       totalUsers,
+      verifiedUsers,
+      gmailConnectedUsers,
       newUsers24h,
       newUsersWeek,
       activeUsers24h,
       retentionRate,
 
-      // Credit stats
-      totalCreditsUsed: creditStats[0]?.totalCreditsUsed || 0,
-      avgDaysActive: Math.round(creditStats[0]?.avgDaysActive || 0),
-      // Report info
-      reportDate: now.toDateString(),
-      reportTime: now.toLocaleTimeString(),
+      // Plan Stats
+      freePlanUsers,
+      premiumUsers,
+
+      // Aggregates
+      totalCreditsUsed: aggregate[0]?.totalCreditsUsed || 0,
+      avgDaysActive: Math.round(aggregate[0]?.avgDaysActive || 0),
+      avgCurrentStreak: Math.round(aggregate[0]?.avgCurrentStreak || 0),
+      totalFollowers: aggregate[0]?.totalFollowers || 0,
+      totalConnections: aggregate[0]?.totalConnections || 0,
     };
   } catch (error) {
+    console.error('Error generating stats:', error);
     throw error;
   }
 };

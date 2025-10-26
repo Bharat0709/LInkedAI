@@ -1,5 +1,6 @@
 const express = require('express');
 const memberController = require('../controllers/memberController');
+const gmailController = require('../controllers/GmailController/gmailController')
 const integrationUtils = require('../utils/integrations');
 const { verifyExtension } = require('../middlewares/verifyExtensionRequest');
 const { verifyToken } = require('../middlewares/verifytoken');
@@ -29,6 +30,8 @@ router.put('/lead-generation-settings/:memberId', memberController.updateLeadGen
 router.put('/summary/:memberId', memberController.updateCompleteSummary);
 router.put('/settings/:memberId', memberController.updateMemberSettings);
 router.patch('/feed-filters/:memberId', memberController.updateFeedFilterSettings);
+router.post('/mail/send/:memberId', gmailController.sendGmail); 
+router.delete('/mail/disconnect/:memberId', gmailController.disconnectGmail);
 
 router.delete('/deleteAccount/:memberId', memberController.deleteMemberAccount);
 router.post('/integrationds/googleSheet', integrationUtils.fetchGoogleSheetData);

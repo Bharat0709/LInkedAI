@@ -202,7 +202,6 @@ const updateGeneratedEmail = async (postId, updateData) => {
 
 const updateStatus = async (postId, status, user) => {
   const validStatuses = ['new', 'contacted', 'responded', 'qualified', 'converted', 'closed', 'rejected'];
-
   if (!validStatuses.includes(status)) {
     throw new AppError('Invalid status value', 400);
   }

@@ -149,6 +149,11 @@ const updateMemberProfileStats = async (id, memberData, timeZone) => {
   });
 };
 
+const getGmailTokensByUserId = async (id) => {
+  return await Member.findById(id)
+    .select('+gmailTokens.accessToken +gmailTokens.refreshToken gmailTokens.email gmailTokens.expiryDate');
+};
+
 module.exports = {
   findById,
   findByEmail,
@@ -159,6 +164,7 @@ module.exports = {
   findLeaderboard,
   findAllSortedByDaysActive,
   create,
+  getGmailTokensByUserId,
   updateById,
   updateMemberProfileStats,
   updateProfile,
