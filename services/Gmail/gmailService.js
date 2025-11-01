@@ -6,6 +6,7 @@ const { saveTokens, getTokens, removeTokens } = require('../../repositories/gmai
 const { google } = require('googleapis');
 const { updateStatus } = require('../SavedPost/savedPostService');
 const AppError = require('../../utils/appError');
+const { processCredits } = require('../AI/aiHelper');
 
 const GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.send', 'https://www.googleapis.com/auth/userinfo.email'];
 
@@ -46,48 +47,86 @@ const handleOAuthCallback = async (code, userId) => {
   return { email: userEmail };
 };
 
+// ✅ Updated sendMail Function with Credit Deduction
 const sendMail = async (userId, organizationId, to, subject, html, postId) => {
-  const tokens = await getTokens(userId);
-  if (!tokens) throw new Error('Gmail not connected');
+  const CREDIT_COST = 10; // ✅ Standard email cost
 
-  const existingOrganization = await organizationRepository.findById(organizationId);
-  if (!existingOrganization) {
-    throw new AppError('Organization not found', 404);
+  // Step 1: Deduct 10 credits BEFORE sending email
+  try {
+    await processCredits('member', userId, CREDIT_COST, 'Email Service', {
+      reason: 'Email sent using Gmail',
+      recipient: to,
+      subject: subject,
+      postId: postId || null,
+    });
+    console.log(`✅ Deducted ${CREDIT_COST} credits for email service`);
+  } catch (error) {
+    console.error('❌ Failed to deduct credits:', error.message);
+    throw error; // Stop execution if credits cannot be deducted
   }
 
-  const existingMember = await memberRepository.findById(userId);
-  if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
-    throw new AppError('Member not found or does not belong to the organization', 404);
-  }
+  // Step 2: Email sending process
+  try {
+    const tokens = await getTokens(userId);
+    if (!tokens) throw new Error('Gmail not connected');
 
-  const client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    const existingOrganization = await organizationRepository.findById(organizationId);
+    if (!existingOrganization) {
+      throw new AppError('Organization not found', 404);
+    }
 
-  client.setCredentials({
-    access_token: tokens.accessToken,
-    refresh_token: tokens.refreshToken,
-    expiry_date: tokens.expiryDate,
-  });
+    const existingMember = await memberRepository.findById(userId);
+    if (!existingMember || existingMember.organizationId.toString() !== organizationId.toString()) {
+      throw new AppError('Member not found or does not belong to the organization', 404);
+    }
 
-  // Auto refresh expired token
-  if (Date.now() >= tokens.expiryDate) {
-    const newTokens = await client.refreshAccessToken();
-    await saveTokens(userId, newTokens.credentials);
-  }
+    const client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
 
-  const gmail = google.gmail({ version: 'v1', auth: client });
-  const rawMessage = Buffer.from(`From: me\r\nTo: ${to}\r\nSubject: ${subject}\r\n` + `MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}`)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+    client.setCredentials({
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      expiry_date: tokens.expiryDate,
+    });
 
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: { raw: rawMessage },
-  });
+    // Auto-refresh expired token
+    if (Date.now() >= tokens.expiryDate) {
+      const newTokens = await client.refreshAccessToken();
+      await saveTokens(userId, newTokens.credentials);
+    }
 
-  if (postId) {
-    await updateStatus(postId, 'contacted', existingOrganization);
+    const gmail = google.gmail({ version: 'v1', auth: client });
+
+    const rawMessage = Buffer.from(
+      `From: me\r\nTo: ${to}\r\nSubject: ${subject}\r\n` +
+      `MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${html}`
+    )
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: { raw: rawMessage },
+    });
+
+    console.log(`📩 Email sent successfully to ${to}`);
+
+    // Update post status (if any)
+    if (postId) {
+      await updateStatus(postId, 'contacted', existingOrganization);
+    }
+
+  } catch (error) {
+    console.error('❌ Email sending failed:', error.message);
+
+    // Optionally refund credits if email fails (Optional Logic)
+    // await processRefundCredits(userId, organizationId, CREDIT_COST)
+
+    throw new AppError(`Failed to send email: ${error.message}`, 500);
   }
 };
 

@@ -55,8 +55,6 @@ exports.sendFeedback = async (organization, rating, feedbackText) => {
   return await sendAutoSendEmail(admin1, `Feedback from ${organization?.name}`, html);
 };
 
-// Updated sendDailyStatsReport function in your email service file
-
 // TO ADMIN - DAILY STATS REPORT - AUTOMATED CRON JOB
 exports.sendDailyStatsReport = async (stats, csvPath = null) => {
   const html = compileTemplate('adminMails/daily_report', stats);
@@ -75,4 +73,21 @@ exports.sendDailyStatsReport = async (stats, csvPath = null) => {
 
   // Send to both admins with attachments
   return await sendFrostmailEmail(admin1, `Daily Platform Stats - ${stats.reportDate}`, html, attachments);
+};
+
+exports.sendCreditsExpiringNotification = async ({ org, creditsLeft, expiresAt }) => {
+
+  const html = compileTemplate('account/credits_expiry', {
+    name: org?.name || 'User',
+    creditsLeft,
+    expiryDate: expiresAt.toLocaleString(),  
+    dashboardUrl: 'https://engagegpt.in/dashboard',
+    year: new Date().getFullYear(),
+  });
+
+  return await sendAutoSendEmail(
+    org.email,
+    '⚠️ Your EngageGPT Credits Are Expiring Soon',
+    html
+  );
 };

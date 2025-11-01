@@ -1,8 +1,8 @@
+const { sendCreditsExpiringNotification } = require('../../admin/email/admin');
 const creditRepository = require('../../repositories/creditsRepository');
 
 const processExpiredCredits = async () => {
   try {
-
     const organizations = await creditRepository.findOrganizationsWithExpiredCredits();
 
     if (organizations.length === 0) {
@@ -20,7 +20,6 @@ const processExpiredCredits = async () => {
     for (const org of organizations) {
       try {
         const result = await creditRepository.expireCreditsForOrganization(org._id);
-
         if (result) {
           results.push(result);
           successCount++;
@@ -56,7 +55,6 @@ const getExpiryStats = async () => {
 
 const sendExpiryNotifications = async (daysBeforeExpiry = 3) => {
   try {
-
     const organizations = await creditRepository.findOrganizationsWithCreditsExpiringSoon(daysBeforeExpiry);
 
     if (organizations.length === 0) {
@@ -66,23 +64,18 @@ const sendExpiryNotifications = async (daysBeforeExpiry = 3) => {
       };
     }
 
-    // TODO: Integrate with your email service
-    // const emailService = require('./emailService');
-
     let notificationsSent = 0;
 
     for (const org of organizations) {
       try {
         const daysLeft = Math.ceil((org.credits.expiresAt - new Date()) / (1000 * 60 * 60 * 24));
-
+        console.log(`Sending notification to ${org.email} for credits expiring in ${daysLeft} days.`);
         // TODO: Send email notification
-        // await emailService.sendCreditExpiryNotification({
-        //   email: org.email,
-        //   name: org.name,
-        //   creditsBalance: org.credits.balance,
-        //   expiresAt: org.credits.expiresAt,
-        //   daysLeft,
-        // });
+        await sendCreditsExpiringNotification({
+          org,
+          creditsLeft: org.credits.balance,
+          expiresAt: org.credits.expiresAt,
+        });
 
         notificationsSent++;
       } catch (error) {

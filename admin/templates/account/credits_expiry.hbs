@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Credits Expiring Soon — Use Them!</title>
+  <style>
+    @media only screen and (max-width:600px) {
+      .container {
+        width: 100% !important;
+        border-radius: 0 !important;
+      }
+      .cta {
+        width: 100% !important;
+      }
+    }
+  </style>
+</head>
+
+<body style="margin:0; padding:0; background:#f4f6f8; font-family: Arial, sans-serif; color:#1f2937;">
+  <!-- Preheader -->
+  <span style="display:none; font-size:1px; color:#f4f6f8; opacity:0;">
+    Your EngageGPT credits are expiring on {{expiryDate}}.
+  </span>
+
+  <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="background:#f4f6f8;">
+    <tr>
+      <td align="center" style="padding:28px 16px;">
+        <table class="container" width="600" cellspacing="0" cellpadding="0" role="presentation"
+          style="background:#ffffff; border-radius:12px; box-shadow:0 6px 18px rgba(16,24,40,0.08);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background:#0c4a6e; color:#ffffff; text-align:center; padding:28px; font-size:20px; font-weight:600;">
+              ⚠️ Your Credits Are Expiring Soon
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:24px; font-size:16px; line-height:1.6;">
+              <p>Hi <strong>{{name}}</strong>,</p>
+              <p>You have <strong>{{creditsLeft}} credits</strong> remaining in your EngageGPT account.</p>
+              <p>These credits will <strong>expire on {{expiryDate}}</strong>. Be sure to use them before they’re gone.</p>
+
+              <!-- Info Box -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                style="margin:16px 0 20px 0; border:1px solid #e6eef5; border-radius:8px;">
+                <tr>
+                  <td style="padding:14px;">
+                    <table width="100%" role="presentation">
+                      <tr>
+                        <td style="font-size:14px; color:#0c4a6e; font-weight:600;">Credits Left</td>
+                        <td style="text-align:right; font-size:14px; font-weight:700;">{{creditsLeft}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding-top:8px; font-size:14px; color:#6b7280;">Expiry Date</td>
+                        <td style="padding-top:8px; text-align:right; font-size:14px;">{{expiryDate}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#6b7280; font-size:13px;">If you’ve already used your credits or think this is a mistake, feel free to contact us.</p>
+              <p style="margin-top:12px;">Cheers,<br/><strong>The EngageGPT Team</strong></p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f0f2f5; padding:16px 20px; text-align:center; font-size:13px; color:#6b7280; border-top:1px solid #e6eef5;">
+              <div>&copy; {{year}} EngageGPT. All rights reserved.</div>
+              <div>
+                <a href="https://engagegpt.in" style="color:#0c4a6e; text-decoration:none; margin-right:8px;">Website</a>
+                <a href="mailto:engagegpt@gmail.com" style="color:#0c4a6e; text-decoration:none;">Support</a>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

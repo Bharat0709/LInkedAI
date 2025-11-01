@@ -4,10 +4,8 @@ const appError = require('../../../utils/appError');
 const expireCredits = async (req, res) => {
   try {
     const password = req.body.password;
-    const queryPassword = req.query.password;
-
+    const queryPassword = req.params.password;
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
     if (!password || password !== ADMIN_PASSWORD || (queryPassword && queryPassword !== ADMIN_PASSWORD)) {
       return new appError('Unauthorized: Invalid Admin Details', 401);
     }
