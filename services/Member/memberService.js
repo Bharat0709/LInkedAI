@@ -62,9 +62,6 @@ const createMember = async (organizationId, memberData) => {
     organizationId,
     createdAt: new Date(),
   });
-
-  sendNewMemberInviteEmail(organization.name, name, email, member.connectionToken);
-
   return member;
 };
 
