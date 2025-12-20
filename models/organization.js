@@ -135,8 +135,8 @@ const organizationSchema = new mongoose.Schema(
     planFeatures: {
       aiModels: {
         type: [String],
-        enum: ['gemini', 'chatgpt', 'mistral', 'groq', 'perplexity'],
-        default: ['gemini', 'chatgpt', 'groq', 'perplexity'],
+        enum: ['chatgpt', 'mistral', 'groq', 'perplexity'],
+        default: ['chatgpt', 'groq', 'perplexity'],
       },
       hasPrioritySupport: {
         type: Boolean,
