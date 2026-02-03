@@ -20,6 +20,7 @@ exports.verifyExtension = catchAsync(async (req, res, next) => {
     const originHeader = req.headers.origin;
     const fetchSite = req.headers['sec-fetch-site'];
     const allowedId = process.env.ALLOWED_EXTENSION_ID;
+    console.log(extensionId, timestamp, nonce, originHeader, allowedId);
 
     // 1. Validate Extension ID
     if (!extensionId || extensionId !== allowedId) {
@@ -27,8 +28,10 @@ exports.verifyExtension = catchAsync(async (req, res, next) => {
     }
 
     // 2. Validate Origin
-    const expectedOrigin = `chrome-extension://${allowedId}`;
-    const originIsValid = (originHeader && originHeader === expectedOrigin) || (fetchSite && (fetchSite === 'none' || fetchSite === 'same-origin')) || originHeader === 'https://www.linkedin.com';
+    const expectedOrigin = `chrome-extension://${allowedId}` || 'http://localhost:8000';
+    console.log(originHeader);
+    const originIsValid =
+      (originHeader && originHeader === expectedOrigin) || (fetchSite && (fetchSite === 'none' || fetchSite === 'same-origin')) || originHeader === 'https://www.linkedin.com' || originHeader === 'http://localhost:8000';
 
     if (!originIsValid) {
       return res.status(403).json({ error: 'Invalid request origin' });

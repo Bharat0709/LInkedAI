@@ -13,7 +13,7 @@ router.post('/generate/post-content', openaiController.generatePostContent);
 router.use(verifyExtension);
 router.post('/generate/comment', openaiController.generateComment);
 router.post('/generate/custom-comment', openaiController.generateCustomComment);
-router.post('/generate/msg-template', openaiController.generateMessageTemplate);
 router.post('/generate/msg-reply', openaiController.generateMessageReply);
+router.post('/generate/msg-template', openaiController.generateMessageTemplate);
 
 module.exports = router;

@@ -1,7 +1,6 @@
 const catchAsync = require('../../utils/catchAsync');
 const openaiService = require('../../services/AI/openaiService');
 const AppError = require('../../utils/appError');
-const { UserMetadata } = require('firebase-admin/auth');
 
 const getUserTypeAndId = async req => {
   if (req.member) {
@@ -16,6 +15,7 @@ const getUserTypeAndId = async req => {
 // Generate Comment Controller
 exports.generateComment = catchAsync(async (req, res, next) => {
   const { postContent, selectedOption, provider = 'chatgpt' } = req.body;
+
   const { userType, userId } = await getUserTypeAndId(req);
 
   const result = await openaiService.generateComment(userType, userId, postContent, selectedOption, provider);
@@ -75,6 +75,25 @@ exports.generateMessageReply = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     ...result,
+  });
+});
+
+// Generate Message Reply Controller
+exports.generateEmailTemplate = catchAsync(async (req, res, next) => {
+  const { format, templateType, prompt } = req.body;
+  if (!format || !templateType) {
+    return next(new AppError('Email format and template type are required', 400));
+  }
+  const { userType, userId } = await getUserTypeAndId(req);
+
+
+  const result = await openaiService.generateEmailTemplate(userType, userId, format, templateType, prompt);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      ...result,
+    },
   });
 });
 

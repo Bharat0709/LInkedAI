@@ -12,9 +12,8 @@ const upload = multer({
 });
 
 router.post('/check-verification', organizationController.checkVerificationStatus);
-// Protect all routes after thics middleware
+
 router.use(verifyToken);
-// Organization profile routes
 router.get('/profile', organizationController.getProfile);
 router.patch('/profile', upload.single('profilePicture'), organizationController.updateProfile);
 

@@ -20,6 +20,7 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   if (!token) {
     return next(new AppError('You are not authorized to perform this action', 401));
   }
+  console.log(token);
 
   // 3️⃣ Verify and decode token
   let decoded;
@@ -51,9 +52,7 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   }
 
   // 4️⃣ Check if user still exists
-  const user = decoded.isMember
-    ? await Member.findById(decoded.id)
-    : await Organization.findById(decoded.id);
+  const user = decoded.isMember ? await Member.findById(decoded.id) : await Organization.findById(decoded.id);
 
   if (!user) {
     const entity = decoded.isMember ? 'Member' : 'Organization';

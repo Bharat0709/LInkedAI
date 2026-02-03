@@ -24,7 +24,7 @@ const createConnections = () => {
     console.log('Connected to MongoDB (O)');
   });
   oldDBConnection.on('error', error => {
-    console.error('New MongoDB Connection Error:', error);
+    console.error('Old MongoDB Connection Error:', error);
   });
   return { newDBConnection , oldDBConnection};
 };
