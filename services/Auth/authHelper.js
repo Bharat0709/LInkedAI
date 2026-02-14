@@ -64,7 +64,7 @@ const createInitialOrganizationData = (email, timeZone, verificationTokenHash) =
 
     // Default plan features
     planFeatures: {
-      aiModels: ['gemini', 'chatgpt'],
+      aiModels: ['chatgpt'],
       hasPrioritySupport: false,
       canBuyCredits: true,
     },
