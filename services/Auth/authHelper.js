@@ -116,7 +116,7 @@ const createGoogleOrganizationData = profile => {
 
     // Default plan features
     planFeatures: {
-      aiModels: ['gemini', 'chatgpt'],
+      aiModels: ['chatgpt'],
       hasPrioritySupport: false,
       canBuyCredits: true,
     },
