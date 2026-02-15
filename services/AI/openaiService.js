@@ -76,7 +76,7 @@ const generateCustomComment = async (userType, userId, postContent, customTone, 
       role: 'user',
       content: `CONTEXT:
     Post Content: "${postContent}"
-    Tone: ${customTone}
+    Tone: ${customTone} - STRICTL ̏FOLLOW THIS TONE 
     Length: Exactly ${wordCount} words.
 
     TASK:
@@ -293,7 +293,7 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
     """
 
     TASK:
-    Write a reply on behalf of ${userName} that is under 40 words.
+    Write a reply on behalf of ${userName}. Decide word limit by yourself based on the conversation of the users. 
 
     DECISION LOGIC:
     1. IF THE LAST MESSAGE WAS FROM A THIRD PARTY: Pick up on their last specific question or statement. Acknowledge it and provide a logical next step or answer.
