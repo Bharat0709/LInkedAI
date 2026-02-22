@@ -20,7 +20,6 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   if (!token) {
     return next(new AppError('You are not authorized to perform this action', 401));
   }
-  console.log(token);
 
   // 3️⃣ Verify and decode token
   let decoded;

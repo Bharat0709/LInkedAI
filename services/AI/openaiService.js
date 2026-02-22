@@ -252,7 +252,6 @@ Do not include explanations or additional text - only the template content.`,
 
   const generatedTemplateContent = await aiHelper.makeAPICall(provider, messages, 400);
 
-  console.log(generatedTemplateContent);
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.EMAIL_TEMPLATE,
     service: 'email_template',

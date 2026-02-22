@@ -165,7 +165,7 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
     type: 'usage',
     amount: 10,
     balance: newOrgBalance,
-    description: `Credits used by member ${member.name} for Resetting Credit used for ${new Date().toLocaleString()}`,
+    description: `Credits used by member ${member.name} for Resetting Credits`,
     createdAt: new Date(),
   };
 

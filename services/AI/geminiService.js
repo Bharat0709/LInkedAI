@@ -59,7 +59,7 @@ const generateComment = async (userId, postContent, selectedOption) => {
   });
 
   await logActivity(userId, 'credits_used', {
-    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT, // or whatever cost you define
+    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT, 
     service: 'comment',
     provider: 'gemini',
     postContentLength: postContent.length,
@@ -113,7 +113,6 @@ const generateCustomComment = async (userId, postContent, customTone, wordCount)
 };
 
 const generatePostContent = async (userId, postType, selectedTone) => {
-  console.log(userId, postType, selectedTone);
   const parts = [
     {
       text: ` As a linkedIn user i want you to make a ${selectedTone} LinkedIn post in for me with the following specifications:
@@ -157,7 +156,6 @@ const generatePostContent = async (userId, postType, selectedTone) => {
     generationConfig,
     safetySettings,
   });
-  console.log('RESUKLT ', result.response.text());
 
   return result.response.text();
 };
