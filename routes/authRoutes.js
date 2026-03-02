@@ -1,6 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/Auth/authController');
-const gmailController = require('../controllers/GmailController/gmailController')
+const gmailController = require('../controllers/GmailController/gmailController');
 const router = express.Router();
 
 // SIGNUP

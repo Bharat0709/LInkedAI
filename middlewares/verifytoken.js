@@ -51,9 +51,7 @@ exports.verifyToken = catchAsync(async (req, res, next) => {
   }
 
   // 4️⃣ Check if user still exists
-  const user = decoded.isMember
-    ? await Member.findById(decoded.id)
-    : await Organization.findById(decoded.id);
+  const user = decoded.isMember ? await Member.findById(decoded.id) : await Organization.findById(decoded.id);
 
   if (!user) {
     const entity = decoded.isMember ? 'Member' : 'Organization';

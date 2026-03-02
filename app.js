@@ -22,8 +22,7 @@ const envArray = require('./utils/envArray');
 const AppError = require('./utils/appError');
 
 // ROUTES
-const geminiRouter = require('./routes/geminiRoutes');
-const openaiRouter = require('./routes/openAIRoutes');
+const aiRouter = require('./routes/aiRoutes');
 const authRouter = require('./routes/authRoutes');
 const postRouter = require('./routes/postsRoutes');
 const linkedinRouter = require('./routes/linkedinRoutes');
@@ -66,6 +65,7 @@ sessionStore.on('error', function (error) {
 });
 
 // Enhanced CORS configuration
+console.log(envArray('CORS_ORIGINS'));
 const corsOptions = {
   origin: envArray('CORS_ORIGINS'),
   methods: envArray('CORS_METHODS', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']),
@@ -108,8 +108,8 @@ const createRateLimiter = (windowMs, max, message) =>
     },
   });
 
-const limiter = createRateLimiter(15 * 60 * 1000, 200, 'Too many requests from this IP, please try again later.');
-const authLimiter = createRateLimiter(15 * 60 * 1000, 100, 'Too many authentication attempts, please try again later.');
+const limiter = createRateLimiter(15 * 60 * 1000, 400, 'Too many requests from this IP, please try again later.');
+const authLimiter = createRateLimiter(15 * 60 * 1000, 30, 'Too many authentication attempts, please try again later.');
 const aiLimiter = createRateLimiter(15 * 60 * 1000, 20, 'Too many ai generation attempts, please try again later.');
 
 cron.schedule('* * * * *', () => {
@@ -131,6 +131,7 @@ cron.schedule(
 );
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(helmet());
 app.use(compression());
 app.use(mongoSanitize());
@@ -168,15 +169,59 @@ app.use((req, res, next) => {
   next();
 });
 
+// ============================================================
+// ✅ HOOKLOOP LOGGER (Corrected Version)
+// Place this BEFORE your API routes
+// ============================================================
+// Middleware to capture console.log and console.error for EchoPort
+app.use((req, res, next) => {
+  const logs = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+
+  // 1. Capture standard logs
+  console.log = (...args) => {
+    logs.push('LOG: ' + args.join(' '));
+    originalLog.apply(console, args);
+  };
+
+  // 2. Capture errors
+  console.error = (...args) => {
+    logs.push('ERR: ' + args.join(' '));
+    originalError.apply(console, args);
+  };
+
+  // 3. Attach logs to the response header safely
+  const originalEnd = res.end;
+  res.end = function (chunk, encoding) {
+    // Restore original console immediately
+    console.log = originalLog;
+    console.error = originalError;
+
+    // Send logs if headers haven't been sent yet
+    if (!res.headersSent && logs.length > 0) {
+      try {
+        res.setHeader('X-EchoPort-Console', JSON.stringify(logs));
+      } catch (e) {
+        // Fallback if header fails
+      }
+    }
+
+    originalEnd.call(this, chunk, encoding);
+  };
+
+  next();
+});
+// ============================================================
+
 // API Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/organization', organizationRouter);
+app.use('/api/v1/member', memberRouter);
 app.use('/api/v1/linkedin', linkedinRouter);
 app.use('/api/v1/calendar', calendarRouter);
-app.use('/api/v1/member', memberRouter);
-app.use('/api/v1/ai', geminiRouter);
+app.use('/api/v1/ai', aiRouter);
 app.use('/api/v1/email-templates', emailTemplateRouter);
-app.use('/api/v1/openai', openaiRouter);
 app.use('/api/v1/posts', postRouter);
 app.use('/api/v1/saved-posts', savedPostsRouter);
 app.use('/api/v1/automation', automationRouter);
@@ -184,7 +229,7 @@ app.use('/api/v1/payments', paymentRouter);
 app.use('/api/v1/admin', adminRouter);
 
 // Health check route
-app.get('/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
   res.status(200).json({
     status: 'success',
     message: 'Server is healthy',
@@ -211,12 +256,19 @@ app.all('*', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));
 });
 
-// Global error handling middleware
+// Add this to your local server (localhost:3000)
+
+// Global Error Handler
 app.use((err, req, res, next) => {
+  // ✅ IMPORTANT: Explicitly log the error here.
+  // This triggers the middleware above to capture it and show it in EchoPort (Red text).
+  console.error(err);
+
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  if (NODE_ENV === 'production') {
+  // Your existing error response logic...
+  if (process.env.NODE_ENV === 'production') {
     res.status(err.statusCode).json({
       status: err.status,
       message: err.isOperational ? err.message : 'Something went wrong!',
@@ -230,7 +282,6 @@ app.use((err, req, res, next) => {
     });
   }
 });
-
 if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {

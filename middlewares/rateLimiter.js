@@ -19,44 +19,25 @@ const rateLimitMiddleware = catchAsync(async (req, res, next) => {
   const userId = req.member.id;
 
   // Use different rate limiter based on endpoint
-  const limiter = req.path.includes('/hiring-posts')
-    ? postSaveRateLimiter
-    : apiRateLimiter;
+  const limiter = req.path.includes('/hiring-posts') ? postSaveRateLimiter : apiRateLimiter;
 
   try {
     // Include response headers with rate limit info
     const rateLimitRes = await limiter.consume(userId);
 
     // Add rate limit headers so client can adapt
-    res.setHeader(
-      'X-RateLimit-Limit',
-      req.path.includes('/hiring-posts') ? 10 : 4
-    );
+    res.setHeader('X-RateLimit-Limit', req.path.includes('/hiring-posts') ? 10 : 4);
     res.setHeader('X-RateLimit-Remaining', rateLimitRes.remainingPoints);
-    res.setHeader(
-      'X-RateLimit-Reset',
-      new Date(Date.now() + rateLimitRes.msBeforeNext).toISOString()
-    );
+    res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimitRes.msBeforeNext).toISOString());
 
     next();
   } catch (rateLimitRes) {
     // Also send limit info when rejecting
-    res.setHeader(
-      'X-RateLimit-Limit',
-      req.path.includes('/hiring-posts') ? 10 : 4
-    );
+    res.setHeader('X-RateLimit-Limit', req.path.includes('/hiring-posts') ? 10 : 4);
     res.setHeader('X-RateLimit-Remaining', 0);
-    res.setHeader(
-      'X-RateLimit-Reset',
-      new Date(Date.now() + rateLimitRes.msBeforeNext).toISOString()
-    );
+    res.setHeader('X-RateLimit-Reset', new Date(Date.now() + rateLimitRes.msBeforeNext).toISOString());
 
-    throw new AppError(
-      'Too many requests, please try again in ' +
-        Math.ceil(rateLimitRes.msBeforeNext / 1000) +
-        ' seconds.',
-      429
-    );
+    throw new AppError('Too many requests, please try again in ' + Math.ceil(rateLimitRes.msBeforeNext / 1000) + ' seconds.', 429);
   }
 });
 

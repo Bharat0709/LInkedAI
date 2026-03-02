@@ -2,7 +2,7 @@ const memberRepository = require('../../repositories/memberRepository');
 const organizationRepository = require('../../repositories/organizationRepository');
 const aiRepository = require('../../repositories/aiRepository');
 const { generateConnectionToken } = require('../../utils/randomString');
-const { sendNewMemberInviteEmail, sendMilestoneEmail} = require('../../admin/email/member');
+const { sendNewMemberInviteEmail, sendMilestoneEmail } = require('../../admin/email/member');
 const { logMemberActivity, parseConnectionToken, validateUpdateFields } = require('./memberHelper');
 const AppError = require('../../utils/appError');
 const OldMember = require('../../models/OldMember');
@@ -163,7 +163,7 @@ const updateCreditsUsedToday = async (memberId, organizationId) => {
     type: 'usage',
     amount: 10,
     balance: newOrgBalance,
-    description: `Credits used by member ${member.name} for Resetting Credit used for ${new Date().toLocaleString()}`,
+    description: `Credits used by member ${member.name} for Resetting Credits`,
     createdAt: new Date(),
   };
 
@@ -480,6 +480,7 @@ const updateMemberSettings = async (memberId, organizationId, settingsData) => {
   const updateFields = {};
 
   if (timeZone) updateFields.timeZone = timeZone;
+  if (settingsData.allowReferencing !== undefined) updateFields.allowReferencing = settingsData.allowReferencing;
 
   if (postSavingPreferences) {
     updateFields.postSavingPreferences = {

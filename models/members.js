@@ -150,10 +150,15 @@ const MemberSchema = new mongoose.Schema({
   },
   aiModels: {
     type: [String],
-    enum: ['chatgpt', 'mistral', 'groq', 'perplexity'],
+    enum: ['chatgpt', 'groq', 'perplexity'],
+
     default: ['chatgpt', 'groq', 'perplexity'],
   },
   hasCustomAIComments: {
+    type: Boolean,
+    default: false,
+  },
+  allowReferencing: {
     type: Boolean,
     default: false,
   },

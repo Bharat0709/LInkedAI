@@ -4,31 +4,25 @@ const findById = async id => {
   return await SavedPost.findById(id).populate('savedBy', 'name profilePicture email');
 };
 
-const findByOrganizationId = async (organizationId, options = {}) => {
-  const { status, category, priority, sortBy = 'createdAt', order = 'desc', limit = 50, page = 1, search, memberId, tags } = options;
-
+const buildQuery = (organizationId, options) => {
+  const { status, category, priority, search, memberId, tags } = options;
   let query = { organizationId };
 
   if (status && status !== 'all') {
     query.leadStatus = status;
   }
-
   if (category) {
     query.category = category;
   }
-
   if (priority) {
     query.leadPriority = priority;
   }
-
   if (memberId) {
     query.savedBy = memberId;
   }
-
   if (tags && tags.length > 0) {
     query.tags = { $in: tags };
   }
-
   if (search) {
     query.$or = [
       { content: { $regex: search, $options: 'i' } },
@@ -38,7 +32,12 @@ const findByOrganizationId = async (organizationId, options = {}) => {
       { emailAddresses: { $regex: search, $options: 'i' } },
     ];
   }
+  return query;
+};
 
+const findByOrganizationId = async (organizationId, options = {}) => {
+  const { sortBy = 'createdAt', order = 'desc', limit = 50, page = 1 } = options;
+  const query = buildQuery(organizationId, options);
   const skip = (parseInt(page) - 1) * parseInt(limit);
   let sort = {};
   sort[sortBy] = order === 'desc' ? -1 : 1;
@@ -46,8 +45,8 @@ const findByOrganizationId = async (organizationId, options = {}) => {
   return await SavedPost.find(query).populate('savedBy', 'name profilePicture').sort(sort).skip(skip).limit(parseInt(limit));
 };
 
-const countByOrganizationId = async (organizationId, filters = {}) => {
-  let query = { organizationId, ...filters };
+const countByOrganizationId = async (organizationId, options = {}) => {
+  const query = buildQuery(organizationId, options);
   return await SavedPost.countDocuments(query);
 };
 

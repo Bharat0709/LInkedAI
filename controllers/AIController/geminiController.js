@@ -84,8 +84,7 @@ exports.generatePostContentGemini = catchAsync(async (req, res, next) => {
   });
 });
 
-
-exports.generatePostContentGeminiExtn  = catchAsync(async (req, res, next) => {
+exports.generatePostContentGeminiExtn = catchAsync(async (req, res, next) => {
   const { postType, selectedTone } = req.body;
   if (!postType || !selectedTone) {
     return next(new AppError('Post type and selected tone are required', 400));
@@ -108,7 +107,6 @@ exports.generatePostContentGeminiExtn  = catchAsync(async (req, res, next) => {
     remainingCredits: updatedUser.creditsLeft,
   });
 });
-
 
 exports.generateOrganizationPostContentUsePersona = catchAsync(async (req, res, next) => {
   const { postType, language, persona, selectedTone } = req.body;

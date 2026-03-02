@@ -82,4 +82,3 @@ exports.deleteOrganization = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-

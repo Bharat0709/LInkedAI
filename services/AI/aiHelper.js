@@ -34,6 +34,7 @@ const CREDIT_COSTS = {
   COMMENT: 5,
   CUSTOM_COMMENT: 5,
   POST_CONTENT: 10,
+  EMAIL_TEMPLATE: 10,
   MESSAGE_TEMPLATE: 5,
   MESSAGE_REPLY: 5,
 };
@@ -108,7 +109,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
       }
 
       if (member.creditLimitperDay !== -1 && member.creditsUsedToday + creditAmount > member.creditLimitperDay) {
-        throw new AppError('Daily credit limit reached! Visit profile settings to reset limit', 403);
+        throw new AppError('Daily credit limit reached! Visit www.engagegpt.in/dashboard/settings to reset limit', 403);
       }
 
       // Reset member daily credits if date changed
@@ -151,7 +152,7 @@ const processCredits = async (userType, userId, creditAmount, feature = 'general
         member: {
           id: member._id,
           creditsUsedToday: member.creditsUsedToday,
-          creditLimitperDay: member.creditLimitperDay
+          creditLimitperDay: member.creditLimitperDay,
         },
       };
     } else if (userType === 'organization') {

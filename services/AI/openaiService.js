@@ -13,23 +13,30 @@ const generateComment = async (userType, userId, postContent, selectedOption, pr
 
   const messages = [
     {
+      role: 'system',
+      content: `You are a savvy LinkedIn networking expert. Your writing style is "Micro-Engagement": 
+    - You avoid "AI-isms" (e.g., "This is a great reminder," "In today's fast-paced world").
+    - You sound like a human typing a quick, thoughtful reply from a mobile phone.
+    - You prioritize "Social Proof" and "Low-Friction" communication.`,
+    },
+    {
       role: 'user',
-      content: `As a linkedIn user on behalf of me help me writing a comment in ${selectedOption} tone for a linkedIn Post with the following post content:\n\n${postContent} 
-        Requirements: 
-        - The comment should be strictly in ${selectedOption} tone only.
-        - The comment should be relevant to the whole post content
-        - Give response as if a real user have written the comment
-        - You can use emojis as well if its a congratulatory comment
-        - Do not repeat the exact words written in the post
-        - Give result in a single paragraph and not greater than 30 words  
-        - Do not include double quotes in response
-        - Do not include hashtags in response 
-        - Give a short and engaging comment 
-        - Comment should not seem to be written by AI`,
+      content: `Post Content: "${postContent}"
+
+    Task: Write a ${selectedOption} comment responding to this post.
+
+    Execution Instructions:
+    1. VOICE: Act as a peer in the industry. Use a mix of short and medium sentence lengths.
+    2. HOOK: Start with a direct reaction to a specific point in the post. 
+    3. THE "HUMAN" FILTER: Strictly avoid corporate cliches like "Deep dive," "Masterclass," "Kudos," or "I couldn't agree more." 
+    4. FORMAT: Single paragraph. No hashtags. No quotation marks. 
+    5. BREVITY: Keep it under 40 - 50  words. Every word must earn its place.
+    6. TONE SPECIFICITY: If ${selectedOption} is 'Funny', use dry wit. If 'Insightful', add a small "pro-tip" or "why." If 'Congratulatory', be genuinely stoked, not formal.
+    7. FINISH: Do not sign off with your name or a formal closing.`,
     },
   ];
 
-  const generatedComment = await aiHelper.makeAPICall(provider, messages, 150);
+  const generatedComment = await aiHelper.makeAPICall(provider, messages, 200);
 
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.COMMENT,
@@ -58,21 +65,30 @@ const generateCustomComment = async (userType, userId, postContent, customTone, 
 
   // Process credits first
   const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.CUSTOM_COMMENT, 'Custom Comment using ' + provider);
-
   const messages = [
     {
+      role: 'system',
+      content: `You are an experienced professional with a sharp, modern communication style. 
+    Your goal is to write LinkedIn comments that sound like a quick, high-value thought sent from a smartphone. 
+    You avoid all "bot-like" enthusiasm and generic corporate fluff.`,
+    },
+    {
       role: 'user',
-      content: `As a linkedIn user from India on behalf of me help me write a comment for a linkedIn Post in the ${customTone} tone with the following post content:\n\n${postContent} in ${wordCount} words
-        Requirements:
-        - You can use emojis as well if its a congratulatory comment
-        - The comment should strictly be in ${customTone} only
-        - Give response as if a real user have written the comment
-        - The comment should be relevant to the whole post content
-        - Do not repeat the exact words written in the post.
-        - Do not include double quotes in response
-        - Do not include hashtags in response 
-        - Give engaging comment & complete the comment within the word limit 
-        - The comment should not seem to be written by AI`,
+      content: `CONTEXT:
+    Post Content: "${postContent}"
+    Tone: ${customTone} - STRICTL ̏FOLLOW THIS TONE 
+    Length: Exactly ${wordCount} words.
+
+    TASK:
+    Write a LinkedIn comment as a real person. 
+
+    STRICT RULES:
+    1. THE "NO-FLUFF" FILTER: Do not use words like: 'insightful', 'tremendous', 'kudos', 'valuable', 'testament', or 'delighted'. These sound like AI.
+    2. DIRECTNESS: Start immediately with the core thought. No "Thanks for sharing" or "I really enjoyed reading this" openers.
+    3. THE SPECIFICITY RULE: Reference one specific nuance or concept from the post content so it's clear you actually read it.
+    4. SENTENCE STRUCTURE: Use fragments or punchy sentences. Avoid the "Subject + Verb + Adjective" pattern that AI defaults to.
+    5. FORMAT: Single paragraph. No hashtags. No double quotes. No formal sign-offs/names.
+    6. EMOJIS: Use a maximum of one relevant emoji only if the tone is 'Congratulatory' or 'Appreciative'. Otherwise, zero emojis.`,
     },
   ];
 
@@ -105,28 +121,36 @@ const generatePostContent = async (userType, userId, postType, selectedTone, pro
 
   const messages = [
     {
+      role: 'system',
+      content: `You are an expert LinkedIn Content Strategist. Your writing style is:
+    - High-Impact: You use "The 1-2-1 Rule" (1 strong hook, 2 supporting points, 1 closing question).
+    - Readable: You use line breaks for clarity, not just bullet points.
+    - Authentic: You avoid corporate "buzzword soup" and speak like a human expert.`,
+    },
+    {
       role: 'user',
-      content: `As a linkedIn user i want you to make a ${selectedTone} LinkedIn post for me with the following specifications:
+      content: `Create a ${selectedTone} LinkedIn post about: ${postType}.
 
-        Post Topic is about ${postType}
-  
-        Requirements:
-        - Include emojis to add a touch of personality.
-        - Do not include ** or * before, after or in between the words the text in the response
-        - Incorporate relevant hashtags for increased visibility.
-        - Start the post with a compelling hook line to engage the audience.
-        - Give the content in points and understand what kind of content will suite the audience the best as per the post content requirements
-        - Should have one link attached that is related to post content helpful for the audience if any
-        - Prompt followers to share their thoughts or experiences related to the post.
-        - Ensure the post fits within LinkedIn's character limit for optimal engagement
-        - Leverage current events or industry trends to make the post timely and relevant.
-        - Use simple and easy to understand words in the post
-        - The post should not seem to be written by AI
-        - Complete the post within approx 900 words`,
+    EXECUTION STEPS:
+    1. THE HOOK: Start with a "scroll-stopper" (a bold claim, a surprising stat, or a relatable pain point). Do not start with "In today's world..."
+    2. THE BODY: Break the content into 3-4 punchy, digestible sections. Use simple language.
+    3. THE FORMATTING: 
+       - Use line breaks between every 1-2 sentences to create white space. 
+       - Use plain text only (NO bolding ** or italics *).
+       - If using points, use clean emojis (e.g., 🔹 or ✅) instead of standard dashes.
+    4. TREND INTEGRATION: Briefly mention a current industry shift or trend to make it feel timely.
+    5. THE CALL TO ACTION: End with a specific, open-ended question that is easy to answer.
+    6. LINK & HASHTAGS: Include a placeholder [Insert Relevant Link Here] and 3-5 high-traffic hashtags.
+    7. HUMAN FILTER: Avoid AI "tell-tale" words: 'Unlock,' 'Empower,' 'Harness,' 'Transformative,' 'Demystify.'
+    
+    CONSTRAINTS: 
+    - Approx. length: 200-400 words (ideal for LinkedIn engagement).
+    - Tone: Strictly ${selectedTone}.
+    - No bold/italic markdown.`,
     },
   ];
 
-  const generatedPostContent = await aiHelper.makeAPICall(provider, messages, 1500);
+  const generatedPostContent = await aiHelper.makeAPICall(provider, messages, 2500);
 
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.POST_CONTENT,
@@ -154,20 +178,34 @@ const generateMessageTemplate = async (userType, userId, templateRequirements, s
 
   const messages = [
     {
+      role: 'system',
+      content: `You are a professional networking coach. You specialize in writing "High-Response" LinkedIn Outreach.
+    Your style is:
+    - Direct: No fluff or long introductions.
+    - Value-Oriented: Every sentence serves a purpose.
+    - Low-Friction: It makes it easy for the recipient to say 'yes' or 'reply.'`,
+    },
+    {
       role: 'user',
-      content: `Generate a ${selectedTone} message template for linkedin with the following purpose:
+      content: `PURPOSE: ${templateRequirements}
+    TONE: ${selectedTone}
+    WORD LIMIT: Under 150 words (brevity is key for messages).
 
-        Template is about ${templateRequirements}
+    TASK:
+    Generate a LinkedIn message template based on the purpose above.
 
-        Requirements:
-        - Template should be short and to the point
-        - Should be completed in 200 words
-        - Message Template should be professional.
-        - If template is about applying for job then attach resume and skills in the message and message should be professional`,
+    EXECUTION INSTRUCTIONS:
+    1. THE SUBJECT LINE (if applicable): Include a punchy, relevant subject line in [brackets].
+    2. THE OPENING: Start with a personalized touch (e.g., "I've been following your work on..." or "Your recent post about...").
+    3. THE "WHY": Clearly state why you are reaching out in 1-2 sentences. 
+    4. JOB APPLICATION SPECIFICS: If this is for a job/referral, include placeholders for [Top Skill 1], [Top Skill 2], and a clear mention that the [Resume is Attached].
+    5. THE CALL TO ACTION (CTA): End with a low-pressure question (e.g., "Would you be open to a 5-minute chat?" or "Do you have any advice for someone in my position?").
+    6. ANTI-BOT FILTER: Do not use "I hope this message finds you well" or "I am writing to express my interest." These are overused and ignored.
+    7. FORMATTING: Use placeholders like [Name], [Company], and [Specific Project] so the user knows exactly where to customize.`,
     },
   ];
 
-  const generatedTemplateContent = await aiHelper.makeAPICall(provider, messages, 300);
+  const generatedTemplateContent = await aiHelper.makeAPICall(provider, messages, 400);
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_TEMPLATE,
     service: 'message_template',
@@ -183,6 +221,49 @@ const generateMessageTemplate = async (userType, userId, templateRequirements, s
   };
 };
 
+// Generate Message Template Service
+const generateEmailTemplate = async (userType, userId, format, templateType, prompt, provider = 'chatgpt') => {
+  // Process credits first
+  const creditResult = await aiHelper.processCredits(userType, userId, aiHelper.CREDIT_COSTS.EMAIL_TEMPLATE, 'Email Template');
+
+  const messages = [
+    {
+      role: 'system',
+      content: `Generate a ${format} email template with the following specifications:
+
+Email Format: ${format} (formal/informal/persuasive/personal)
+Template Type: ${templateType} (html/text)
+${prompt ? `Additional Requirements: ${prompt}` : ''}
+
+Requirements:
+- Create a professional email template suitable for ${format} communication
+- Template should be concise and effective (maximum 2000 characters)
+- Include relevant placeholders like {{firstName}}, {{lastName}}, {{companyName}}, {{position}}, etc.
+- ${templateType === 'html' ? 'Use proper HTML structure with inline CSS styling for email compatibility' : 'Use clean, well-formatted plain text'}
+- Ensure the tone matches the ${format} style requested
+- Include appropriate greeting, body content, and professional closing
+- Make it versatile for various business communication needs
+- If HTML format, ensure mobile-responsive design with proper email client compatibility
+
+${templateType === 'html' ? 'Return valid HTML email template with inline CSS.' : 'Return clean plain text email template.'}
+Do not include explanations or additional text - only the template content.`,
+    },
+  ];
+
+  const generatedTemplateContent = await aiHelper.makeAPICall(provider, messages, 400);
+
+  await logActivity(userId, 'credits_used', {
+    creditsUsed: aiHelper.CREDIT_COSTS.EMAIL_TEMPLATE,
+    service: 'email_template',
+    provider: aiHelper.PROVIDERS[provider].name,
+  });
+
+  return {
+    generatedEmailContent: generatedTemplateContent.trim(),
+    provider: aiHelper.PROVIDERS[provider].name,
+  };
+};
+
 // Generate Message Reply Service
 const generateMessageReply = async (userType, userId, formattedMessages, userName, provider = 'chatgpt') => {
   if (!formattedMessages || !userName) {
@@ -194,20 +275,38 @@ const generateMessageReply = async (userType, userId, formattedMessages, userNam
 
   const messages = [
     {
+      role: 'system',
+      content: `You are a high-level executive assistant for ${userName}. 
+    Your goal is to maintain ${userName}'s professional reputation by writing replies that are:
+    - Contextual: They directly address the last point made in the conversation.
+    - Human: They sound like a busy professional, not a formal chatbot.
+    - Minimalist: No unnecessary politeness or "fluff" sentences.`,
+    },
+    {
       role: 'user',
-      content: `My name is ${userName} and on behalf of me Generate a formal reply to these messages from linkedin with the following last 5 conversation:
+      content: `CONTEXT:
+    User Name: ${userName}
+    Recent Conversation History: 
+    """
+    ${formattedMessages}
+    """
 
-        ${formattedMessages}
+    TASK:
+    Write a reply on behalf of ${userName}. Decide word limit by yourself based on the conversation of the users. 
 
-        If there is no message from the other side except for ${userName} that is me then send a default one to start a conversation.
-        Requirements:
-        - Reply should be short and to the point
-        - Should be completed in 50 words
-        - Reply should be professional.`,
+    DECISION LOGIC:
+    1. IF THE LAST MESSAGE WAS FROM A THIRD PARTY: Pick up on their last specific question or statement. Acknowledge it and provide a logical next step or answer.
+    2. IF THE ONLY MESSAGES ARE FROM ${userName} (OR NO HISTORY): Generate a "Cold Outreach" starter that is relevant to a professional LinkedIn setting (e.g., "Thanks for connecting, [Name]. Looking forward to following your work.")
+
+    STRICT GUIDELINES:
+    - NO BOT OPENERS: Avoid "I hope you are doing well" or "Thank you for your message."
+    - TONE: Professional, peer-to-peer, and decisive.
+    - FORMAT: Plain text only. No hashtags. No quotes.
+    - SIGN-OFF: Do not include a formal sign-off unless it's a simple "Best, ${userName}" or "Thanks, ${userName}".`,
     },
   ];
 
-  const generatedReply = await aiHelper.makeAPICall(provider, messages, 100);
+  const generatedReply = await aiHelper.makeAPICall(provider, messages, 200);
   await logActivity(userId, 'credits_used', {
     creditsUsed: aiHelper.CREDIT_COSTS.MESSAGE_REPLY,
     service: 'message_reply',
@@ -280,6 +379,7 @@ module.exports = {
   generateMessageReply,
   generateMessageTemplate,
   generateMessageReply,
+  generateEmailTemplate,
   checkProviderHealth,
   getAvailableProviders,
 };

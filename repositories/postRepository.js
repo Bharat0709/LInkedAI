@@ -1,4 +1,3 @@
-// repositories/postRepository.js
 const Post = require('../models/posts');
 
 const findByPostUrn = async (postUrn, organizationId, memberId) => {
@@ -22,6 +21,24 @@ const findByMemberAndOrganization = async (organizationId, memberId) => {
     organizationId,
     memberId,
   });
+};
+
+/**
+ * Fetches top posts specifically optimized for MCP Persona analysis.
+ * Sorts by a combination of likes and comments to find "high-value" content.
+ */
+const getHighEngagementPosts = async (organizationId, memberId, limit = 20) => {
+  return await Post.find({ organizationId, memberId }).sort({ numLikes: -1, numComments: -1 }).limit(limit).lean();
+};
+
+/**
+ * Fetches the most recent posts to capture the current "vibe" or trending topics the user is on.
+ */
+const getRecentPosts = async (organizationId, memberId, limit = 10) => {
+  return await Post.find({ organizationId, memberId })
+    .sort({ _id: -1 }) // Assuming ObjectId timestamp or add a createdAt field
+    .limit(limit)
+    .lean();
 };
 
 const calculateStats = posts => {
@@ -55,6 +72,8 @@ module.exports = {
   createPost,
   updatePost,
   findByMemberAndOrganization,
+  getHighEngagementPosts,
+  getRecentPosts,
   calculateStats,
   getTopPosts,
 };

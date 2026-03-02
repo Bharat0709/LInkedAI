@@ -9,9 +9,10 @@ router.post('/generate/post-content/gemini', geminiApiController.generatePostCon
 router.post('/generate/email-template/gemini', geminiApiController.generateEmailTemplateGemini);
 
 router.use(verifyExtension);
-router.post('/generate/post-content/gemini/extn', geminiApiController.generatePostContentGeminiExtn);
-router.post('/generate/comment/gemini', geminiApiController.generateCommentGemini);
-router.post('/generate/custom-comment/gemini', geminiApiController.generateCustomCommentGemini);
+router.post('/gemini/generate/comment/', geminiApiController.generateCommentGemini);
+router.post('/gemini/generate/custom-comment', geminiApiController.generateCustomCommentGemini);
+router.post('/gemini/generate/extn-post-content', geminiApiController.generatePostContentGeminiExtn);
+
 router.post('/generate/use-template/gemini', geminiApiController.generateOrganizationPostContentUseTemplate);
 router.post('/generate/msg-template/gemini', geminiApiController.generateTemplateGemini);
 

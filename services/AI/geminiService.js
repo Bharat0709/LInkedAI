@@ -59,7 +59,7 @@ const generateComment = async (userId, postContent, selectedOption) => {
   });
 
   await logActivity(userId, 'credits_used', {
-    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT, // or whatever cost you define
+    creditsUsed: aiHelper.CREDIT_COSTS.COMMENT, 
     service: 'comment',
     provider: 'gemini',
     postContentLength: postContent.length,
