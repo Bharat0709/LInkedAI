@@ -22,7 +22,7 @@ exports.getSavedPosts = catchAsync(async (req, res, next) => {
     priority: req.query.priority,
     sortBy: req.query.sortBy || 'createdAt',
     order: req.query.order || 'desc',
-    limit: req.query.limit || 100,
+    limit: req.query.limit || 50,
     page: req.query.page || 1,
     search: req.query.search,
     memberId: req.query.memberId,
@@ -34,6 +34,7 @@ exports.getSavedPosts = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: result.posts.length,
+    totalResults: result.totalResults,
     totalPages: result.totalPages,
     currentPage: result.currentPage,
     data: result.posts,
@@ -71,6 +72,7 @@ exports.getSavedPostStats = catchAsync(async (req, res, next) => {
 
 exports.getOrganizationSavedPosts = catchAsync(async (req, res, next) => {
   const { organizationId } = req.params;
+  console.log(req.params);
   const user = req.member;
 
   // Ensure user belongs to this organization or is admin
@@ -85,7 +87,7 @@ exports.getOrganizationSavedPosts = catchAsync(async (req, res, next) => {
     memberId: req.query.memberId,
     sortBy: req.query.sortBy || 'createdAt',
     order: req.query.order || 'desc',
-    limit: req.query.limit || 10,
+    limit: req.query.limit || 50,
     page: req.query.page || 1,
     search: req.query.search,
   };
@@ -95,6 +97,7 @@ exports.getOrganizationSavedPosts = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     results: result.posts.length,
+    totalResults: result.totalResults,
     totalPages: result.totalPages,
     currentPage: result.currentPage,
     data: result.posts,

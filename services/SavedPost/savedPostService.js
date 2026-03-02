@@ -62,11 +62,7 @@ const getSavedPosts = async (organizationId, options) => {
   }
 
   const posts = await savedPostRepository.findByOrganizationId(organizationId, options);
-  const totalPosts = await savedPostRepository.countByOrganizationId(organizationId, {
-    leadStatus: options.status !== 'all' ? options.status : undefined,
-    category: options.category,
-    savedBy: options.memberId,
-  });
+  const totalPosts = await savedPostRepository.countByOrganizationId(organizationId, options);
 
   // Get filter options
   const categories = await savedPostRepository.getDistinctValues(organizationId, 'category');
@@ -92,7 +88,7 @@ const getSavedPosts = async (organizationId, options) => {
 
   return {
     posts,
-    totalPosts,
+    totalResults: totalPosts,
     totalPages: Math.ceil(totalPosts / parseInt(options.limit || 50)),
     currentPage: parseInt(options.page || 1),
     filters: {

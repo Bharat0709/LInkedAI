@@ -108,8 +108,8 @@ const createRateLimiter = (windowMs, max, message) =>
     },
   });
 
-const limiter = createRateLimiter(15 * 60 * 1000, 200, 'Too many requests from this IP, please try again later.');
-const authLimiter = createRateLimiter(15 * 60 * 1000, 100, 'Too many authentication attempts, please try again later.');
+const limiter = createRateLimiter(15 * 60 * 1000, 400, 'Too many requests from this IP, please try again later.');
+const authLimiter = createRateLimiter(15 * 60 * 1000, 30, 'Too many authentication attempts, please try again later.');
 const aiLimiter = createRateLimiter(15 * 60 * 1000, 20, 'Too many ai generation attempts, please try again later.');
 
 cron.schedule('* * * * *', () => {

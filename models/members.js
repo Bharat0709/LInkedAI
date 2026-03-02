@@ -157,6 +157,10 @@ const MemberSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  allowReferencing: {
+    type: Boolean,
+    default: false,
+  },
   postSavingPreferences: {
     enabled: {
       type: Boolean,

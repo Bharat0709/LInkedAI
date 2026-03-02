@@ -482,6 +482,7 @@ const updateMemberSettings = async (memberId, organizationId, settingsData) => {
   const updateFields = {};
 
   if (timeZone) updateFields.timeZone = timeZone;
+  if (settingsData.allowReferencing !== undefined) updateFields.allowReferencing = settingsData.allowReferencing;
 
   if (postSavingPreferences) {
     updateFields.postSavingPreferences = {
