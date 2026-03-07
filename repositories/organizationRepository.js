@@ -13,6 +13,10 @@ const findByEmailWithPassword = async email => {
   return await Organization.findOne({ email }).select('+password');
 };
 
+const findAll = async () => {
+  return await Organization.find({ isActive: true });
+};
+
 const findByResetToken = async (hashedToken, currentTime) => {
   return await Organization.findOne({
     resetPasswordToken: hashedToken,
@@ -170,7 +174,6 @@ const clearVerificationTokens = async id => {
   );
 };
 
-
 module.exports = {
   findById,
   findByEmail,
@@ -195,4 +198,5 @@ module.exports = {
   clearResetTokens,
   clearVerificationTokens,
   getOrganizationCredits,
+  findAll,
 };

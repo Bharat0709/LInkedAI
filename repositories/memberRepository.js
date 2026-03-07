@@ -12,6 +12,10 @@ const findAllByOrganizationId = async organizationId => {
   return await Member.find({ organizationId }).sort({ createdAt: -1 });
 };
 
+const findAll = async () => {
+  return await Member.find({ active: true });
+};
+
 const findByIdAndOrg = async (memberId, organizationId) => {
   return await Member.findOne({ _id: memberId, organizationId });
 };
@@ -177,4 +181,5 @@ module.exports = {
   deleteMember,
   countByOrganizationId,
   findAllByOrganizationId,
+  findAll,
 };
