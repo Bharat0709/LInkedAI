@@ -76,18 +76,24 @@ exports.sendDailyStatsReport = async (stats, csvPath = null) => {
 };
 
 exports.sendCreditsExpiringNotification = async ({ org, creditsLeft, expiresAt }) => {
-
   const html = compileTemplate('account/credits_expiry', {
     name: org?.name || 'User',
     creditsLeft,
-    expiryDate: expiresAt.toLocaleString(),  
+    expiryDate: expiresAt.toLocaleString(),
     dashboardUrl: 'https://engagegpt.in/dashboard',
     year: new Date().getFullYear(),
   });
 
-  return await sendAutoSendEmail(
-    org.email,
-    '⚠️ Your EngageGPT Credits Are Expiring Soon',
-    html
-  );
+  return await sendAutoSendEmail(org.email, '⚠️ Your EngageGPT Credits Are Expiring Soon', html);
+};
+
+// TO ALL USERS - ENGAGEGPT 3.0 UPDATE
+exports.send3_0UpdateEmail = async user => {
+  const html = compileTemplate('updates/engagegpt_3_0', {
+    name: user.name,
+    dashboardUrl: 'https://engagegpt.in/dashboard',
+    year: new Date().getFullYear(),
+  });
+
+  return await sendAutoSendEmail(user.email, '🚀 EngageGPT 3.0 is Here: Smaller, Faster, and Stable!', html);
 };

@@ -96,7 +96,7 @@ const connectMember = async ({ connectionToken, name, profileLink, profilePictur
     profilePicture,
   };
 
-  await memberRepository.updateById(member._id, memberData);
+  const updatedMember = await memberRepository.updateById(member._id, memberData);
 
   // Log activity
   await logMemberActivity(member._id, 'member_connected_extension', {
@@ -104,8 +104,8 @@ const connectMember = async ({ connectionToken, name, profileLink, profilePictur
     createdAt: new Date(),
   });
 
-  await sendNewUserEmail(member);
-  return member;
+  await sendNewUserEmail(updatedMember);
+  return updatedMember;
 };
 
 const findAllByOrganizationId = async organizationId => {
