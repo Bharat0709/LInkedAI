@@ -21,17 +21,26 @@ exports.sendUpdateEmailToAll = catchAsync(async (req, res, next) => {
     });
   }
 
-  const emailPromises = members.map(member =>
-    adminEmailService.send3_0UpdateEmail(member).catch(err => {
-      console.error(`Failed to send email to ${member.email}:`, err.message);
-      return null;
-    })
-  );
-
-  await Promise.allSettled(emailPromises);
-
   res.status(200).json({
     success: true,
-    message: `Update emails sent to ${members.length} members.`,
+    message: `Started sending update emails to ${members.length} members at 30-second intervals.`,
   });
+
+  // Process emails in the background to prevent request timeout
+  (async () => {
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      try {
+        await adminEmailService.send3_0UpdateEmail(member);
+        console.log(`[${i + 1}/${members.length}] Sent update email to ${member.email}`);
+      } catch (err) {
+        console.error(`[${i + 1}/${members.length}] Failed to send email to ${member.email}:`, err.message);
+      }
+      
+      if (i < members.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 30000)); // 30 seconds interval
+      }
+    }
+    console.log('Finished sending all update emails.');
+  })();
 });
