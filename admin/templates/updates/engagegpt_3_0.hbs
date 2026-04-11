@@ -1,147 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>EngageGPT 3.0 is Here</title>
-    <style>
-        /* Reset & Client-specific fixes */
-        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { -ms-interpolation-mode: bicubic; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        table { border-collapse: collapse !important; }
-        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-        
-        /* Responsive utilities */
-        @media screen and (max-width: 600px) {
-            .container { width: 100% !important; border-radius: 0 !important; }
-            .content-padding { padding: 30px 20px !important; }
-            .header-padding { padding: 40px 20px !important; }
-        }
-    </style>
-</head>
-<body style="background-color: #f4f4f5; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; -webkit-font-smoothing: antialiased;">
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <title>EngageGPT 3.1 is Here</title>
+  </head>
+  <body style="background-color: #f4f4f5; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-    <!-- Wrapper Table -->
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f5;">
-        <tr>
-            <td align="center" style="padding: 40px 10px;">
-                
-                <!-- Main Email Container -->
-                <table border="0" cellpadding="0" cellspacing="0" width="600" class="container" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);">
-                    
-                    <!-- Header / Hero Section -->
-                    <tr>
-                        <td align="center" class="header-padding" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 50px 40px;">
-                            <h2 style="color: #c7d2fe; margin: 0 0 10px 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px;">EngageGPT</h2>
-                            <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.2;">Welcome to 3.0</h1>
-                            <p style="color: #e0e7ff; margin: 15px 0 0 0; font-size: 16px; line-height: 1.5;">Smarter, faster, and accessible to everyone.</p>
-                        </td>
-                    </tr>
+    <table width='100%' style='background-color: #f4f4f5; padding: 40px 10px;'>
+      <tr>
+        <td align='center'>
 
-                    <!-- Body Content -->
-                    <tr>
-                        <td class="content-padding" style="padding: 40px;">
-                            
-                            <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-                                Hi {{#if name}}{{name}}{{else}}there{{/if}},
-                            </p>
+          <table width='600' style='background-color: #ffffff; border-radius: 16px; overflow: hidden;'>
 
-                            <!-- Feature 1: The Bug Fix -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; background-color: #f8fafc; border-radius: 12px;">
-                                <tr>
-                                    <td style="padding: 20px;">
-                                        <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 10px 0; font-weight: 700;">🚀 The "User Not Found" Issue is Fixed</h3>
-                                        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 15px 0;">
-                                            We’ve been tackling this stubborn issue for the last 6 months, and we are thrilled to announce it is finally resolved. The extension is now completely stable and open to everyone.
-                                        </p>
-                                        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 15px 0;">
-                                            Please update the extension if you haven't already. Latest version 3.0.2
-                                        </p>
-                                        <p style="color: #4f46e5; font-size: 14px; line-height: 1.5; margin: 0; font-weight: 600;">
-                                            <em>Did you face this issue in the past? Reply to this email and let us know—we’d love to add free credits to your account as a thank you for your patience!</em>
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
+            <!-- HEADER -->
+            <tr>
+              <td align='center' style='background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 50px 40px;'>
+                <h2 style='color: #c7d2fe; margin: 0; font-size: 14px;'>EngageGPT</h2>
+                <h1 style='color: #ffffff; margin: 10px 0 0; font-size: 32px;'>Welcome to 3.1</h1>
+                <p style='color: #e0e7ff; margin-top: 10px;'>Smarter, faster, and more powerful.</p>
+              </td>
+            </tr>
 
-                            <!-- Feature 2: MCP Server -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
-                                <tr>
-                                    <td valign="top" style="padding-right: 15px; width: 24px;">
-                                        <span style="font-size: 20px;">🧠</span>
-                                    </td>
-                                    <td>
-                                        <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 8px 0; font-weight: 600;">Introducing the EngageGPT MCP Server</h3>
-                                        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0;">
-                                            Scale your content creation like never before. You can now use our new MCP server to integrate directly with Claude, enabling you to write and generate posts using your exact, unique writing persona.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
+            <!-- BODY -->
+            <tr>
+              <td style='padding: 40px;'>
 
-                            <!-- Feature 3: UI -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 35px;">
-                                <tr>
-                                    <td valign="top" style="padding-right: 15px; width: 24px;">
-                                        <span style="font-size: 20px;">✨</span>
-                                    </td>
-                                    <td>
-                                        <h3 style="color: #1e293b; font-size: 18px; margin: 0 0 8px 0; font-weight: 600;">A Fresh New Dashboard</h3>
-                                        <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0;">
-                                            Log in to experience our beautifully redesigned, modern UI. It’s faster, cleaner, and waiting for you to explore.
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
+                <p style='font-size: 16px; color: #333;'>Hi {{#if name}}{{name}}{{else}}there{{/if}},</p>
 
-                            <!-- CTA Button -->
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 35px;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="{{#if dashboardUrl}}{{dashboardUrl}}{{else}}https://engagegpt.in/dashboard{{/if}}" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 8px; transition: background-color 0.3s ease;">
-                                            Explore EngageGPT 3.0
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
+                <!-- FEATURE -->
+                <div style='background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:25px;'>
+                  <h3 style='margin:0; font-size:18px;'>🚀 Version 3.1 is Now Live</h3>
+                  <p style='margin-top:10px; font-size:15px; color:#555;'>
+                    We’re excited to announce that EngageGPT 3.1 is now available!
+                  </p>
+                  <p style='font-size:15px; color:#555;'>
+                    The second biggest challenge has officially been resolved — you can now
+                    <strong>comment on LinkedIn directly using EngageGPT</strong>.
+                  </p>
+                  <p style='font-size:15px; color:#555;'>
+                    Thank you for your patience and support while we worked on this.
+                  </p>
+                </div>
 
-                            <!-- Women's Day & Closing -->
-                            <div style="border-top: 1px solid #e2e8f0; padding-top: 30px;">
-                                <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 5px 0;">
-                                    We are more than happy to assist you. If you have any questions, just hit reply or reach out to us at:
-                                </p>
-                                <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
-                                    <a href="mailto:bharat.pahwa@engagegpt.in" style="color: #4f46e5; text-decoration: none; font-weight: 500;">bharat.pahwa@engagegpt.in</a> or 
-                                    <a href="mailto:Support@engagegpt.in" style="color: #4f46e5; text-decoration: none; font-weight: 500;">Support@engagegpt.in</a>
-                                </p>
-                                
-                                <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0;">
-                                    Best regards,<br>
-                                    <strong>The EngageGPT Team</strong>
-                                </p>
-                            </div>
+                <!-- CREDIT MESSAGE -->
+                <div style='margin-bottom:30px;'>
+                  <p style='font-size:15px; color:#555;'>
+                    If you faced any issues earlier and lost credits, just reply to this email. We’ll restore your credits and add
+                    <strong>500 free credits</strong>
+                    from our side.
+                  </p>
+                </div>
 
-                        </td>
-                    </tr>
+                <!-- CTA -->
+                <div style='text-align:center; margin-bottom:30px;'>
+                  <a href='https://www.linkedin.com/feed/' style='background:#0f172a; color:#fff; padding:14px 30px; text-decoration:none; border-radius:8px; font-weight:600;'>
+                    Explore EngageGPT 3.1
+                  </a>
+                </div>
 
-                    <!-- Footer -->
-                    <tr>
-                        <td align="center" style="background-color: #f8fafc; padding: 25px 40px; border-top: 1px solid #e2e8f0;">
-                            <p style="color: #94a3b8; font-size: 13px; line-height: 1.5; margin: 0;">
-                                © {{#if year}}{{year}}{{else}}2025{{/if}} EngageGPT. All rights reserved.<br>
-                                You are receiving this email because you signed up for EngageGPT.
-                            </p>
-                        </td>
-                    </tr>
+                <!-- SUPPORT -->
+                <div style='border-top:1px solid #eee; padding-top:20px;'>
+                  <p style='font-size:15px; color:#555;'>
+                    Need help? Reach out to us:
+                  </p>
+                  <p style='font-size:15px;'>
+                    <a href='mailto:bharat.pahwa@engagpt.in'>bharat.pahwa@engagegpt.in</a><br />
+                    <a href='mailto:support@engagegpt.in'>support@engagegpt.in</a>
+                  </p>
 
-                </table>
-                <!-- End Main Container -->
+                  <p style='margin-top:20px;'>
+                    Best regards,<br />
+                    <strong>EngageGPT Team</strong>
+                  </p>
+                </div>
 
-            </td>
-        </tr>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td align='center' style='background:#f8fafc; padding:20px;'>
+                <p style='font-size:12px; color:#999;'>
+                  ©
+                  {{year}}
+                  EngageGPT. All rights reserved.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
     </table>
-</body>
+
+  </body>
 </html>
