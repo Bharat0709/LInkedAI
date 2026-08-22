@@ -95,5 +95,5 @@ exports.send3_0UpdateEmail = async user => {
     year: new Date().getFullYear(),
   });
 
-  return await sendAutoSendEmail(user.email, '🚀 EngageGPT 3.3 is Here: GO AND HIT GENERATE COMMENT!', html);
+  return await sendAutoSendEmail(user.email, '⚡ EngageGPT Update: ChatGPT & Groq Comment Generation Restored!', html);
 };
