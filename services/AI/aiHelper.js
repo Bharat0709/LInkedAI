@@ -7,25 +7,25 @@ const PROVIDERS = {
   chatgpt: {
     baseURL: 'https://api.openai.com/v1',
     apiKey: process.env.API_KEY_CHATGPT,
-    model: 'gpt-4o-mini',
+    model: process.env.CHATGPT_MODEL || 'gpt-4o-mini',
     name: 'ChatGPT',
   },
   groq: {
     baseURL: 'https://api.groq.com/openai/v1',
     apiKey: process.env.API_KEY_GROQ,
-    model: 'llama-3.1-8b-instant',
+    model: process.env.GROQ_MODEL || 'groq/compound-mini',
     name: 'Groq',
   },
   mistral: {
     baseURL: 'https://api.together.xyz/v1',
     apiKey: process.env.API_KEY_TOGETHERAI,
-    model: 'mistralai/Mistral-7B-Instruct-v0.1',
+    model: process.env.MISTRAL_MODEL || 'mistralai/Mistral-7B-Instruct-v0.1',
     name: 'Mistral',
   },
   perplexity: {
     baseURL: 'https://api.perplexity.ai',
-    apikey: process.env.API_KEY_PERPLEXITY,
-    model: 'sonar',
+    apiKey: process.env.API_KEY_PERPLEXITY,
+    model: process.env.PERPLEXITY_MODEL || 'sonar',
     name: 'Perplexity',
   },
 };
@@ -78,17 +78,25 @@ const makeAPICall = async (provider, messages, maxTokens = 120, temperature = 0.
     if (error instanceof AppError) {
       throw error;
     }
+    const errMsg = error.message || error.error?.message || '';
+
     // Handle specific API errors
     if (error.status === 429) {
+      if (errMsg.toLowerCase().includes('credit') || errMsg.toLowerCase().includes('quota')) {
+        throw new AppError('AI provider credit balance exhausted. Please add credits to your account.', 429);
+      }
       throw new AppError('AI provider rate limit exceeded', 429);
     }
     if (error.status === 401) {
+      if (errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('billing')) {
+        throw new AppError('AI provider quota/credits exhausted. Please check your billing details.', 401);
+      }
       throw new AppError('Invalid API key for AI provider', 401);
     }
     if (error.status === 403) {
       throw new AppError('AI provider access forbidden', 403);
     }
-    throw new AppError(`AI provider error: ${error.message}`, 500);
+    throw new AppError(`AI provider error: ${errMsg}`, 500);
   }
 };
 
